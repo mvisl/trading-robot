@@ -5096,6 +5096,7 @@ function renderOperationalResearch(operations) {
 
   renderResearchPrograms(operations.research_programs || []);
   renderResearchDimensionalityIntegrity(operations.attack_on_assumptions || {});
+  renderAdaptiveResourceOrchestrator(operations.adaptive_resource_orchestrator || {});
 
   const foundation = view.foundation || [];
   setText("researchFoundationCount", foundation[0]?.name ? `${foundation[0].name}${foundation.length > 1 ? ` (+${foundation.length - 1})` : ""}` : "No completed work");
@@ -5125,6 +5126,34 @@ function renderResearchPrograms(programs) {
     const counts = `${row.completed_contour_count || 0}/${row.bound_contour_count || 0} bound contours completed`;
     return `<article class="research-program-stage tone-${portalTone(row.status)}"><div><span>${escapeHtml(activeLabel)}</span><strong>${escapeHtml(row.title)}</strong></div><p>${escapeHtml(budget)} · output: ${escapeHtml(row.output_artifact)}</p><small>${escapeHtml(counts)}</small><details><summary>Details</summary><dl><div><dt>Lifecycle</dt><dd>${escapeHtml(row.lifecycle)}</dd></div><div><dt>Admission</dt><dd>${escapeHtml(row.admission_rule)}</dd></div><div><dt>Waits for</dt><dd>${escapeHtml((row.waits_for || []).join(", ") || "nothing")}</dd></div><div><dt>Latest artifact</dt><dd>${escapeHtml(latest)}</dd></div></dl></details></article>${index < subsystems.length - 1 ? `<span class="research-program-arrow" aria-hidden="true">→</span>` : ""}`;
   }).join("");
+}
+
+function renderAdaptiveResourceOrchestrator(aro) {
+  const resource = aro.resource_snapshot || {};
+  const rollout = aro.rollout || {};
+  const estimate = rollout.activation_estimate || {};
+  const allocations = aro.shadow_plan?.allocations || [];
+  const reserves = aro.protected_reserves || [];
+  const level3 = aro.level3_decision_queue || [];
+  setText("researchAroStatus", aro.status || "NOT CONFIGURED");
+  setText("researchAroPrinciple", aro.status === "SHADOW"
+    ? "ARO computes elastic allocations and releases waiting tasks, but has no execution authority. The fixed scheduler is still canonical."
+    : "ARO rollout state is unavailable or not yet in shadow mode.");
+  setText("researchAroCores", `${allocations.length}/${resource.elastic_core_capacity ?? "?"} allocated`);
+  setText("researchAroReserves", reserves.map((row) => `${row.reserve_id} ${row.minimum_core_rights}`).join(" · ") || "not configured");
+  setText("researchAroLevel3", level3[0] ? `${level3[0].contour_id}${level3.length > 1 ? ` (+${level3.length - 1})` : ""}` : "empty · no core held");
+  setText("researchAroNextGate", `${estimate.blocking_gate || rollout.next_stage || "unknown"}${estimate.remaining_research_cycles == null ? "" : ` · ${estimate.remaining_research_cycles} cycles`}`);
+  if ($("researchAroCoreList")) $("researchAroCoreList").innerHTML = allocations.map((row) => `<article class="tone-${portalTone(row.status)}"><div><span>${escapeHtml(row.core_id)}</span><strong>${escapeHtml(row.core_class)}</strong></div><p>${escapeHtml(row.task_id)}</p><small>${escapeHtml(row.reasoning_tier)}${row.protected_reserve ? ` · reserve ${escapeHtml(row.protected_reserve)}` : ""}</small></article>`).join("") || `<div class="research-honest-empty"><strong>No shadow core allocated</strong><span>${escapeHtml(aro.fail_closed_validation?.violations?.join(", ") || "No eligible demand.")}</span></div>`;
+  if ($("researchAroDetails")) $("researchAroDetails").innerHTML = [
+    ["Scheduler", aro.shadow_plan?.strategy || "—"],
+    ["Linear score", aro.shadow_plan?.scalar_priority_formula_used ? "FORBIDDEN VIOLATION" : "not used"],
+    ["Fail-closed", aro.fail_closed_validation?.status || "—"],
+    ["Shadow cycles", `${rollout.successful_shadow_scheduler_cycles || 0}/${rollout.gates?.required_shadow_scheduler_cycles || "?"}`],
+    ["Research cycles", `${rollout.gates?.completed_research_cycles || 0}/${rollout.gates?.required_research_cycles || "?"}`],
+    ["RFC Review", rollout.rfc_review?.status || "NOT_DUE"],
+    ["Execution effect", aro.shadow_plan?.comparison_to_active_scheduler?.execution_effect || "UNKNOWN"],
+    ["Heartbeat", aro.heartbeat_at ? portalRelativeTime(aro.heartbeat_at) : "unknown"],
+  ].map(([key, value]) => `<div><dt>${escapeHtml(key)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("");
 }
 
 function renderResearchDimensionalityIntegrity(system) {
