@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Libertex Real Lane Prep</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <div class="title-row">
+            <h1>Real Lane Prep</h1>
+            <a class="nav-badge" href="./">Console</a>
+            <a class="nav-badge" href="./#council">Council</a>
+          </div>
+          <p id="subtitle">Preparation page for the first $100 real-money calibration phase.</p>
+        </div>
+      </header>
+
+      <section class="hero-grid">
+        <article class="panel money-panel">
+          <div class="panel-head">
+            <h2>Current Position</h2>
+          </div>
+          <strong class="money-value" style="font-size:56px">$100</strong>
+          <span class="money-sub">planned first real deposit</span>
+          <p class="strategy-note">This is a calibration lane, not a profit lane. The first 5-10 real trades exist to measure execution gap versus demo.</p>
+        </article>
+
+        <article class="panel money-panel">
+          <div class="panel-head">
+            <h2>Lane Design</h2>
+          </div>
+          <strong class="money-value" style="font-size:40px">Dual Lane</strong>
+          <span class="money-sub">demo investigate stays on · real stays fail-closed</span>
+          <p class="strategy-note">Upper EARN / INVESTIGATE tabs are dashboard view controls only. Real execution is handled by a separate lane state machine.</p>
+        </article>
+      </section>
+
+      <section class="status-grid">
+        <article class="panel">
+          <div class="panel-head"><h2>Prepared</h2></div>
+          <ul class="review-list" style="list-style:none; padding:0; margin:0;">
+            <li>Demo investigation is intended to remain always-on unless the global hard stop is used.</li>
+            <li>Real lane has separate states: `DISABLED`, `ARMED`, `LIVE`, `DRAINING`, `STOPPED`.</li>
+            <li>`Stop Real` means graceful real-only exit. It must not stop demo investigation.</li>
+            <li>Global `Stop` / kill switch remains the hard stop for everything.</li>
+            <li>Real lane is still calibration-only: manual unlock, one trade at a time, no auto-open.</li>
+          </ul>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head"><h2>First Real Rules</h2></div>
+          <ul class="review-list" style="list-style:none; padding:0; margin:0;">
+            <li>Use separate browser profiles for demo and real. Do not share one Libertex session.</li>
+            <li>First 5-10 real trades are execution-gap probes, not “earn mode” automation.</li>
+            <li>Each probe must log real spread, slippage, fill latency, and realized cost/R.</li>
+            <li>No automatic opportunistic real entry until calibration probes are complete.</li>
+            <li>Keep one concurrent real trade at most during calibration.</li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Stops</h2></div>
+        <p class="strategy-note">
+          Suggested structure: global hard stop for all robot activity, plus a separate real-lane stop that bans new real entries and drains existing real positions.
+          For the first $100 lane, the stop logic should be tighter than demo and should fail closed on any ambiguity.
+        </p>
+        <ul class="review-list" style="list-style:none; padding:0; margin:0;">
+          <li>Real lane stop: new real entries off, open real positions close out, demo continues.</li>
+          <li>Hard stop: scanner off, demo off, real off, global safety first.</li>
+          <li>Calibration phase: one trade at a time, no automatic re-entry after a real stop.</li>
+        </ul>
+      </section>
+    </main>
+  </body>
+</html>

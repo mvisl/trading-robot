@@ -3,23 +3,741 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta http-equiv="refresh" content="0; url=https://institute.167-99-214-34.sslip.io/" />
-    <title>Institute Portal</title>
-    <style>
-      :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
-      body { display: grid; min-height: 100vh; margin: 0; place-items: center; background: #101418; color: #eef1f4; }
-      main { max-width: 32rem; padding: 2rem; text-align: center; }
-      a { color: #8ab4f8; }
-    </style>
-    <script>
-      const portal = "https://institute.167-99-214-34.sslip.io/";
-      window.location.replace(`${portal}${window.location.hash}`);
-    </script>
+    <title>Libertex Robot Console</title>
+    <link rel="stylesheet" href="./styles.css?v=20260723-research-operations-v2-aggregates" />
   </head>
   <body>
-    <main>
-      <h1>Opening Institute Portal…</h1>
-      <p><a href="https://institute.167-99-214-34.sslip.io/">Continue to the live portal</a></p>
+    <section class="portal-auth-overlay" id="portalAuthOverlay" hidden>
+      <form class="portal-auth-card" id="portalAuthForm">
+        <span>INSTITUTE</span>
+        <h1>Open Control Center</h1>
+        <p>Enter the dashboard code. The portal stays on GitHub Pages; the code is sent only to the live institute backend.</p>
+        <input id="portalAuthCode" name="code" type="password" inputmode="numeric" autocomplete="one-time-code" aria-label="Dashboard code" />
+        <button type="submit">Open dashboard</button>
+        <small id="portalAuthStatus"></small>
+      </form>
+    </section>
+    <button class="portal-menu-toggle" id="portalMenuToggle" type="button" aria-label="Open institute navigation" aria-expanded="false">☰</button>
+    <div class="portal-drawer-backdrop" id="portalDrawerBackdrop" hidden></div>
+    <aside class="portal-sidebar" id="portalSidebar" aria-label="Institute navigation">
+      <div class="portal-brand">
+        <span>INSTITUTE</span>
+        <strong>Control Center</strong>
+      </div>
+      <nav class="portal-navigation" id="portalNavigation"></nav>
+      <div class="portal-sidebar-state">
+        <span id="portalLiveDot" class="portal-live-dot"></span>
+        <div><strong id="portalStateLabel">Loading live state…</strong><small id="portalStateMeta">Loading live state…</small></div>
+      </div>
+    </aside>
+    <main class="shell portal-content">
+      <section class="portal-view active" id="portal-dashboard" data-portal-view="dashboard">
+      <header class="topbar">
+        <div>
+          <div class="title-row">
+            <h1>Libertex Robot Console</h1>
+          </div>
+          <p id="subtitle">Waiting for terminal data</p>
+          <div class="title-links" aria-label="Console links">
+            <button class="share-badge" id="shareDashboard" type="button" aria-label="Copy one-hour dashboard share link" title="Copy one-hour dashboard share link">
+              <span aria-hidden="true">↗</span>
+            </button>
+            <span id="shareStatus">private</span>
+            <a class="nav-badge" href="#council" data-portal-target="council" title="Open AI Council insights">Council</a>
+            <a class="nav-badge" href="./real-prep.html" title="Open real-lane preparation page">Real Prep</a>
+            <a class="nav-badge" href="#handoff" data-portal-target="handoff" title="Open Codex handoff instructions">Codex</a>
+          </div>
+        </div>
+        <div class="top-actions">
+          <div class="strategy-mode-card">
+            <div class="strategy-mode-buttons" aria-label="Dashboard account view">
+              <button data-strategy-mode="real" type="button">Real</button>
+              <button class="active" data-strategy-mode="demo_earn" type="button">Demo Earn</button>
+              <button data-strategy-mode="investigate" type="button">Demo Investigate</button>
+            </div>
+            <div class="learning-meter" aria-label="Learning stability">
+              <span id="learningMeterFill"></span>
+              <i id="learningMeterThumb"></i>
+            </div>
+            <div class="learning-meter-labels">
+              <span id="learningMeterLeftLabel">edge не доказан</span>
+              <strong id="learningMeterText">learning</strong>
+              <span id="learningMeterRightLabel">нужны разборы</span>
+            </div>
+          </div>
+          <button class="primary-stop" id="robotToggle">Stop</button>
+        </div>
+      </header>
+
+      <section class="portal-overview" id="portalOverview" aria-label="Institute overview">
+        <div class="portal-overview-head">
+          <div><span class="portal-kicker">Institute now</span><h2>Operational Overview</h2></div>
+          <span class="pill" id="portalOverviewFreshness">waiting for Control Plane</span>
+        </div>
+        <div class="portal-health-grid" id="portalHealthGrid"></div>
+        <div class="portal-overview-grid">
+          <article class="portal-compact-card" id="portalCapacityCard"><span>Preparation Capacity</span><strong id="portalCapacityValue">—</strong><small id="portalCapacityMeta">—</small></article>
+          <article class="portal-compact-card" id="portalPressureCard"><span>Pipeline Pressure</span><strong id="portalPressureValue">—</strong><small id="portalPressureMeta">—</small></article>
+          <article class="portal-compact-card" id="portalCapitalCard"><span>Capital Readiness</span><strong id="portalCapitalValue">—</strong><small id="portalCapitalMeta">—</small></article>
+          <article class="portal-compact-card" id="portalOwnerCard"><span>Owner Attention</span><strong id="portalOwnerValue">—</strong><small id="portalOwnerMeta">—</small></article>
+        </div>
+        <div class="portal-overview-lists">
+          <article class="portal-mini-panel"><div class="panel-head"><h3>Top Incidents</h3><span id="portalIncidentCount">0</span></div><ol id="portalTopIncidents" class="portal-plain-list"></ol></article>
+          <article class="portal-mini-panel"><div class="panel-head"><h3>Automatic Next Actions</h3><span id="portalActionCount">0</span></div><ol id="portalTopActions" class="portal-plain-list"></ol></article>
+        </div>
+      </section>
+
+      <section class="earn-ribbon" id="earnRibbon" hidden>
+        <div class="earn-ribbon-line">
+          <strong id="earnRibbonTitle">Earn is running</strong>
+          <span id="earnRibbonSummary">0 trades · $0.00 total</span>
+        </div>
+      </section>
+
+      <div class="mobile-strategy-toggle">
+        <div class="strategy-mode-buttons" aria-label="Mobile dashboard account view">
+          <button data-strategy-mode="real" type="button">Real</button>
+          <button class="active" data-strategy-mode="demo_earn" type="button">Demo Earn</button>
+          <button data-strategy-mode="investigate" type="button">Demo Investigate</button>
+        </div>
+      </div>
+
+      <section class="hero-grid">
+        <article class="panel money-panel">
+          <div class="panel-head">
+            <h2>Balance</h2>
+            <span class="pill" id="connectionPill">Offline</span>
+          </div>
+          <strong class="money-value" id="balanceText">-</strong>
+          <span class="money-sub metric-total" id="balanceTotalText"></span>
+          <span class="money-sub" id="accountText">-</span>
+          <div class="balance-deltas" id="balanceDeltas">
+            <span><b>Day</b> <strong id="balanceDay">-</strong></span>
+            <span><b>Week</b> <strong id="balanceWeek">-</strong></span>
+            <span><b>Month</b> <strong id="balanceMonth">-</strong></span>
+          </div>
+        </article>
+
+        <article class="panel money-panel">
+          <div class="panel-head">
+            <h2>Open Result</h2>
+            <span class="pill" id="statusPill">Starting</span>
+          </div>
+          <strong class="money-value" id="sessionProfit">-</strong>
+          <span class="money-sub metric-total" id="sessionTotalText"></span>
+          <div class="open-result-meta">
+            <span class="money-sub" id="runtimeText">runtime -</span>
+            <div class="open-result-actions">
+              <button class="real-arm-button inline" id="startRealLane" type="button" hidden>Start earning</button>
+              <button class="danger real-stop-button inline" id="stopRealLane" type="button" hidden>Stop earning</button>
+            </div>
+          </div>
+          <p class="strategy-note" id="openResultModeNote">Сейчас показан режим проверки гипотез. Реальная дорожка выключена.</p>
+        </article>
+
+        <article class="panel money-panel">
+          <div class="panel-head">
+            <h2 id="periodTitle">Change 1h</h2>
+            <span class="pill" id="openProfitPill">Open P/L -</span>
+          </div>
+          <div class="period-ranges" aria-label="Profit period">
+            <button data-period-range="600000">10m</button>
+            <button data-period-range="3600000" class="active">1h</button>
+            <button data-period-range="14400000">4h</button>
+            <button data-period-range="28800000">8h</button>
+            <button data-period-range="86400000">Day</button>
+            <button data-period-range="604800000">Week</button>
+          </div>
+          <strong class="money-value" id="profitPerHour">-</strong>
+          <span class="money-sub metric-total" id="periodTotalText"></span>
+          <span class="money-sub" id="availableText">available -</span>
+        </article>
+      </section>
+
+      <section class="panel exposure-panel">
+        <div class="panel-head">
+          <h2>Used Funds / Open P&L</h2>
+          <div class="feed-tools">
+            <span id="exposureMeta" class="chart-meta">waiting for data</span>
+            <div class="feed-filter" aria-label="Chart timeframe">
+              <button class="active" data-chart-range="all" type="button">All</button>
+              <button data-chart-range="600000" type="button">10m</button>
+              <button data-chart-range="3600000" type="button">1h</button>
+              <button data-chart-range="14400000" type="button">4h</button>
+              <button data-chart-range="86400000" type="button">Day</button>
+              <button data-chart-range="604800000" type="button">Week</button>
+            </div>
+            <div class="feed-filter" aria-label="Chart demo lane">
+              <button class="active" data-chart-lane="all" type="button">All</button>
+              <button data-chart-lane="explore" type="button">Explore</button>
+              <button data-chart-lane="earn" type="button">Earn</button>
+            </div>
+            <div class="feed-filter" aria-label="Chart filter">
+              <button class="active" data-chart-filter="all" type="button">All</button>
+              <button data-chart-filter="invested" type="button">Invested</button>
+              <button data-chart-filter="profit" type="button">Profit</button>
+            </div>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="exposureChart" aria-label="Used funds and open profit chart"></canvas>
+        </div>
+        <div class="chart-legend">
+          <span><i class="legend-used"></i> Used funds <strong id="usedChartText">$0.00</strong></span>
+          <span><i class="legend-profit"></i> <span id="profitChartLabel">Open P/L</span> <strong id="profitChartText">$0.00</strong></span>
+          <span id="demoEarnLegend" hidden><i class="legend-demo-earn"></i> Demo Earn <strong id="demoEarnChartText">$0.00</strong></span>
+        </div>
+        <p class="chart-note" id="chartNote">Earn uses a cent-scale P/L overlay for micro-real probes, so a $0.01 move stays visible even beside $10 used funds.</p>
+      </section>
+
+      <nav class="mobile-section-list" aria-label="Dashboard sections">
+        <button type="button" data-mobile-target="decision-section"><span>Решения</span><small id="mobileFeedMeta">0 событий</small></button>
+        <button type="button" data-mobile-target="summary-section"><span>Что делает робот</span><small id="mobileSummaryMeta">ожидание</small></button>
+        <button type="button" data-mobile-target="closed-review-section"><span>Разбор сделок</span><small id="mobileReviewMeta">0 разборов</small></button>
+        <button type="button" data-mobile-target="insights-section"><span>Инсайты</span><small id="mobileInsightMeta">0 инсайтов</small></button>
+        <button type="button" data-mobile-target="strategy-balance-section"><span>Баланс стратегий</span><small id="mobileStrategyMeta">разобранные сделки</small></button>
+        <button type="button" data-mobile-target="hypothesis-health-section"><span>Гипотезы</span><small id="mobileHypothesisMeta">качество обучения</small></button>
+        <button type="button" data-mobile-target="execution-section"><span>Дорожка</span><small id="mobileExecutionMeta">только демо</small></button>
+        <button type="button" data-mobile-target="scanner-section"><span>Сканер</span><small id="mobileScannerMeta">0 сканов</small></button>
+        <button type="button" data-mobile-target="market-section"><span>Рынок</span><small id="mobileMarketMeta">0 инструментов</small></button>
+        <button type="button" data-mobile-target="server-runbook-section"><span>Сервер</span><small>настройки</small></button>
+        <button type="button" data-mobile-target="advisor-section"><span>LLM-советник</span><small id="mobileAdvisorMeta">выключен</small></button>
+        <button type="button" data-mobile-target="codex-handoff"><span>Handoff</span><small>деплой и восстановление</small></button>
+      </nav>
+
+      <section class="main-grid primary-grid">
+        <article class="panel feed-panel mobile-managed" id="decision-section">
+          <div class="panel-head">
+            <h2>Decision Feed</h2>
+            <div class="feed-tools">
+              <span id="feedCount">0 trades</span>
+              <div class="feed-filter" aria-label="Feed filter">
+                <button data-feed-filter="open" type="button">Open</button>
+                <button class="active" data-feed-filter="trades" type="button">Trades</button>
+                <button data-feed-filter="logs" type="button">Logs</button>
+                <button data-feed-filter="all" type="button">All</button>
+              </div>
+            </div>
+          </div>
+          <div class="feed-readouts" aria-label="Open trade summary">
+            <div>
+              <span>Open</span>
+              <strong id="feedOpenCount">0</strong>
+            </div>
+            <div>
+              <span>Open P/L</span>
+              <strong id="feedOpenProfit">$0.00</strong>
+            </div>
+            <div>
+              <span>Used</span>
+              <strong id="feedUsedFunds">$0.00</strong>
+            </div>
+          </div>
+          <ol id="decisionFeed" class="feed"></ol>
+        </article>
+
+        <article class="panel summary-panel mobile-managed" id="summary-section">
+          <div class="panel-head">
+            <h2>What The Robot Is Doing</h2>
+            <span id="lastScan">-</span>
+          </div>
+          <p class="plain-summary" id="robotSummary">Waiting for terminal data.</p>
+          <div class="real-eta-card" id="realEtaCard" aria-label="Next real trade estimate">
+            <div class="real-eta-head">
+              <strong id="realEtaTitle">Следующая real-сделка</strong>
+              <span class="pill" id="realEtaPill">оценка</span>
+            </div>
+            <div class="real-eta-grid">
+              <div>
+                <span>Сейчас</span>
+                <strong id="realEtaCurrent">-</strong>
+              </div>
+              <div>
+                <span>Risk-check</span>
+                <strong id="realEtaRisk">-</strong>
+              </div>
+              <div>
+                <span>Hard horizon</span>
+                <strong id="realEtaHard">-</strong>
+              </div>
+              <div>
+                <span>Следующий вход</span>
+                <strong id="realEtaNext">-</strong>
+              </div>
+            </div>
+            <div class="real-eta-footer">
+              <span id="realEtaBlocker">Блокер: -</span>
+              <span id="realEtaReview">Разборы: -</span>
+            </div>
+          </div>
+          <dl class="kv">
+            <div><dt>Режим</dt><dd id="modeText">только просмотр</dd></div>
+            <div><dt>Сканер</dt><dd id="scannerText">работает</dd></div>
+            <div><dt>Счёт</dt><dd id="accountGuard">нужно демо</dd></div>
+            <div><dt>Инструмент</dt><dd id="selectedInstrument">-</dd></div>
+            <div><dt>Открытый P/L</dt><dd id="openProfitText">-</dd></div>
+            <div><dt>Занято</dt><dd id="usedText">-</dd></div>
+            <div><dt>Открыто сделок</dt><dd id="openTradesText">-</dd></div>
+            <div><dt>Отложено</dt><dd id="pendingTradesText">-</dd></div>
+            <div><dt>Закрыто за 24ч</dt><dd id="closedTradesText">-</dd></div>
+          </dl>
+        </article>
+      </section>
+
+      <section class="panel closed-review-panel mobile-managed" id="closed-review-section">
+          <div class="panel-head">
+            <h2>Разбор сделок</h2>
+            <div class="review-actions">
+              <span id="reviewClosedStatus">Not checked yet</span>
+            </div>
+          </div>
+        <div class="trade-review-layout">
+          <div class="model-review" id="tradeReviewModel">
+            <div>
+              <strong>Жду закрытые сделки</strong>
+              <p>Здесь будет короткий вывод по серии. Полные детали открываются по клику.</p>
+            </div>
+          </div>
+          <div class="review-stack-wrap">
+            <div class="review-stack-head">
+              <strong>Последние закрытия</strong>
+              <small>подробности по клику</small>
+            </div>
+            <div class="review-slider">
+              <button class="review-arrow" id="reviewPrev" aria-label="Previous closed review">‹</button>
+              <ol id="closedTradeReviews" class="review-list"></ol>
+              <button class="review-arrow" id="reviewNext" aria-label="Next closed review">›</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel insights-panel mobile-managed" id="insights-section">
+        <div class="panel-head">
+          <h2>Insights</h2>
+          <div class="feed-tools">
+            <span id="insightCount">0 инсайтов</span>
+            <div class="feed-filter" aria-label="Insight filter">
+              <button class="active" data-insight-filter="all" type="button">All</button>
+              <button data-insight-filter="positive" type="button">Positive</button>
+              <button data-insight-filter="negative" type="button">Negative</button>
+              <button data-insight-filter="recent" type="button">Recent</button>
+            </div>
+          </div>
+        </div>
+        <p class="insight-explain" id="insightExplain">Insights will separate closed-trade lessons from live open-risk alerts.</p>
+        <ol id="insightList" class="insight-list"></ol>
+      </section>
+
+      <section class="panel strategy-balance-panel mobile-managed" id="strategy-balance-section">
+        <div class="panel-head">
+          <h2>Strategy Balance</h2>
+          <div class="feed-tools">
+            <span id="strategyBalanceMeta">0 trades</span>
+            <div class="feed-filter" aria-label="Strategy balance timeframe">
+              <button class="active" data-strategy-range="all" type="button">All</button>
+              <button data-strategy-range="600000" type="button">10m</button>
+              <button data-strategy-range="3600000" type="button">1h</button>
+              <button data-strategy-range="14400000" type="button">4h</button>
+              <button data-strategy-range="86400000" type="button">Day</button>
+              <button data-strategy-range="604800000" type="button">Week</button>
+            </div>
+            <div class="feed-filter" aria-label="Strategy balance metric">
+              <button data-strategy-metric="count" type="button">Count</button>
+              <button class="active" data-strategy-metric="sum" type="button">Sum</button>
+            </div>
+            <div class="feed-filter" aria-label="Execution provider">
+              <button data-strategy-provider="cdp" type="button">CDP</button>
+              <button data-strategy-provider="mt5" type="button">MT5</button>
+              <button class="active" data-strategy-provider="combined" type="button">Combined</button>
+            </div>
+          </div>
+        </div>
+        <div class="strategy-balance-chart-wrap">
+          <canvas id="strategyBalanceChart" aria-label="Positive and negative strategy balance over time"></canvas>
+        </div>
+        <div class="strategy-balance-stats">
+          <span><i class="legend-profit"></i> Positive <strong id="strategyPositiveText">-</strong></span>
+          <span><i class="legend-loss"></i> Negative <strong id="strategyNegativeText">-</strong></span>
+        </div>
+        <div class="strategy-net-stats">
+          <span>Reviewed closed net <strong id="strategyClosedNetText">-</strong></span>
+          <span>Open P/L <strong id="strategyOpenNetText">-</strong></span>
+          <span>Reviewed + open <strong id="strategyReviewedNetText">-</strong></span>
+        </div>
+        <p class="strategy-note" id="strategyBalanceNote">This block uses reviewed closed trades only. Day/Week/Month above use balance history, so they can differ until every closed trade is reviewed and open P/L is flat.</p>
+      </section>
+
+      <section class="panel hypothesis-health-panel mobile-managed" id="hypothesis-health-section">
+        <div class="panel-head">
+          <h2>Hypothesis Health</h2>
+          <div class="feed-tools">
+            <span id="hypothesisHealthMeta">Waiting for closed evidence</span>
+          </div>
+        </div>
+        <div class="hypothesis-health-grid">
+          <div class="hypothesis-kpi-stack">
+            <div class="hypothesis-score-card">
+              <span>Learning quality</span>
+              <strong id="hypothesisHealthScore">0%</strong>
+              <small id="hypothesisHealthLabel">waiting for evidence</small>
+            </div>
+            <div class="hypothesis-stats">
+              <div><span>Tracked</span><strong id="hypothesisTotal">0</strong><small>known hypotheses</small></div>
+              <div><span>Сырые 24ч</span><strong id="hypothesisNew">0</strong><small>MSE/chart signals</small></div>
+              <div><span>Testing</span><strong id="hypothesisTesting">0</strong><small>needs closes</small></div>
+              <div><span>Достаточная выборка</span><strong id="hypothesisMature">0</strong><small>n>=20</small></div>
+              <div><span>Usable</span><strong id="hypothesisConfirmed">0</strong><small>enough proof</small></div>
+              <div><span>Applied / blocked</span><strong id="hypothesisAppliedRejected">0</strong><small>rules vs rejects</small></div>
+            </div>
+          </div>
+          <div class="hypothesis-chart-wrap">
+            <div class="hypothesis-chart-head">
+              <strong>Evidence trend</strong>
+              <span>line = proof quality after each closed review</span>
+            </div>
+            <canvas id="hypothesisHealthChart" aria-label="Hypothesis health trend"></canvas>
+            <div class="hypothesis-chart-legend">
+              <span><i class="good"></i> earn-ready</span>
+              <span><i class="watch"></i> investigate</span>
+              <span><i class="bad"></i> too noisy</span>
+            </div>
+          </div>
+        </div>
+        <div class="hypothesis-body">
+          <div class="hypothesis-eta" id="hypothesisEta">
+            <div class="hypothesis-eta-head">
+              <strong>Maturity ETA</strong>
+              <span id="hypothesisEtaMeta">waiting for review speed</span>
+            </div>
+            <div class="hypothesis-eta-grid">
+              <div><span>1 ready cohort</span><strong id="hypothesisEtaOne">-</strong><small id="hypothesisEtaOneNote">need closed reviews</small></div>
+              <div><span>3 ready cohorts</span><strong id="hypothesisEtaThree">-</strong><small id="hypothesisEtaThreeNote">need closed reviews</small></div>
+              <div><span>All tracked</span><strong id="hypothesisEtaAll">-</strong><small id="hypothesisEtaAllNote">need closed reviews</small></div>
+            </div>
+          </div>
+          <div class="hypothesis-funnel" id="hypothesisFunnel"></div>
+        </div>
+        <div class="hypothesis-gates">
+          <div>
+            <strong>Promote gate</strong>
+            <span id="hypothesisPromoteGate">Need cohort evidence.</span>
+          </div>
+          <div>
+            <strong>Reject gate</strong>
+            <span id="hypothesisRejectGate">Need repeatable loss evidence.</span>
+          </div>
+          <div>
+            <strong>Noise control</strong>
+            <span id="hypothesisNoiseGate">Need classified setup fields.</span>
+          </div>
+        </div>
+        <p class="strategy-note" id="hypothesisHealthSummary">Hypothesis health will explain whether the robot is really learning or only producing noisy observations.</p>
+      </section>
+
+      <section class="secondary-controls">
+        <details>
+          <summary>Secondary controls and scanner details</summary>
+          <div class="mode-strip" id="modeButtons">
+            <button data-mode="read-only">Read</button>
+            <button data-mode="dry-run">Dry</button>
+            <button data-mode="paper">Paper</button>
+            <button data-mode="demo-armed">Демо</button>
+            <button data-mode="live-locked">Live</button>
+          </div>
+          <div class="actions">
+            <button id="scanOnce">Scan once</button>
+            <button id="toggleScanner">Пауза</button>
+            <button class="danger" id="killSwitch">Kill switch</button>
+          </div>
+        </details>
+      </section>
+
+      <section class="status-grid">
+        <article class="panel risk-panel mobile-managed" id="execution-section">
+          <div class="panel-head">
+            <h2>Lane Status</h2>
+            <span class="pill" id="executionPill">two lanes</span>
+          </div>
+          <p class="plain-summary" id="executionSummary">Demo splits Explore and Demo Earn; Real tracks real execution separately.</p>
+          <div class="lane-grid">
+            <div class="lane-card">
+              <div class="lane-card-head">
+                <strong>Demo</strong>
+                <span class="pill" id="executionDemoPill">demo</span>
+              </div>
+              <div class="lane-card-value" id="executionDemoStatus">-</div>
+              <small id="executionDemoMeta">-</small>
+            </div>
+            <div class="lane-card">
+              <div class="lane-card-head">
+                <strong>Real</strong>
+                <span class="pill" id="executionRealPill">real</span>
+              </div>
+              <div class="lane-card-value" id="executionRealStatus">-</div>
+              <small id="executionRealMeta">-</small>
+            </div>
+          </div>
+          <p class="strategy-note" id="executionEpochNote">24h metrics can include older pre-fix attempts. Current run shows only data since the latest server restart.</p>
+        </article>
+
+        <article class="panel metrics-panel mobile-managed" id="scanner-section">
+          <div class="panel-head">
+            <h2>Сканер</h2>
+            <span class="pill" id="candidatePill">0 candidates</span>
+          </div>
+          <div class="metric-row">
+            <div><strong id="scanCount">0</strong><span>scans</span></div>
+            <div><strong id="instrumentCount">0</strong><span>instruments</span></div>
+            <div><strong id="errorCount">0</strong><span>errors</span></div>
+          </div>
+        </article>
+      </section>
+
+      <section class="panel learning-panel operator-only">
+        <div class="panel-head">
+          <h2>Learning Loop</h2>
+          <span id="learningState">collect only</span>
+        </div>
+        <div class="learning-grid">
+          <div><strong>Real-time</strong><span id="learnRealtime">collect_only</span></div>
+          <div><strong>Hourly</strong><span id="learnHourly">health_check</span></div>
+          <div><strong>Daily</strong><span id="learnDaily">propose_changes</span></div>
+          <div><strong>Weekly</strong><span id="learnWeekly">promote_after_tests</span></div>
+        </div>
+      </section>
+
+      <section class="panel demo-panel operator-only">
+        <div class="panel-head">
+          <h2>Demo Execution</h2>
+          <span id="demoPolicy">prepare_ticket_only</span>
+        </div>
+        <div class="demo-grid">
+          <button id="crawlCatalog">Crawl Catalog</button>
+          <div class="demo-readout">
+            <strong id="catalogTotal">0</strong>
+            <span>catalog instruments</span>
+          </div>
+        </div>
+        <p class="demo-note" id="demoStatus">Demo only. Real account is blocked.</p>
+      </section>
+
+      <section class="main-grid">
+        <article class="panel market-panel mobile-managed" id="market-section">
+          <div class="panel-head">
+            <h2>Рынок</h2>
+            <span id="terminalTitle">No tab</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Инструмент</th>
+                  <th>Оценка</th>
+                  <th>Статус</th>
+                </tr>
+              </thead>
+              <tbody id="instrumentRows"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="panel preview-panel mobile-managed" id="snapshot-section">
+          <div class="panel-head">
+            <h2>Terminal Snapshot</h2>
+            <span id="snapshotMeta">No screenshot yet</span>
+          </div>
+          <div class="snapshot-frame">
+            <img id="terminalSnapshot" alt="Libertex terminal snapshot" />
+          </div>
+        </article>
+      </section>
+
+      <section class="settings-section" aria-label="Settings and service information">
+        <div class="settings-heading">
+          <h2>Settings</h2>
+          <p>Service information for deployment, access, and advisor configuration. Trading data is shown above.</p>
+        </div>
+
+        <section class="panel server-runbook-panel mobile-managed" id="server-runbook-section">
+          <div class="panel-head">
+            <h2>Сервер</h2>
+            <span class="pill online">DigitalOcean</span>
+          </div>
+          <div class="server-runbook-grid">
+            <div>
+              <strong>Open from anywhere</strong>
+              <span>http://167.99.214.34 · code 2501</span>
+            </div>
+            <div>
+              <strong>Source of truth</strong>
+              <span>GitHub main branch; server runs /opt/trading-robot</span>
+            </div>
+            <div>
+              <strong>Remote Libertex browser</strong>
+              <span>SSH tunnel to localhost:6080 only; noVNC is not public</span>
+            </div>
+            <div>
+              <strong>Local Mac</strong>
+              <span>Do not start localhost:3000 for daily operation; avoid two robots</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel advisor-panel mobile-managed" id="advisor-section">
+          <div class="panel-head">
+            <h2>LLM Advisor</h2>
+            <span class="pill" id="advisorPill">disabled</span>
+          </div>
+          <div class="advisor-grid">
+            <div>
+              <strong>Status</strong>
+              <span id="advisorStatus">disabled</span>
+            </div>
+            <div>
+              <strong>Provider</strong>
+              <span id="advisorProvider">-</span>
+            </div>
+            <div>
+              <strong>Patches</strong>
+              <span id="advisorPatches">0 applied · 0 rejected</span>
+            </div>
+            <div>
+              <strong>Current knobs</strong>
+              <span id="advisorKnobs">default policy</span>
+            </div>
+          </div>
+          <p class="plain-summary advisor-summary" id="advisorSummary">Advisor is disabled. Robot continues on deterministic policy.</p>
+        </section>
+
+      </section>
+      </section>
+
+      <section class="portal-view" id="portal-research" data-portal-view="research" hidden>
+        <header class="portal-page-head research-command-head"><div><span class="portal-kicker">Live Institute</span><h1>Research Operations</h1><p>Что работает сейчас, что ждёт и что приблизит следующий Money Verdict.</p></div><span class="pill" id="researchFreshness">Loading live state…</span></header>
+
+        <section class="research-command-strip" aria-label="Institute situation in five seconds">
+          <article><span>NOW</span><strong id="researchSummaryNow">Loading live state…</strong></article>
+          <article><span>RESIDENT</span><strong id="researchSummaryResident">Loading live state…</strong></article>
+          <article class="critical"><span>BLOCKER</span><strong id="researchSummaryBlocker">Loading live state…</strong></article>
+          <article><span>NEXT RESULT</span><strong id="researchSummaryNext">Loading live state…</strong></article>
+        </section>
+
+        <section class="research-live-grid">
+          <article class="panel portal-section-panel research-now-panel">
+            <div class="panel-head"><div><span class="portal-kicker">NOW</span><h2>Active work</h2></div><span class="pill" id="researchNowCount">Loading live state…</span></div>
+            <div class="research-process-list" id="researchNowList"><div class="research-honest-empty"><strong>Loading live state…</strong><span>Loading live state…</span></div></div>
+          </article>
+
+          <article class="panel portal-section-panel resident-live-panel">
+            <div class="panel-head"><div><span class="portal-kicker">RESIDENT</span><h2>Resident Operator</h2></div><span class="pill" id="residentOperatorStatus">Loading live state…</span></div>
+            <div class="resident-live-task">
+              <span>Current task</span>
+              <strong id="residentTask">Loading live state…</strong>
+              <small id="residentMission">Loading live state…</small>
+            </div>
+            <div class="resident-live-meta">
+              <div><span>Engine</span><strong id="residentEngine">Loading live state…</strong></div>
+              <div><span>Started</span><strong id="residentStarted">Loading live state…</strong></div>
+              <div><span>ETA</span><strong id="residentEta">Loading live state…</strong></div>
+            </div>
+            <div class="resident-action-line"><span>Last</span><strong id="residentLastAction">Loading live state…</strong></div>
+            <div class="resident-action-line"><span>Next</span><strong id="residentNextAction">Loading live state…</strong></div>
+            <details class="research-card-details"><summary>Why this state</summary><p id="residentReasoning">—</p><dl class="portal-kv-grid"><div><dt>Selection</dt><dd id="residentEngineReason">—</dd></div><div><dt>Source</dt><dd id="residentSource">—</dd></div></dl><span id="residentActionCount" hidden>0</span><ol id="residentActions" class="portal-plain-list"></ol></details>
+          </article>
+        </section>
+
+        <section class="research-decision-grid">
+          <article class="panel portal-section-panel research-blocker-panel">
+            <div class="panel-head"><div><span class="portal-kicker">BLOCKER</span><h2>Money path bottleneck</h2></div><span class="pill" id="researchBlockerStatus">Loading live state…</span></div>
+            <strong class="research-decision-title" id="researchBlockerTitle">Loading live state…</strong>
+            <p id="researchBlockerReason">Loading live state…</p>
+            <small id="researchBlockerWaitingFor">Loading live state…</small>
+            <details class="research-card-details"><summary id="researchWaitingSummary">Loading live state…</summary><p id="researchBlockerDetail">—</p><div class="research-waiting-list" id="researchWaitingList"></div></details>
+          </article>
+          <article class="panel portal-section-panel research-next-panel">
+            <div class="panel-head"><div><span class="portal-kicker">NEXT</span><h2>What happens next</h2></div><span class="pill" id="researchNextCount">Loading live state…</span></div>
+            <div class="research-process-list" id="researchNextList"><div class="research-honest-empty"><strong>Loading live state…</strong><span>Loading live state…</span></div></div>
+          </article>
+        </section>
+
+        <section class="panel portal-section-panel research-flow-panel">
+          <div class="panel-head"><div><span class="portal-kicker">FLOW</span><h2>Pipeline to capital</h2></div><span id="researchPipelinePressure">—</span></div>
+          <div class="research-flow" id="researchOperationalFlow"></div>
+          <p class="research-flow-note" id="researchFlowNote">—</p>
+        </section>
+
+        <section class="panel portal-section-panel research-background-panel">
+          <div class="panel-head"><div><span class="portal-kicker">BACKGROUND</span><h2>Always-on processes</h2></div><span id="researchBackgroundMeta">—</span></div>
+          <div class="research-background-grid" id="researchBackgroundProcesses"></div>
+        </section>
+
+        <details class="panel portal-section-panel research-foundation-panel">
+          <summary><span><span class="portal-kicker">FOUNDATION</span><strong>Completed work</strong></span><span id="researchFoundationCount">Loading live state…</span></summary>
+          <p class="muted">Завершённые контуры — память института, а не текущая работа.</p>
+          <div class="research-foundation-grid" id="researchFoundation"></div>
+        </details>
+
+        <details class="panel portal-section-panel research-diagnostics">
+          <summary><span><span class="portal-kicker">DETAILS</span><strong>Operational diagnostics</strong></span><span>Registry, reasoning, incidents and canonical contours</span></summary>
+          <section class="panel portal-section-panel">
+            <div class="panel-head"><h2>Institute Components</h2><span id="instituteProgressMeta">canonical stages</span></div>
+            <div class="institute-progress" id="instituteProgress"></div>
+          </section>
+          <section class="research-pipeline-grid">
+            <article class="panel portal-section-panel"><div class="panel-head"><h2>Pipeline Objects</h2><span>primary first · click for all</span></div><div class="pipeline-count-grid" id="researchPipelineCounts"></div></article>
+            <article class="panel portal-section-panel"><div class="panel-head"><h2>Preparation Capacity</h2><span id="researchCapacityMeta">—</span></div><div class="portal-capacity-slots" id="researchCapacitySlots"></div><p id="researchCapacityReason" class="muted">—</p></article>
+            <article class="panel portal-section-panel"><div class="panel-head"><h2>Capital Readiness</h2><span id="researchCapitalCandidate">—</span></div><strong class="portal-large-value" id="researchCapitalGate">—</strong><div class="portal-kv-grid" id="researchCapitalFacts"></div></article>
+          </section>
+          <section class="research-proof-grid">
+            <article class="panel portal-section-panel"><div class="panel-head"><h2>Money Verdict Critical Path</h2><span class="pill" id="criticalPathStatus">—</span></div><strong class="portal-large-value" id="criticalPathCandidate">—</strong><dl class="portal-kv-grid" id="criticalPathFacts"></dl></article>
+            <article class="panel portal-section-panel"><div class="panel-head"><h2>RF9-6 Source Recovery</h2><span class="pill" id="sourceRecoveryStatus">SEARCHING</span></div><strong class="portal-large-value" id="sourceRecoveryHash">—</strong><dl class="portal-kv-grid" id="sourceRecoveryFacts"></dl></article>
+            <article class="panel portal-section-panel research-inventory-panel"><div class="panel-head"><h2>Parallel Research Inventory</h2><span id="parallelInventoryMeta">—</span></div><div class="research-inventory-list" id="parallelResearchInventory"></div></article>
+          </section>
+          <section class="research-operator-grid">
+            <article class="panel portal-section-panel fire-monitor-panel"><div class="panel-head"><h2>Fire Monitor</h2><span class="pill" id="fireOpen">0 open</span></div><div class="fire-window-grid"><div><strong id="fireToday">0</strong><span>Today</span></div><div><strong id="fireWeek">0</strong><span>Week</span></div><div><strong id="fireMonth">0</strong><span>Month</span></div></div><div id="fireCategories" class="fire-categories"></div><p id="fireObjective" class="muted"></p></article>
+            <article class="panel portal-section-panel owner-attention-panel"><div class="panel-head"><h2>Need Owner</h2><span id="ownerAttentionCount">0</span></div><div id="ownerAttention" class="owner-attention-list"></div></article>
+          </section>
+          <section class="panel portal-section-panel reasoning-governor-panel">
+            <div class="panel-head"><h2>Reasoning Engines</h2><span class="pill" id="reasoningBudgetMode">—</span></div>
+            <div class="reasoning-engine-grid"><article><div><strong>Rule Engine</strong><span id="reasoningRuleStatus">—</span></div><dl id="reasoningRuleMetrics"></dl></article><article><div><strong>Local LLM</strong><span id="reasoningLocalStatus">—</span></div><dl id="reasoningLocalMetrics"></dl></article><article><div><strong>Gemini</strong><span id="reasoningGeminiStatus">—</span></div><dl id="reasoningGeminiMetrics"></dl></article></div>
+            <div class="reasoning-budget-grid"><div><span>Gemini Spent</span><strong id="reasoningBudgetSpent">—</strong></div><div><span>Remaining</span><strong id="reasoningBudgetRemaining">—</strong></div><div><span>Forecast</span><strong id="reasoningBudgetForecast">—</strong></div><div><span>Prevented Calls</span><strong id="reasoningPreventedCalls">—</strong></div><div><span>Estimated Saved</span><strong id="reasoningSavedCost">—</strong></div></div>
+            <p class="reasoning-selection"><b>Current:</b> <span id="reasoningCurrentEngine">—</span> · <span id="reasoningSelectionReason">—</span></p>
+            <div class="panel-head secondary"><h3>31-day outcome</h3><span class="pill" id="reasoningQualityStatus">—</span></div><dl class="portal-kv-grid" id="reasoningHistory"></dl><p class="muted" id="reasoningQualityBasis">—</p>
+            <div class="panel-head secondary"><h3>Self-learning proposals</h3><span id="reasoningImprovementCount">0</span></div><ul id="reasoningImprovements" class="portal-plain-list"></ul>
+          </section>
+          <section class="panel portal-section-panel"><div class="panel-head"><h2>Blocked Graph</h2><span id="blockedGraphCount">Highest priority first</span></div><div class="blocked-graph" id="blockedGraph"></div></section>
+          <section class="panel portal-section-panel"><div class="panel-head"><h2>Autonomous Actions</h2><span id="autonomousActionCount">0</span></div><div id="autonomousActions" class="autonomous-action-list"></div></section>
+          <section class="panel portal-section-panel"><div class="panel-head"><h2>Contours</h2><div class="portal-filter-group" id="contourFilters"></div></div><div class="research-contours" id="researchContours"></div></section>
+        </details>
+      </section>
+
+      <section class="portal-view" id="portal-handoff" data-portal-view="handoff" hidden>
+        <header class="portal-page-head"><div><span class="portal-kicker">State Transfer</span><h1>Handoff</h1><p>Последние изменения, immutable artifacts и факты для следующего агента.</p></div><span class="pill" id="handoffRevision">revision —</span></header>
+        <section class="handoff-portal-grid">
+          <article class="panel portal-section-panel"><div class="panel-head"><h2>Latest Changes</h2><span id="handoffChangeCount">0</span></div><ol id="handoffChanges" class="portal-timeline"></ol></article>
+          <article class="panel portal-section-panel"><div class="panel-head"><h2>Next Agent Must Know</h2><span>canonical</span></div><ul id="handoffFacts" class="portal-fact-list"></ul></article>
+        </section>
+        <section class="panel portal-section-panel"><div class="panel-head"><h2>Recent Immutable Artifacts</h2><span id="handoffArtifactCount">0</span></div><div id="handoffArtifacts" class="artifact-grid"></div></section>
+        <section class="panel portal-section-panel"><div class="panel-head"><h2>Operational Access</h2><span>single server</span></div><div class="handoff-grid"><div><strong>Canonical Portal</strong><span>One public link; read-only institute state.</span></div><div><strong>Server</strong><span>trading-robot-01 · /opt/trading-robot</span></div><div><strong>State Integrity</strong><span id="handoffIntegrity">—</span></div><div><strong>Do not split brain</strong><span>Do not launch localhost UI or a second live runner.</span></div></div></section>
+      </section>
+
+      <section class="portal-view" id="portal-council" data-portal-view="council" hidden>
+        <header class="portal-page-head"><div><span class="portal-kicker">Decision Memory</span><h1>Council</h1><p>История решений, reviews, verdicts и архитектурных обсуждений.</p></div><span class="pill" id="portalCouncilFreshness">waiting</span></header>
+        <section class="panel portal-section-panel council-takeaway"><div class="panel-head"><h2>Current Takeaway</h2><span id="portalCouncilStatus">—</span></div><p id="portalCouncilSummary">Loading council state.</p></section>
+        <section class="council-portal-grid">
+          <article class="panel portal-section-panel"><div class="panel-head"><h2>Decisions & Verdicts</h2><span id="portalCouncilCount">0</span></div><div id="portalCouncilEntries" class="council-card-list"></div></article>
+          <article class="panel portal-section-panel"><div class="panel-head"><h2>Open Institute Incidents</h2><span id="portalCouncilIncidentCount">0</span></div><div id="portalCouncilIncidents" class="council-card-list"></div></article>
+        </section>
+      </section>
     </main>
+    <aside class="mobile-detail" id="mobileDetail" aria-hidden="true">
+      <div class="mobile-detail-head">
+        <button type="button" id="mobileBack">Back</button>
+        <strong id="mobileDetailTitle">Section</strong>
+      </div>
+      <div class="mobile-detail-body" id="mobileDetailBody"></div>
+    </aside>
+    <script src="./app.js?v=20260723-research-operations-v2-aggregates" type="module"></script>
   </body>
 </html>
