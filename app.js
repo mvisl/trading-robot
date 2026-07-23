@@ -5094,9 +5094,36 @@ function renderOperationalResearch(operations) {
   setText("researchBackgroundMeta", background.length ? "ALL LIVE SERVICES VISIBLE" : "No service telemetry");
   if ($("researchBackgroundProcesses")) $("researchBackgroundProcesses").innerHTML = background.map((row) => `<article class="${row.status === "ONLINE" ? "online" : "offline"}"><span class="background-light" aria-hidden="true"></span><div><strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(row.cadence)}</small></div><p>${escapeHtml(row.updated_at ? `updated ${portalRelativeTime(row.updated_at)}` : row.detail)}</p><details><summary>Details</summary><span>${escapeHtml(row.detail)} · ${escapeHtml(row.active_state || "unknown")}/${escapeHtml(row.sub_state || "unknown")}</span></details></article>`).join("") || `<div class="research-honest-empty"><strong>Background telemetry unavailable</strong><span>System service probes have not completed.</span></div>`;
 
+  renderResearchPrograms(operations.research_programs || []);
+
   const foundation = view.foundation || [];
   setText("researchFoundationCount", foundation[0]?.name ? `${foundation[0].name}${foundation.length > 1 ? ` (+${foundation.length - 1})` : ""}` : "No completed work");
   if ($("researchFoundation")) $("researchFoundation").innerHTML = foundation.map((row) => `<article><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(portalDate(row.completed_at))}</span><small>${escapeHtml(row.artifact || row.id)}</small></article>`).join("") || `<div class="portal-empty">No completed contours registered.</div>`;
+}
+
+function renderResearchPrograms(programs) {
+  const program = programs.find((row) => row.program_id === "INTENT_COMMITMENT_FLOW_V1") || programs[0];
+  setText("researchProgramStatus", program?.status || "NOT REGISTERED");
+  setText("researchProgramPrinciple", program
+    ? "Discovery is continuous and outside Evidence WIP. Modeling turns mechanisms into contracts. Validation alone consumes protected evidence budget."
+    : "The long-lived research program is not present in canonical state.");
+  if (!$("researchPrograms")) return;
+  if (!program) {
+    $("researchPrograms").innerHTML = `<div class="research-honest-empty"><strong>Program state unavailable</strong><span>Waiting for the next Control Plane reconciliation.</span></div>`;
+    return;
+  }
+  const subsystems = program.subsystems || [];
+  $("researchPrograms").innerHTML = subsystems.map((row, index) => {
+    const activeLabel = row.subsystem_id === "DISCOVERY"
+      ? "CONTINUOUS"
+      : row.subsystem_id === "MECHANISM_MODELING"
+        ? "ON DEMAND"
+        : "GATED";
+    const budget = row.uses_evidence_wip ? "uses Evidence WIP" : "outside Evidence WIP";
+    const latest = row.latest_artifact_id || "No immutable output yet";
+    const counts = `${row.completed_contour_count || 0}/${row.bound_contour_count || 0} bound contours completed`;
+    return `<article class="research-program-stage tone-${portalTone(row.status)}"><div><span>${escapeHtml(activeLabel)}</span><strong>${escapeHtml(row.title)}</strong></div><p>${escapeHtml(budget)} · output: ${escapeHtml(row.output_artifact)}</p><small>${escapeHtml(counts)}</small><details><summary>Details</summary><dl><div><dt>Lifecycle</dt><dd>${escapeHtml(row.lifecycle)}</dd></div><div><dt>Admission</dt><dd>${escapeHtml(row.admission_rule)}</dd></div><div><dt>Waits for</dt><dd>${escapeHtml((row.waits_for || []).join(", ") || "nothing")}</dd></div><div><dt>Latest artifact</dt><dd>${escapeHtml(latest)}</dd></div></dl></details></article>${index < subsystems.length - 1 ? `<span class="research-program-arrow" aria-hidden="true">→</span>` : ""}`;
+  }).join("");
 }
 
 function renderPrimaryProcessList(items, label, emptyMarkup) {
