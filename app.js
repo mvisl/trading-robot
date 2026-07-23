@@ -5361,6 +5361,7 @@ function renderAtlasDiscoveryProducer(atlas) {
     : shortDurationSeconds(atlas.next_output_eta_seconds));
   setText("researchAtlasProduced", metrics.produced_today || 0);
   setText("researchAtlasQueued", queue.length);
+  setText("researchAtlasFrontier", metrics.frontier_candidates || atlas.frontier_queue_total || 0);
   setText("researchAtlasValidated", metrics.validated || 0);
   setText("researchAtlasRejected", metrics.rejected || 0);
   setText("researchAtlasEngine", atlas.reasoning_policy?.local_model
