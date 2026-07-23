@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Libertex Robot Console</title>
-    <link rel="stylesheet" href="./styles.css?v=20260723-research-operations-v2-aggregates" />
+    <title>Institute Control Center</title>
+    <link rel="stylesheet" href="./styles.css?v=20260723-living-process-control-center" />
   </head>
   <body>
     <section class="portal-auth-overlay" id="portalAuthOverlay" hidden>
@@ -35,7 +35,7 @@
       <header class="topbar">
         <div>
           <div class="title-row">
-            <h1>Libertex Robot Console</h1>
+            <h1>Institute Control Center</h1>
           </div>
           <p id="subtitle">Waiting for terminal data</p>
           <div class="title-links" aria-label="Console links">
@@ -85,6 +85,39 @@
           <article class="portal-mini-panel"><div class="panel-head"><h3>Top Incidents</h3><span id="portalIncidentCount">0</span></div><ol id="portalTopIncidents" class="portal-plain-list"></ol></article>
           <article class="portal-mini-panel"><div class="panel-head"><h3>Automatic Next Actions</h3><span id="portalActionCount">0</span></div><ol id="portalTopActions" class="portal-plain-list"></ol></article>
         </div>
+      </section>
+
+      <section class="panel institute-work-center" id="instituteWorkCenter" aria-label="Living institute processes">
+        <div class="panel-head institute-work-head">
+          <div>
+            <span class="portal-kicker">INSTITUTE LIVE WORK</span>
+            <h2>What the institute is doing now</h2>
+          </div>
+          <span class="pill" id="instituteWorkFreshness">waiting for process state</span>
+        </div>
+        <strong class="institute-work-headline" id="instituteWorkHeadline">Loading current missions and work queues…</strong>
+        <div class="institute-work-answers">
+          <article>
+            <span>Most important</span>
+            <strong id="instituteWorkMostImportant">—</strong>
+            <small id="instituteWorkMostImportantDetail">—</small>
+          </article>
+          <article>
+            <span>Next substantial result</span>
+            <strong id="instituteWorkNextResult">—</strong>
+            <small id="instituteWorkNextResultDetail">—</small>
+          </article>
+          <article>
+            <span>Last completed</span>
+            <strong id="instituteWorkLastCompleted">—</strong>
+            <small id="instituteWorkLastCompletedDetail">—</small>
+          </article>
+        </div>
+        <div class="living-program-grid" id="livingProgramPrimary"></div>
+        <details class="living-program-more" id="livingProgramMore" hidden>
+          <summary><strong id="livingProgramMoreLabel">More live programs</strong><span>Open full process inventory</span></summary>
+          <div class="living-program-grid secondary" id="livingProgramSecondary"></div>
+        </details>
       </section>
 
       <section class="earn-ribbon" id="earnRibbon" hidden>
@@ -768,6 +801,6 @@
       </div>
       <div class="mobile-detail-body" id="mobileDetailBody"></div>
     </aside>
-    <script src="./app.js?v=20260723-research-operations-v2-aggregates" type="module"></script>
+    <script src="./app.js?v=20260723-living-process-control-center" type="module"></script>
   </body>
 </html>

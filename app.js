@@ -4954,6 +4954,7 @@ function renderInstitutePortal(state) {
   setText("portalStateMeta", operations.state_revision ? `revision ${operations.state_revision} · ${portalDate(operations.generated_at)}` : "canonical state unavailable");
   $("portalLiveDot")?.classList.toggle("offline", !live);
   renderPortalOverview(state, operations);
+  renderLivingInstituteWork(operations);
   renderResearchPortal(operations);
   renderHandoffPortal(operations);
   renderCouncilPortal(state?.instituteCouncil, operations);
@@ -5004,6 +5005,190 @@ function renderPortalOverview(state, operations) {
   const actions = operations.automatic_next_actions || [];
   setText("portalActionCount", actions.length);
   if ($("portalTopActions")) $("portalTopActions").innerHTML = actions.slice(0, 4).map((row) => `<li><strong>${escapeHtml(row.action)}</strong><span>${escapeHtml(row.target_contour_id)} · ETA ${escapeHtml(portalEta(row.eta_hours))}</span></li>`).join("") || `<li class="portal-empty">No autonomous action is currently admissible.</li>`;
+}
+
+function renderLivingInstituteWork(operations) {
+  const canonical = Array.isArray(operations.living_programs) ? operations.living_programs : [];
+  const background = (operations.background_processes || [])
+    .filter((row) => row.id !== "resident")
+    .map((row) => backgroundAsLivingProgram(row, operations));
+  const programs = [...canonical, ...background];
+  const preferredOrder = [
+    "RESIDENT_OPERATOR",
+    "ADAPTIVE_RESOURCE_ORCHESTRATOR_V1",
+    "INTENT_COMMITMENT_FLOW_V1:DISCOVERY",
+    "atlas-witness",
+    "RDI",
+    "INTENT_COMMITMENT_FLOW_V1:MECHANISM_MODELING",
+  ];
+  const preferred = preferredOrder.map((id) => programs.find((row) => row.program_id === id)).filter(Boolean);
+  const remaining = programs
+    .filter((row) => !preferred.some((chosen) => chosen.program_id === row.program_id))
+    .sort((a, b) => Number(b.priority || 0) - Number(a.priority || 0) || String(a.name).localeCompare(String(b.name)));
+  const primary = [...preferred, ...remaining].slice(0, 6);
+  const secondary = programs.filter((row) => !primary.some((chosen) => chosen.program_id === row.program_id));
+  const view = operations.operational_processes || {};
+  const blocker = view.critical_blocker || {};
+  const aro = programs.find((row) => row.program_id === "ADAPTIVE_RESOURCE_ORCHESTRATOR_V1");
+  const runningContours = view.now || [];
+  const onlineBackground = background.filter((row) => row.status === "ONLINE").length;
+
+  setText("instituteWorkFreshness", operations.status === "LIVE"
+    ? `live process state · revision ${operations.state_revision || "—"}`
+    : operations.status || "unavailable");
+  setText("instituteWorkHeadline", aro
+    ? `${aro.name}: ${aro.progress?.label || aro.current_task}. ${runningContours.length ? `${runningContours.length} admitted research process${runningContours.length === 1 ? "" : "es"} executing.` : "No evidence contour is executing."} ${onlineBackground} background processes observed online.`
+    : `${runningContours.length} admitted research processes executing · ${onlineBackground} background processes observed online.`);
+
+  setText("instituteWorkMostImportant", blocker.candidate || "No Money Verdict candidate");
+  setText("instituteWorkMostImportantDetail", blocker.reason
+    ? `${blocker.reason} · ${blocker.waiting_for || "waiting for admissible unblock event"}`
+    : "No critical-path blocker is registered.");
+
+  if (aro) {
+    setText("instituteWorkNextResult", "ARO shadow sample threshold");
+    setText("instituteWorkNextResultDetail", `${aro.progress?.label || "progress unavailable"} · ${livingEtaOrEvent(aro)}`);
+  } else {
+    const nextResult = programs
+      .filter((row) => row.eta_hours != null && Number(row.priority || 0) >= 75)
+      .sort((a, b) => Number(a.eta_hours) - Number(b.eta_hours))[0];
+    setText("instituteWorkNextResult", nextResult?.name || view.next_result?.name || "No result scheduled");
+    setText("instituteWorkNextResultDetail", nextResult
+      ? `${nextResult.next_task} · ${livingEtaOrEvent(nextResult)}`
+      : view.next_result?.output || blocker.waiting_for || "Waiting for the next governed event.");
+  }
+
+  const completed = view.foundation?.[0];
+  setText("instituteWorkLastCompleted", completed?.name || "No completed contour");
+  setText("instituteWorkLastCompletedDetail", completed
+    ? `${completed.artifact || completed.id} · ${portalRelativeTime(completed.completed_at)}`
+    : "No immutable completion artifact is registered.");
+
+  if ($("livingProgramPrimary")) {
+    $("livingProgramPrimary").innerHTML = primary.map(renderLivingProgramCard).join("")
+      || `<div class="research-honest-empty"><strong>Living-program projection unavailable</strong><span>Waiting for the next Control Plane reconciliation.</span></div>`;
+  }
+  const more = $("livingProgramMore");
+  if (more) {
+    more.hidden = secondary.length === 0;
+    setText("livingProgramMoreLabel", `${secondary.length} more live program${secondary.length === 1 ? "" : "s"}`);
+    if ($("livingProgramSecondary")) $("livingProgramSecondary").innerHTML = secondary.map(renderLivingProgramCard).join("");
+  }
+}
+
+function backgroundAsLivingProgram(row, operations) {
+  const intervalSeconds = Number(row.interval_seconds || 0);
+  const lastTrigger = Date.parse(row.last_trigger_at || row.updated_at || 0);
+  const elapsedSeconds = lastTrigger ? Math.max(0, (Date.now() - lastTrigger) / 1000) : null;
+  const cycleProgress = intervalSeconds && elapsedSeconds != null
+    ? Math.max(0, Math.min(100, Math.round(100 * elapsedSeconds / intervalSeconds)))
+    : null;
+  const dueSeconds = intervalSeconds && elapsedSeconds != null ? Math.max(0, intervalSeconds - elapsedSeconds) : null;
+  const priority = {
+    "atlas-witness": 87,
+    runner: 80,
+    labeler: 66,
+    collectors: 64,
+    milestones: 60,
+  }[row.id] || 50;
+  const runnerNow = operations.operational_processes?.now?.[0];
+  const currentTask = row.id === "runner" && runnerNow
+    ? `Execute ${runnerNow.name}`
+    : row.current_task || row.detail || "Observe service state";
+  const nextTask = row.id === "runner" && !runnerNow
+    ? "Start the next formally admitted contour"
+    : row.next_task || "Continue the next governed cycle";
+  const nextEvent = intervalSeconds
+    ? dueSeconds > 0
+      ? `Next cycle in ${shortDurationSeconds(dueSeconds)}`
+      : "Waiting for the next scheduled trigger"
+    : row.status === "ONLINE"
+      ? "Continuous stream; next append event"
+      : "Waiting for service recovery";
+  return {
+    program_id: row.id,
+    name: row.name,
+    mission: row.mission || row.detail,
+    phase: `${row.phase || row.cadence || "BACKGROUND"} · ${row.status || "UNKNOWN"}`,
+    status: row.status,
+    current_task: currentTask,
+    progress: {
+      current: cycleProgress,
+      total: cycleProgress == null ? null : 100,
+      unit: intervalSeconds ? "current cadence cycle" : "continuous observation",
+      label: intervalSeconds
+        ? `${cycleProgress == null ? "—" : cycleProgress}% of ${row.cadence}`
+        : `${row.cadence || "continuous"} · observed ${portalRelativeTime(row.observed_at || row.heartbeat_at)}`,
+      percent: cycleProgress,
+      open_ended: true,
+    },
+    next_task: nextTask,
+    eta_hours: dueSeconds == null ? null : dueSeconds / 3600,
+    next_event: nextEvent,
+    heartbeat_at: row.heartbeat_at || row.observed_at,
+    last_state_change_at: row.last_state_change_at || row.updated_at,
+    last_state_change: row.last_state_change || row.detail,
+    queue: [
+      { id: `${row.id}:CURRENT`, title: currentTask, status: row.status, detail: row.detail },
+      { id: `${row.id}:NEXT`, title: nextTask, status: "NEXT", detail: nextEvent },
+    ],
+    priority,
+    source: "LIVE_SERVICE_TELEMETRY",
+  };
+}
+
+function renderLivingProgramCard(program) {
+  const progress = program.progress || {};
+  const progressPercent = progress.percent == null ? null : Math.max(0, Math.min(100, Number(progress.percent)));
+  const queue = program.queue || [];
+  const queuePrimary = queue[0]?.title || program.next_task || "No queued work item";
+  const queueRemainder = Math.max(0, queue.length - 1);
+  const heartbeat = program.heartbeat_at ? portalRelativeTime(program.heartbeat_at) : "not observed";
+  const lastChange = program.last_state_change || "No state transition recorded.";
+  return `<article class="living-program-card tone-${portalTone(program.status || program.phase)}">
+    <div class="living-program-title">
+      <div><span>${escapeHtml(program.parent_program || program.source || "LONG-LIVED PROGRAM")}</span><strong>${escapeHtml(program.name)}</strong></div>
+      <em>${escapeHtml(program.phase || "PHASE UNKNOWN")}</em>
+    </div>
+    <p class="living-program-mission">${escapeHtml(compactText(program.mission || "Mission unavailable", 155))}</p>
+    <div class="living-program-current"><span>Current</span><strong>${escapeHtml(program.current_task || "No current task")}</strong></div>
+    <div class="living-program-progress">
+      <div><span>Progress</span><strong>${escapeHtml(progress.label || "No measurable progress registered")}</strong></div>
+      ${progressPercent == null ? "" : `<i><b style="width:${progressPercent}%"></b></i>`}
+    </div>
+    <div class="living-program-flow">
+      <div><span>Now</span><strong>${escapeHtml(compactText(program.current_task || "—", 92))}</strong></div>
+      <b aria-hidden="true">→</b>
+      <div><span>Next</span><strong>${escapeHtml(compactText(program.next_task || program.next_event || "—", 92))}</strong></div>
+    </div>
+    <div class="living-program-timing">
+      <div><span>${program.eta_hours == null ? "Waiting for" : "ETA"}</span><strong>${escapeHtml(livingEtaOrEvent(program))}</strong></div>
+      <div><span>Heartbeat</span><strong>${escapeHtml(heartbeat)}</strong></div>
+    </div>
+    <p class="living-program-change"><span>Changed</span>${escapeHtml(compactText(lastChange, 150))}</p>
+    <details class="living-program-queue">
+      <summary><span>Queue</span><strong>${escapeHtml(compactText(queuePrimary, 88))}${queueRemainder ? ` <em>(+${queueRemainder})</em>` : ""}</strong></summary>
+      <div>${queue.map((row, index) => `<article><span>${index + 1}</span><div><strong>${escapeHtml(row.title)}</strong><small>${escapeHtml(row.status || "QUEUED")}${row.detail ? ` · ${escapeHtml(compactText(row.detail, 130))}` : ""}</small></div></article>`).join("") || `<p>No queued item has been registered.</p>`}</div>
+    </details>
+  </article>`;
+}
+
+function livingEtaOrEvent(program) {
+  if (program.eta_hours != null && Number.isFinite(Number(program.eta_hours))) {
+    const hours = Math.max(0, Number(program.eta_hours));
+    if (hours < 1 / 60) return "<1 min";
+    if (hours < 1) return `~${Math.max(1, Math.round(hours * 60))} min`;
+    if (hours < 24) return `~${hours.toFixed(hours < 10 ? 1 : 0)}h`;
+    return `~${(hours / 24).toFixed(1)}d`;
+  }
+  return program.next_event || "next governed state transition";
+}
+
+function shortDurationSeconds(seconds) {
+  const value = Math.max(0, Number(seconds || 0));
+  if (value < 60) return `${Math.max(1, Math.ceil(value))}s`;
+  if (value < 3600) return `${Math.ceil(value / 60)}m`;
+  return `${(value / 3600).toFixed(1)}h`;
 }
 
 function renderResearchPortal(operations) {
