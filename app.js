@@ -22,6 +22,7 @@ let activeMobileSection = null;
 let eventSource = null;
 let lastRenderAt = 0;
 let fallbackRefreshInFlight = false;
+let instituteRefreshInFlight = false;
 let apiLocked = false;
 let robotStopCountdown = null;
 let activePortalPage = "dashboard";
@@ -90,7 +91,8 @@ function bindPortalLogin() {
       sessionStorage.setItem(PORTAL_ACCESS_TOKEN_KEY, payload.accessToken);
       if ($("portalAuthCode")) $("portalAuthCode").value = "";
       hidePortalLogin();
-      await refreshState("login");
+      await refreshInstituteWorkState("login");
+      void refreshState("login");
     } catch (error) {
       setText("portalAuthStatus", error.message || "Login failed");
     }
@@ -5983,6 +5985,28 @@ async function refreshState(reason = "manual") {
   }
 }
 
+async function refreshInstituteWorkState(reason = "manual") {
+  if (!IS_GITHUB_PORTAL || !portalAccessToken() || instituteRefreshInFlight) return;
+  instituteRefreshInFlight = true;
+  try {
+    const response = await portalFetch(`/api/institute/operations?refresh=${encodeURIComponent(reason)}&t=${Date.now()}`, {
+      cache: "no-store",
+    });
+    if (!response.ok) return;
+    const payload = await response.json();
+    const operations = payload.instituteOperations || payload.operations;
+    if (!operations) return;
+    setText("portalStateLabel", operations.status || "UNAVAILABLE");
+    setText("portalStateMeta", operations.state_revision ? `revision ${operations.state_revision} · ${portalDate(operations.generated_at)}` : "canonical state unavailable");
+    $("portalLiveDot")?.classList.toggle("offline", operations.status !== "LIVE");
+    renderLivingInstituteWork(operations);
+  } catch (error) {
+    console.warn("institute work refresh failed", error);
+  } finally {
+    instituteRefreshInFlight = false;
+  }
+}
+
 function connectEventStream() {
   if (IS_GITHUB_PORTAL) return;
   if (eventSource) eventSource.close();
@@ -6274,7 +6298,10 @@ bindPortalLogin();
 connectEventStream();
 setInterval(() => {
   if (IS_GITHUB_PORTAL) {
-    if (portalAccessToken()) refreshState("github-pages-poll");
+    if (portalAccessToken()) {
+      refreshInstituteWorkState("github-pages-poll");
+      refreshState("github-pages-poll");
+    }
     return;
   }
   const maxStaleMs = document.hidden ? 120000 : 45000;
@@ -6289,4 +6316,5 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
+if (IS_GITHUB_PORTAL && portalAccessToken()) refreshInstituteWorkState("initial");
 refreshState("initial");
