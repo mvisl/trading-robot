@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Institute Control Center</title>
-    <link rel="stylesheet" href="./styles.css?v=20260723-living-process-control-center" />
+    <link rel="stylesheet" href="/styles.css?v=20260723-living-process-control-center" />
   </head>
   <body>
     <section class="portal-auth-overlay" id="portalAuthOverlay" hidden>
@@ -27,7 +27,7 @@
       <nav class="portal-navigation" id="portalNavigation"></nav>
       <div class="portal-sidebar-state">
         <span id="portalLiveDot" class="portal-live-dot"></span>
-        <div><strong id="portalStateLabel">Loading live state…</strong><small id="portalStateMeta">Loading live state…</small></div>
+        <div><strong id="portalStateLabel">__PORTAL_STATE_LABEL__</strong><small id="portalStateMeta">__PORTAL_STATE_META__</small></div>
       </div>
     </aside>
     <main class="shell portal-content">
@@ -69,24 +69,6 @@
         </div>
       </header>
 
-      <section class="portal-overview" id="portalOverview" aria-label="Institute overview">
-        <div class="portal-overview-head">
-          <div><span class="portal-kicker">Institute now</span><h2>Operational Overview</h2></div>
-          <span class="pill" id="portalOverviewFreshness">waiting for Control Plane</span>
-        </div>
-        <div class="portal-health-grid" id="portalHealthGrid"></div>
-        <div class="portal-overview-grid">
-          <article class="portal-compact-card" id="portalCapacityCard"><span>Preparation Capacity</span><strong id="portalCapacityValue">—</strong><small id="portalCapacityMeta">—</small></article>
-          <article class="portal-compact-card" id="portalPressureCard"><span>Pipeline Pressure</span><strong id="portalPressureValue">—</strong><small id="portalPressureMeta">—</small></article>
-          <article class="portal-compact-card" id="portalCapitalCard"><span>Capital Readiness</span><strong id="portalCapitalValue">—</strong><small id="portalCapitalMeta">—</small></article>
-          <article class="portal-compact-card" id="portalOwnerCard"><span>Owner Attention</span><strong id="portalOwnerValue">—</strong><small id="portalOwnerMeta">—</small></article>
-        </div>
-        <div class="portal-overview-lists">
-          <article class="portal-mini-panel"><div class="panel-head"><h3>Top Incidents</h3><span id="portalIncidentCount">0</span></div><ol id="portalTopIncidents" class="portal-plain-list"></ol></article>
-          <article class="portal-mini-panel"><div class="panel-head"><h3>Automatic Next Actions</h3><span id="portalActionCount">0</span></div><ol id="portalTopActions" class="portal-plain-list"></ol></article>
-        </div>
-      </section>
-
       <section class="panel institute-work-center" id="instituteWorkCenter" aria-label="Living institute processes">
         <div class="panel-head institute-work-head">
           <div>
@@ -118,6 +100,24 @@
           <summary><strong id="livingProgramMoreLabel">More live programs</strong><span>Open full process inventory</span></summary>
           <div class="living-program-grid secondary" id="livingProgramSecondary"></div>
         </details>
+      </section>
+
+      <section class="portal-overview" id="portalOverview" aria-label="Institute overview">
+        <div class="portal-overview-head">
+          <div><span class="portal-kicker">Institute now</span><h2>Operational Overview</h2></div>
+          <span class="pill" id="portalOverviewFreshness">waiting for Control Plane</span>
+        </div>
+        <div class="portal-health-grid" id="portalHealthGrid"></div>
+        <div class="portal-overview-grid">
+          <article class="portal-compact-card" id="portalCapacityCard"><span>Preparation Capacity</span><strong id="portalCapacityValue">—</strong><small id="portalCapacityMeta">—</small></article>
+          <article class="portal-compact-card" id="portalPressureCard"><span>Pipeline Pressure</span><strong id="portalPressureValue">—</strong><small id="portalPressureMeta">—</small></article>
+          <article class="portal-compact-card" id="portalCapitalCard"><span>Capital Readiness</span><strong id="portalCapitalValue">—</strong><small id="portalCapitalMeta">—</small></article>
+          <article class="portal-compact-card" id="portalOwnerCard"><span>Owner Attention</span><strong id="portalOwnerValue">—</strong><small id="portalOwnerMeta">—</small></article>
+        </div>
+        <div class="portal-overview-lists">
+          <article class="portal-mini-panel"><div class="panel-head"><h3>Top Incidents</h3><span id="portalIncidentCount">0</span></div><ol id="portalTopIncidents" class="portal-plain-list"></ol></article>
+          <article class="portal-mini-panel"><div class="panel-head"><h3>Automatic Next Actions</h3><span id="portalActionCount">0</span></div><ol id="portalTopActions" class="portal-plain-list"></ol></article>
+        </div>
       </section>
 
       <section class="earn-ribbon" id="earnRibbon" hidden>
@@ -647,50 +647,50 @@
       </section>
 
       <section class="portal-view" id="portal-research" data-portal-view="research" hidden>
-        <header class="portal-page-head research-command-head"><div><span class="portal-kicker">Live Institute</span><h1>Research Operations</h1><p>Что работает сейчас, что ждёт и что приблизит следующий Money Verdict.</p></div><span class="pill" id="researchFreshness">Loading live state…</span></header>
+        <header class="portal-page-head research-command-head"><div><span class="portal-kicker">Live Institute</span><h1>Research Operations</h1><p>Что работает сейчас, что ждёт и что приблизит следующий Money Verdict.</p></div><span class="pill" id="researchFreshness">__RESEARCH_FRESHNESS__</span></header>
 
         <section class="research-command-strip" aria-label="Institute situation in five seconds">
-          <article><span>NOW</span><strong id="researchSummaryNow">Loading live state…</strong></article>
-          <article><span>RESIDENT</span><strong id="researchSummaryResident">Loading live state…</strong></article>
-          <article class="critical"><span>BLOCKER</span><strong id="researchSummaryBlocker">Loading live state…</strong></article>
-          <article><span>NEXT RESULT</span><strong id="researchSummaryNext">Loading live state…</strong></article>
+          <article><span>NOW</span><strong id="researchSummaryNow">__RESEARCH_SUMMARY_NOW__</strong></article>
+          <article><span>RESIDENT</span><strong id="researchSummaryResident">__RESEARCH_SUMMARY_RESIDENT__</strong></article>
+          <article class="critical"><span>BLOCKER</span><strong id="researchSummaryBlocker">__RESEARCH_SUMMARY_BLOCKER__</strong></article>
+          <article><span>NEXT RESULT</span><strong id="researchSummaryNext">__RESEARCH_SUMMARY_NEXT__</strong></article>
         </section>
 
         <section class="research-live-grid">
           <article class="panel portal-section-panel research-now-panel">
-            <div class="panel-head"><div><span class="portal-kicker">NOW</span><h2>Active work</h2></div><span class="pill" id="researchNowCount">Loading live state…</span></div>
-            <div class="research-process-list" id="researchNowList"><div class="research-honest-empty"><strong>Loading live state…</strong><span>Loading live state…</span></div></div>
+            <div class="panel-head"><div><span class="portal-kicker">NOW</span><h2>Active work</h2></div><span class="pill" id="researchNowCount">__RESEARCH_NOW_BADGE__</span></div>
+            <div class="research-process-list" id="researchNowList"><div class="research-honest-empty"><strong>__RESEARCH_NOW_TITLE__</strong><span>__RESEARCH_NOW_DETAIL__</span></div></div>
           </article>
 
           <article class="panel portal-section-panel resident-live-panel">
-            <div class="panel-head"><div><span class="portal-kicker">RESIDENT</span><h2>Resident Operator</h2></div><span class="pill" id="residentOperatorStatus">Loading live state…</span></div>
+            <div class="panel-head"><div><span class="portal-kicker">RESIDENT</span><h2>Resident Operator</h2></div><span class="pill" id="residentOperatorStatus">__RESIDENT_STATUS__</span></div>
             <div class="resident-live-task">
               <span>Current task</span>
-              <strong id="residentTask">Loading live state…</strong>
-              <small id="residentMission">Loading live state…</small>
+              <strong id="residentTask">__RESIDENT_TASK__</strong>
+              <small id="residentMission">__RESIDENT_MISSION__</small>
             </div>
             <div class="resident-live-meta">
-              <div><span>Engine</span><strong id="residentEngine">Loading live state…</strong></div>
-              <div><span>Started</span><strong id="residentStarted">Loading live state…</strong></div>
-              <div><span>ETA</span><strong id="residentEta">Loading live state…</strong></div>
+              <div><span>Engine</span><strong id="residentEngine">__RESIDENT_ENGINE__</strong></div>
+              <div><span>Started</span><strong id="residentStarted">__RESIDENT_STARTED__</strong></div>
+              <div><span>ETA</span><strong id="residentEta">__RESIDENT_ETA__</strong></div>
             </div>
-            <div class="resident-action-line"><span>Last</span><strong id="residentLastAction">Loading live state…</strong></div>
-            <div class="resident-action-line"><span>Next</span><strong id="residentNextAction">Loading live state…</strong></div>
+            <div class="resident-action-line"><span>Last</span><strong id="residentLastAction">__RESIDENT_LAST__</strong></div>
+            <div class="resident-action-line"><span>Next</span><strong id="residentNextAction">__RESIDENT_NEXT__</strong></div>
             <details class="research-card-details"><summary>Why this state</summary><p id="residentReasoning">—</p><dl class="portal-kv-grid"><div><dt>Selection</dt><dd id="residentEngineReason">—</dd></div><div><dt>Source</dt><dd id="residentSource">—</dd></div></dl><span id="residentActionCount" hidden>0</span><ol id="residentActions" class="portal-plain-list"></ol></details>
           </article>
         </section>
 
         <section class="research-decision-grid">
           <article class="panel portal-section-panel research-blocker-panel">
-            <div class="panel-head"><div><span class="portal-kicker">BLOCKER</span><h2>Money path bottleneck</h2></div><span class="pill" id="researchBlockerStatus">Loading live state…</span></div>
-            <strong class="research-decision-title" id="researchBlockerTitle">Loading live state…</strong>
-            <p id="researchBlockerReason">Loading live state…</p>
-            <small id="researchBlockerWaitingFor">Loading live state…</small>
-            <details class="research-card-details"><summary id="researchWaitingSummary">Loading live state…</summary><p id="researchBlockerDetail">—</p><div class="research-waiting-list" id="researchWaitingList"></div></details>
+            <div class="panel-head"><div><span class="portal-kicker">BLOCKER</span><h2>Money path bottleneck</h2></div><span class="pill" id="researchBlockerStatus">__RESEARCH_BLOCKER_STATUS__</span></div>
+            <strong class="research-decision-title" id="researchBlockerTitle">__RESEARCH_BLOCKER_TITLE__</strong>
+            <p id="researchBlockerReason">__RESEARCH_BLOCKER_REASON__</p>
+            <small id="researchBlockerWaitingFor">__RESEARCH_BLOCKER_WAITING__</small>
+            <details class="research-card-details"><summary id="researchWaitingSummary">__RESEARCH_WAITING_SUMMARY__</summary><p id="researchBlockerDetail">—</p><div class="research-waiting-list" id="researchWaitingList"></div></details>
           </article>
           <article class="panel portal-section-panel research-next-panel">
-            <div class="panel-head"><div><span class="portal-kicker">NEXT</span><h2>What happens next</h2></div><span class="pill" id="researchNextCount">Loading live state…</span></div>
-            <div class="research-process-list" id="researchNextList"><div class="research-honest-empty"><strong>Loading live state…</strong><span>Loading live state…</span></div></div>
+            <div class="panel-head"><div><span class="portal-kicker">NEXT</span><h2>What happens next</h2></div><span class="pill" id="researchNextCount">__RESEARCH_NEXT_BADGE__</span></div>
+            <div class="research-process-list" id="researchNextList"><div class="research-honest-empty"><strong>__RESEARCH_NEXT_TITLE__</strong><span>__RESEARCH_NEXT_DETAIL__</span></div></div>
           </article>
         </section>
 
@@ -736,7 +736,7 @@
         </section>
 
         <details class="panel portal-section-panel research-foundation-panel">
-          <summary><span><span class="portal-kicker">FOUNDATION</span><strong>Completed work</strong></span><span id="researchFoundationCount">Loading live state…</span></summary>
+          <summary><span><span class="portal-kicker">FOUNDATION</span><strong>Completed work</strong></span><span id="researchFoundationCount">__RESEARCH_FOUNDATION_SUMMARY__</span></summary>
           <p class="muted">Завершённые контуры — память института, а не текущая работа.</p>
           <div class="research-foundation-grid" id="researchFoundation"></div>
         </details>
@@ -801,6 +801,6 @@
       </div>
       <div class="mobile-detail-body" id="mobileDetailBody"></div>
     </aside>
-    <script src="./app.js?v=20260723-living-process-control-center" type="module"></script>
+    <script src="/app.js?v=20260723-living-process-control-center" type="module"></script>
   </body>
 </html>
