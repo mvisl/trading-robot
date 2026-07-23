@@ -5305,7 +5305,7 @@ function renderOperationalResearch(operations) {
   setText("researchBackgroundMeta", background.length ? "ALL LIVE SERVICES VISIBLE" : "No service telemetry");
   if ($("researchBackgroundProcesses")) $("researchBackgroundProcesses").innerHTML = background.map((row) => `<article class="${row.status === "ONLINE" ? "online" : "offline"}"><span class="background-light" aria-hidden="true"></span><div><strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(row.cadence)}</small></div><p>${escapeHtml(row.updated_at ? `updated ${portalRelativeTime(row.updated_at)}` : row.detail)}</p><details><summary>Details</summary><span>${escapeHtml(row.detail)} · ${escapeHtml(row.active_state || "unknown")}/${escapeHtml(row.sub_state || "unknown")}</span></details></article>`).join("") || `<div class="research-honest-empty"><strong>Background telemetry unavailable</strong><span>System service probes have not completed.</span></div>`;
 
-  renderAtlasDiscoveryProducer(operations.atlas_discovery_producer || {});
+  renderAtlasDiscoveryProducer(atlasProducerFromOperations(operations));
   renderResearchPrograms(operations.research_programs || []);
   renderResearchDimensionalityIntegrity(operations.attack_on_assumptions || {});
   renderAdaptiveResourceOrchestrator(operations.adaptive_resource_orchestrator || {});
@@ -5313,6 +5313,37 @@ function renderOperationalResearch(operations) {
   const foundation = view.foundation || [];
   setText("researchFoundationCount", foundation[0]?.name ? `${foundation[0].name}${foundation.length > 1 ? ` (+${foundation.length - 1})` : ""}` : "No completed work");
   if ($("researchFoundation")) $("researchFoundation").innerHTML = foundation.map((row) => `<article><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(portalDate(row.completed_at))}</span><small>${escapeHtml(row.artifact || row.id)}</small></article>`).join("") || `<div class="portal-empty">No completed contours registered.</div>`;
+}
+
+function atlasProducerFromOperations(operations) {
+  if (operations.atlas_discovery_producer) return operations.atlas_discovery_producer;
+  const program = (operations.research_programs || []).find((row) => row.program_id === "GLOBAL_PREDECESSOR_ATLAS_V1");
+  const discovery = program?.subsystems?.find((row) => row.subsystem_id === "DISCOVERY");
+  if (!discovery) return {};
+  return {
+    status: discovery.producer_status,
+    reason: discovery.producer_reason,
+    mission: program.objective,
+    current_program: discovery.producer_program,
+    current_phase: discovery.producer_phase,
+    current_task: discovery.producer_current_task,
+    next_task: discovery.producer_next_task,
+    queue: discovery.producer_queue || [],
+    queue_total: discovery.producer_queue_total,
+    progress: discovery.producer_progress,
+    metrics: discovery.producer_metrics,
+    blockers: discovery.producer_blockers || [],
+    current_blocker: discovery.producer_blockers?.[0]?.code || null,
+    lifecycle: discovery.producer_lifecycle || [],
+    next_programs: discovery.producer_next_programs || [],
+    heartbeat_at: discovery.producer_heartbeat_at,
+    last_activity: discovery.producer_last_activity,
+    next_output_due_at: discovery.producer_next_output_due_at,
+    next_output_eta_seconds: discovery.producer_next_output_due_at
+      ? Math.max(0, Math.ceil((Date.parse(discovery.producer_next_output_due_at) - Date.now()) / 1000))
+      : null,
+    reasoning_policy: { local_model: "qwen2.5:0.5b" },
+  };
 }
 
 function renderAtlasDiscoveryProducer(atlas) {
