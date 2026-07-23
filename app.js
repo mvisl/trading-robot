@@ -27,6 +27,7 @@ let apiLocked = false;
 let robotStopCountdown = null;
 let activePortalPage = "dashboard";
 let researchContourFilter = "ACTIVE";
+const openLivingProgramQueues = new Set();
 const PORTAL_PAGES = [
   { id: "dashboard", label: "Dashboard", icon: "◫", visible: true, order: 10 },
   { id: "research", label: "Research", icon: "⌁", visible: true, order: 20 },
@@ -5080,6 +5081,7 @@ function renderLivingInstituteWork(operations) {
     setText("livingProgramMoreLabel", `${secondary.length} more live program${secondary.length === 1 ? "" : "s"}`);
     if ($("livingProgramSecondary")) $("livingProgramSecondary").innerHTML = secondary.map(renderLivingProgramCard).join("");
   }
+  bindLivingProgramQueues();
 }
 
 function backgroundAsLivingProgram(row, operations) {
@@ -5172,11 +5174,22 @@ function renderLivingProgramCard(program) {
       <div><span>Heartbeat</span><strong>${escapeHtml(heartbeat)}</strong></div>
     </div>
     <p class="living-program-change"><span>Changed</span>${escapeHtml(compactText(lastChange, 150))}</p>
-    <details class="living-program-queue">
+    <details class="living-program-queue" data-living-program-queue="${escapeHtml(program.program_id)}"${openLivingProgramQueues.has(program.program_id) ? " open" : ""}>
       <summary><span>Queue</span><strong>${escapeHtml(compactText(queuePrimary, 88))}${queueRemainder ? ` <em>(+${queueRemainder})</em>` : ""}</strong></summary>
       <div>${queue.map((row, index) => `<article><span>${index + 1}</span><div><strong>${escapeHtml(row.title)}</strong><small>${escapeHtml(row.status || "QUEUED")}${row.detail ? ` · ${escapeHtml(compactText(row.detail, 130))}` : ""}</small></div></article>`).join("") || `<p>No queued item has been registered.</p>`}</div>
     </details>
   </article>`;
+}
+
+function bindLivingProgramQueues() {
+  document.querySelectorAll("[data-living-program-queue]").forEach((details) => {
+    details.addEventListener("toggle", () => {
+      const programId = details.dataset.livingProgramQueue;
+      if (!programId) return;
+      if (details.open) openLivingProgramQueues.add(programId);
+      else openLivingProgramQueues.delete(programId);
+    });
+  });
 }
 
 function livingEtaOrEvent(program) {
