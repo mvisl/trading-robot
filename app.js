@@ -5095,6 +5095,7 @@ function renderOperationalResearch(operations) {
   if ($("researchBackgroundProcesses")) $("researchBackgroundProcesses").innerHTML = background.map((row) => `<article class="${row.status === "ONLINE" ? "online" : "offline"}"><span class="background-light" aria-hidden="true"></span><div><strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(row.cadence)}</small></div><p>${escapeHtml(row.updated_at ? `updated ${portalRelativeTime(row.updated_at)}` : row.detail)}</p><details><summary>Details</summary><span>${escapeHtml(row.detail)} · ${escapeHtml(row.active_state || "unknown")}/${escapeHtml(row.sub_state || "unknown")}</span></details></article>`).join("") || `<div class="research-honest-empty"><strong>Background telemetry unavailable</strong><span>System service probes have not completed.</span></div>`;
 
   renderResearchPrograms(operations.research_programs || []);
+  renderResearchDimensionalityIntegrity(operations.attack_on_assumptions || {});
 
   const foundation = view.foundation || [];
   setText("researchFoundationCount", foundation[0]?.name ? `${foundation[0].name}${foundation.length > 1 ? ` (+${foundation.length - 1})` : ""}` : "No completed work");
@@ -5124,6 +5125,33 @@ function renderResearchPrograms(programs) {
     const counts = `${row.completed_contour_count || 0}/${row.bound_contour_count || 0} bound contours completed`;
     return `<article class="research-program-stage tone-${portalTone(row.status)}"><div><span>${escapeHtml(activeLabel)}</span><strong>${escapeHtml(row.title)}</strong></div><p>${escapeHtml(budget)} · output: ${escapeHtml(row.output_artifact)}</p><small>${escapeHtml(counts)}</small><details><summary>Details</summary><dl><div><dt>Lifecycle</dt><dd>${escapeHtml(row.lifecycle)}</dd></div><div><dt>Admission</dt><dd>${escapeHtml(row.admission_rule)}</dd></div><div><dt>Waits for</dt><dd>${escapeHtml((row.waits_for || []).join(", ") || "nothing")}</dd></div><div><dt>Latest artifact</dt><dd>${escapeHtml(latest)}</dd></div></dl></details></article>${index < subsystems.length - 1 ? `<span class="research-program-arrow" aria-hidden="true">→</span>` : ""}`;
   }).join("");
+}
+
+function renderResearchDimensionalityIntegrity(system) {
+  const rdi = (system.extensions || []).find((row) => row.heuristic_id === "E8");
+  setText("researchRdiStatus", rdi?.status || "PLANNED");
+  if (!rdi) {
+    setText("researchRdiReason", "Waiting for canonical Control Plane policy");
+    setText("researchRdiActivation", "threshold unavailable");
+    setText("researchRdiHeartbeat", "not registered");
+    setText("researchRdiAblation", "DISABLED");
+    return;
+  }
+  const progress = rdi.progress || {};
+  const remaining = Number(progress.remaining_research_cycles || 0);
+  const reason = rdi.reason === "INSUFFICIENT_COMPLETED_RESEARCH_CYCLES"
+    ? "Недостаточно накопленных исследований"
+    : rdi.reason === "RFC_REVIEW_REQUIRED_BEFORE_ACTIVATION"
+      ? "Threshold reached; RFC Review required"
+      : "Activation threshold and RFC Review satisfied";
+  const dayEstimate = progress.estimated_days_at_observed_rate == null
+    ? ""
+    : ` · ≈${progress.estimated_days_at_observed_rate}d`;
+  setText("researchRdiReason", reason);
+  setText("researchRdiActivation", `${progress.completed_research_cycles || 0}/${progress.required_research_cycles || "?"} cycles · ${remaining} remaining${dayEstimate}`);
+  setText("researchRdiHeartbeat", rdi.heartbeat_at ? portalRelativeTime(rdi.heartbeat_at) : "unknown");
+  setText("researchRdiAblation", rdi.runtime?.behavioral_ablation_enabled ? "ACTIVE" : "DISABLED UNTIL ACTIVATION");
+  setText("researchRdiDetail", `${(rdi.degeneration_catalog || []).join(" · ") || "Degeneration catalog unavailable"}. Activation review: ${rdi.activation_review?.status || "NOT_DUE"}; no research contour or separate service is created.`);
 }
 
 function renderPrimaryProcessList(items, label, emptyMarkup) {
