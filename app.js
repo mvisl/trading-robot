@@ -5048,8 +5048,12 @@ function renderLivingInstituteWork(operations) {
     : "No critical-path blocker is registered.");
 
   if (aro) {
-    setText("instituteWorkNextResult", "ARO shadow sample threshold");
-    setText("instituteWorkNextResultDetail", `${aro.progress?.label || "progress unavailable"} · ${livingEtaOrEvent(aro)}`);
+    const shadowSampleComplete = Number(aro.progress?.total || 0) > 0
+      && Number(aro.progress?.current || 0) >= Number(aro.progress.total);
+    setText("instituteWorkNextResult", shadowSampleComplete ? "ARO research-cycle gate" : "ARO shadow sample threshold");
+    setText("instituteWorkNextResultDetail", shadowSampleComplete
+      ? `Shadow sample complete · ${aro.progress?.label || "research-cycle progress unavailable"} · ${livingEtaOrEvent(aro)}`
+      : `${aro.progress?.label || "progress unavailable"} · ${livingEtaOrEvent(aro)}`);
   } else {
     const nextResult = programs
       .filter((row) => row.eta_hours != null && Number(row.priority || 0) >= 75)
