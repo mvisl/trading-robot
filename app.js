@@ -5018,9 +5018,9 @@ function renderLivingInstituteWork(operations) {
   const programs = [...canonical, ...background];
   const preferredOrder = [
     "RESIDENT_OPERATOR",
+    "GLOBAL_PREDECESSOR_ATLAS_V1:DISCOVERY",
     "ADAPTIVE_RESOURCE_ORCHESTRATOR_V1",
     "INTENT_COMMITMENT_FLOW_V1:DISCOVERY",
-    "atlas-witness",
     "RDI",
     "INTENT_COMMITMENT_FLOW_V1:MECHANISM_MODELING",
   ];
@@ -5305,6 +5305,7 @@ function renderOperationalResearch(operations) {
   setText("researchBackgroundMeta", background.length ? "ALL LIVE SERVICES VISIBLE" : "No service telemetry");
   if ($("researchBackgroundProcesses")) $("researchBackgroundProcesses").innerHTML = background.map((row) => `<article class="${row.status === "ONLINE" ? "online" : "offline"}"><span class="background-light" aria-hidden="true"></span><div><strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(row.cadence)}</small></div><p>${escapeHtml(row.updated_at ? `updated ${portalRelativeTime(row.updated_at)}` : row.detail)}</p><details><summary>Details</summary><span>${escapeHtml(row.detail)} · ${escapeHtml(row.active_state || "unknown")}/${escapeHtml(row.sub_state || "unknown")}</span></details></article>`).join("") || `<div class="research-honest-empty"><strong>Background telemetry unavailable</strong><span>System service probes have not completed.</span></div>`;
 
+  renderAtlasDiscoveryProducer(operations.atlas_discovery_producer || {});
   renderResearchPrograms(operations.research_programs || []);
   renderResearchDimensionalityIntegrity(operations.attack_on_assumptions || {});
   renderAdaptiveResourceOrchestrator(operations.adaptive_resource_orchestrator || {});
@@ -5312,6 +5313,38 @@ function renderOperationalResearch(operations) {
   const foundation = view.foundation || [];
   setText("researchFoundationCount", foundation[0]?.name ? `${foundation[0].name}${foundation.length > 1 ? ` (+${foundation.length - 1})` : ""}` : "No completed work");
   if ($("researchFoundation")) $("researchFoundation").innerHTML = foundation.map((row) => `<article><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(portalDate(row.completed_at))}</span><small>${escapeHtml(row.artifact || row.id)}</small></article>`).join("") || `<div class="portal-empty">No completed contours registered.</div>`;
+}
+
+function renderAtlasDiscoveryProducer(atlas) {
+  const metrics = atlas.metrics || {};
+  const queue = atlas.queue || [];
+  const lifecycle = atlas.lifecycle || [];
+  setText("researchAtlasStatus", atlas.status || "NOT REGISTERED");
+  setText("researchAtlasMission", atlas.mission || "Atlas producer is not present in canonical state.");
+  setText("researchAtlasProgram", atlas.current_program || "No active program");
+  setText("researchAtlasPhase", atlas.current_phase || atlas.status || "—");
+  setText("researchAtlasCurrent", atlas.current_task || atlas.reason || "No provenance-valid task");
+  setText("researchAtlasProgress", atlas.progress?.label || "0 / — missions");
+  setText("researchAtlasEta", atlas.next_output_eta_seconds == null
+    ? atlas.reason || "nearest event unknown"
+    : shortDurationSeconds(atlas.next_output_eta_seconds));
+  setText("researchAtlasProduced", metrics.produced_today || 0);
+  setText("researchAtlasQueued", queue.length);
+  setText("researchAtlasValidated", metrics.validated || 0);
+  setText("researchAtlasRejected", metrics.rejected || 0);
+  setText("researchAtlasEngine", atlas.reasoning_policy?.local_model
+    ? `Local · ${atlas.reasoning_policy.local_model}`
+    : "Local LLM first");
+  setText("researchAtlasBlocker", atlas.current_blocker || "none");
+  setText("researchAtlasNext", atlas.next_task || atlas.next_programs?.[0] || "Next provenance-valid frontier mission");
+  setText("researchAtlasHeartbeat", atlas.heartbeat_at
+    ? `Heartbeat ${portalRelativeTime(atlas.heartbeat_at)} · ${compactText(atlas.last_activity || "state reconciled", 140)}`
+    : "No producer heartbeat");
+  setText("researchAtlasQueueSummary", queue[0]
+    ? `${queue[0].program_title || queue[0].program_id}: ${queue[0].title}${queue.length > 1 ? ` (+${queue.length - 1})` : ""}`
+    : "Atlas queue is empty");
+  if ($("researchAtlasQueue")) $("researchAtlasQueue").innerHTML = queue.map((row) => `<article><div><strong>${escapeHtml(row.program_title || row.program_id)}</strong><span>${escapeHtml(row.status)}</span></div><p>${escapeHtml(row.title)}</p><small>${escapeHtml(row.phase)} · ${escapeHtml(row.data_access || "source checked")}</small></article>`).join("") || `<div class="research-honest-empty"><strong>No executable Atlas mission</strong><span>${escapeHtml(atlas.reason || "The queue-depth detector will create an explicit source-acquisition task.")}</span></div>`;
+  if ($("researchAtlasLifecycle")) $("researchAtlasLifecycle").innerHTML = lifecycle.map((row, index) => `<article class="tone-${portalTone(row.status)}"><span>${escapeHtml(row.stage)}</span><strong>${escapeHtml(row.status)}</strong><small>${escapeHtml(row.detail || "")}</small></article>${index < lifecycle.length - 1 ? `<b aria-hidden="true">→</b>` : ""}`).join("") || `<div class="portal-empty">Lifecycle state unavailable.</div>`;
 }
 
 function renderResearchPrograms(programs) {
