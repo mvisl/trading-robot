@@ -1150,6 +1150,7 @@ body {
 .institute-work-answers span,
 .living-program-current > span,
 .living-program-progress span,
+.living-producer-metrics span,
 .living-program-flow span,
 .living-program-timing span,
 .living-program-change span,
@@ -1286,6 +1287,27 @@ body {
   height: 100%;
   border-radius: inherit;
   background: var(--portal-tone, var(--blue));
+}
+
+.living-producer-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.living-producer-metrics > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 7px 5px;
+  border: 1px solid var(--line-soft);
+  border-radius: 7px;
+  background: rgba(101, 167, 232, 0.055);
+  text-align: center;
+}
+
+.living-producer-metrics strong {
+  font-size: 13px;
 }
 
 .living-program-flow {

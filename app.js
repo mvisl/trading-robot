@@ -5147,6 +5147,7 @@ function backgroundAsLivingProgram(row, operations) {
 
 function renderLivingProgramCard(program) {
   const progress = program.progress || {};
+  const producerMetrics = program.producer_metrics || null;
   const progressPercent = progress.percent == null ? null : Math.max(0, Math.min(100, Number(progress.percent)));
   const queue = program.queue || [];
   const queuePrimary = queue[0]?.title || program.next_task || "No queued work item";
@@ -5164,6 +5165,12 @@ function renderLivingProgramCard(program) {
       <div><span>Progress</span><strong>${escapeHtml(progress.label || "No measurable progress registered")}</strong></div>
       ${progressPercent == null ? "" : `<i><b style="width:${progressPercent}%"></b></i>`}
     </div>
+    ${producerMetrics ? `<div class="living-producer-metrics">
+      <div><span>Produced today</span><strong>${escapeHtml(producerMetrics.produced_today)}</strong></div>
+      <div><span>Queued candidates</span><strong>${escapeHtml(producerMetrics.queued_candidates)}</strong></div>
+      <div><span>Promoted</span><strong>${escapeHtml(producerMetrics.promoted)}</strong></div>
+      <div><span>Rejected</span><strong>${escapeHtml(producerMetrics.rejected)}</strong></div>
+    </div>` : ""}
     <div class="living-program-flow">
       <div><span>Now</span><strong>${escapeHtml(compactText(program.current_task || "—", 92))}</strong></div>
       <b aria-hidden="true">→</b>
@@ -5321,14 +5328,19 @@ function renderResearchPrograms(programs) {
   const subsystems = program.subsystems || [];
   $("researchPrograms").innerHTML = subsystems.map((row, index) => {
     const activeLabel = row.subsystem_id === "DISCOVERY"
-      ? "CONTINUOUS"
+      ? `PRODUCER · ${row.producer_status || "UNKNOWN"}`
       : row.subsystem_id === "MECHANISM_MODELING"
         ? "ON DEMAND"
         : "GATED";
     const budget = row.uses_evidence_wip ? "uses Evidence WIP" : "outside Evidence WIP";
     const latest = row.latest_artifact_id || "No immutable output yet";
-    const counts = `${row.completed_contour_count || 0}/${row.bound_contour_count || 0} bound contours completed`;
-    return `<article class="research-program-stage tone-${portalTone(row.status)}"><div><span>${escapeHtml(activeLabel)}</span><strong>${escapeHtml(row.title)}</strong></div><p>${escapeHtml(budget)} · output: ${escapeHtml(row.output_artifact)}</p><small>${escapeHtml(counts)}</small><details><summary>Details</summary><dl><div><dt>Lifecycle</dt><dd>${escapeHtml(row.lifecycle)}</dd></div><div><dt>Admission</dt><dd>${escapeHtml(row.admission_rule)}</dd></div><div><dt>Waits for</dt><dd>${escapeHtml((row.waits_for || []).join(", ") || "nothing")}</dd></div><div><dt>Latest artifact</dt><dd>${escapeHtml(latest)}</dd></div></dl></details></article>${index < subsystems.length - 1 ? `<span class="research-program-arrow" aria-hidden="true">→</span>` : ""}`;
+    const counts = row.subsystem_id === "DISCOVERY"
+      ? `${row.producer_metrics?.produced_today || 0} produced today · ${row.producer_queue_total || 0} source missions queued · ${row.producer_metrics?.queued_candidates || 0} candidates`
+      : `${row.completed_contour_count || 0}/${row.bound_contour_count || 0} bound contours completed`;
+    const current = row.subsystem_id === "DISCOVERY"
+      ? `<p><strong>Current:</strong> ${escapeHtml(row.producer_current_task || row.producer_reason || "No scheduled Discovery mission")}</p>`
+      : "";
+    return `<article class="research-program-stage tone-${portalTone(row.producer_status || row.status)}"><div><span>${escapeHtml(activeLabel)}</span><strong>${escapeHtml(row.title)}</strong></div><p>${escapeHtml(budget)} · output: ${escapeHtml(row.output_artifact)}</p>${current}<small>${escapeHtml(counts)}</small><details><summary>Details</summary><dl><div><dt>Lifecycle</dt><dd>${escapeHtml(row.lifecycle)}</dd></div><div><dt>Admission</dt><dd>${escapeHtml(row.admission_rule)}</dd></div><div><dt>Waits for</dt><dd>${escapeHtml((row.waits_for || []).join(", ") || "nothing")}</dd></div><div><dt>Latest artifact</dt><dd>${escapeHtml(latest)}</dd></div>${row.subsystem_id === "DISCOVERY" ? `<div><dt>Last activity</dt><dd>${escapeHtml(row.producer_last_activity || "none")}</dd></div><div><dt>Next output</dt><dd>${escapeHtml(row.producer_next_output_due_at ? portalDate(row.producer_next_output_due_at) : row.producer_reason || "not scheduled")}</dd></div>` : ""}</dl></details></article>${index < subsystems.length - 1 ? `<span class="research-program-arrow" aria-hidden="true">→</span>` : ""}`;
   }).join("");
 }
 
