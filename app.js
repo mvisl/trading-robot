@@ -6441,7 +6441,10 @@ async function refreshInstituteWorkState(reason = "manual") {
     setText("portalStateLabel", operations.status || "UNAVAILABLE");
     setText("portalStateMeta", operations.state_revision ? `revision ${operations.state_revision} · ${portalDate(operations.generated_at)}` : "canonical state unavailable");
     $("portalLiveDot")?.classList.toggle("offline", operations.status !== "LIVE");
+    if (currentState) currentState = { ...currentState, instituteOperations: operations };
     renderLivingInstituteWork(operations);
+    renderResearchPortal(operations);
+    renderHandoffPortal(operations);
   } catch (error) {
     console.warn("institute work refresh failed", error);
   } finally {
