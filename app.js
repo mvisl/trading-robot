@@ -5370,11 +5370,11 @@ function renderResearchDashboardV2(operations, collectors = []) {
   const moneyEta = nextMoney.eta || (currentCandidate?.target_date ? `by ${currentCandidate.target_date}` : "unknown");
 
   setText("researchMoneyPathStatus", moneyStatus);
-  setText("researchMoneyCandidate", moneyCandidate);
-  setText("researchMoneyNextResult", humanizeResearchCode(nextMoneyTitle));
-  setText("researchMoneyBlocker", humanizeResearchCode(moneyBlocker));
+  setText("researchMoneyCandidate", researchDisplayName(moneyCandidate));
+  setText("researchMoneyNextResult", researchDisplayName(nextMoneyTitle));
+  setText("researchMoneyBlocker", researchDisplayName(moneyBlocker));
   setText("researchMoneyEta", moneyEta);
-  setText("researchSummaryMoney", `${moneyStatus} · ${moneyCandidate}`);
+  setText("researchSummaryMoney", `${researchDisplayName(moneyStatus)} · ${researchDisplayName(moneyCandidate)}`);
   renderMoneyVerdictStages(currentCandidate, criticalPath);
 
   const atlas = atlasProducerFromOperations(operations);
@@ -5404,21 +5404,21 @@ function renderResearchDashboardV2(operations, collectors = []) {
   const knowledgeProducing = atlasProduced > 0 || discoveryProduced > 0 || producingCollectors > 0;
   const knowledgeStatus = knowledgeProducing ? "PRODUCING" : "IDLE";
   const knowledgeParts = [
-    `Atlas ${truthfulProducerStatus(atlas, atlasProduced)}`,
-    `Discovery ${truthfulProducerStatus(discovery, discoveryProduced)}`,
+    `Atlas ${researchDisplayName(truthfulProducerStatus(atlas, atlasProduced))}`,
+    `Discovery ${researchDisplayName(truthfulProducerStatus(discovery, discoveryProduced))}`,
     `${producingCollectors}/${collectors.length || 0} collectors producing`,
   ];
 
   setText("researchKnowledgeStatus", knowledgeStatus);
   setText("researchKnowledgeSummary", knowledgeParts.join(" · "));
-  setText("researchKnowledgeAtlas", truthfulProducerStatus(atlas, atlasProduced));
-  setText("researchKnowledgeDiscovery", truthfulProducerStatus(discovery, discoveryProduced));
+  setText("researchKnowledgeAtlas", researchDisplayName(truthfulProducerStatus(atlas, atlasProduced)));
+  setText("researchKnowledgeDiscovery", researchDisplayName(truthfulProducerStatus(discovery, discoveryProduced)));
   setText("researchKnowledgeCollectors", `${producingCollectors}/${collectors.length || 0} PRODUCING`);
   setText("researchKnowledgeCandidates", registeredCandidates);
   setText("researchKnowledgeSnapshots", snapshotsToday ? `≥${snapshotsToday}` : "0");
   setText("researchKnowledgeArtifacts", immutableToday ? `≥${immutableToday}` : "0");
   setText("researchSummaryKnowledge", knowledgeProducing
-    ? `${producingCollectors} collectors producing; Atlas ${truthfulProducerStatus(atlas, atlasProduced)}`
+    ? `${producingCollectors} collectors producing · Atlas ${researchDisplayName(truthfulProducerStatus(atlas, atlasProduced))}`
     : "No verified new knowledge output");
 
   const ari = operations.autonomous_research_institute || {};
@@ -5442,7 +5442,7 @@ function renderResearchDashboardV2(operations, collectors = []) {
   const ownerBlocker = profitability.immediate_blocker || {};
   const ownerRequired = ownerBlocker.owner?.includes("OWNER") || ownerBlocker.state?.includes("OWNER");
   setText("researchSummaryOwner", ownerRequired
-    ? `${ownerBlocker.candidate || "Decision"} · ${humanizeResearchCode(ownerBlocker.code || ownerBlocker.exact_decision)}`
+    ? `${ownerBlocker.candidate || "Decision"} denominator decision`
     : "No owner decision required");
 
   const autonomousCount = producingCollectors
@@ -5463,7 +5463,7 @@ function renderResearchDashboardV2(operations, collectors = []) {
     setText("residentMission", "Autonomous action prohibited at this gate. No new evidence is being opened.");
   }
 
-  setText("researchNextMoneyTitle", humanizeResearchCode(nextMoneyTitle));
+  setText("researchNextMoneyTitle", researchDisplayName(nextMoneyTitle));
   setText("researchNextMoneyStatus", nextMoney.owner_required ? "OWNER REQUIRED" : moneyEta);
   setText("researchNextMoneyDetail", `${moneyCandidate} · ${humanizeResearchCode(moneyBlocker)}`);
 
@@ -5474,8 +5474,8 @@ function renderResearchDashboardV2(operations, collectors = []) {
 
   setText("researchBlockerStatus", moneyStatus);
   setText("researchBlockerTitle", moneyCandidate);
-  setText("researchBlockerReason", humanizeResearchCode(moneyBlocker));
-  setText("researchBlockerWaitingFor", nextMoneyTitle ? `Waiting for: ${humanizeResearchCode(nextMoneyTitle)}` : "No unblock trigger registered");
+  setText("researchBlockerReason", researchDisplayName(moneyBlocker));
+  setText("researchBlockerWaitingFor", nextMoneyTitle ? `Waiting for: ${researchDisplayName(nextMoneyTitle)}` : "No unblock trigger registered");
   setText("researchBlockerDetail", currentCandidate?.current_stage || criticalPath.blocking_reasons?.[0]?.detail || "No additional detail");
 
   const infrastructureBlockers = researchInfrastructureBlockers(atlas, discovery, collectors);
@@ -5525,10 +5525,10 @@ function renderMoneyVerdictStages(candidate, criticalPath) {
     ["Replication", replicationComplete ? "complete" : holdoutComplete ? "blocked" : "pending"],
     ["Money Verdict", replicationComplete ? "active" : "pending"],
   ];
-  $("researchMoneyStages").innerHTML = stages.map(([label, state], index) => `<article class="${state}">
+  $("researchMoneyStages").innerHTML = stages.map(([label, state]) => `<article class="${state}">
     <span>${state === "complete" ? "✓" : state === "blocked" ? "×" : "—"}</span>
     <strong>${escapeHtml(label)}</strong>
-  </article>${index < stages.length - 1 ? `<b aria-hidden="true">→</b>` : ""}`).join("");
+  </article>`).join("");
 }
 
 function truthfulProducerStatus(producer, producedToday) {
@@ -5600,6 +5600,24 @@ function researchInfrastructureBlockers(atlas, discovery, collectors) {
 
 function humanizeResearchCode(value) {
   return String(value || "unknown").replaceAll("_", " ").replace(/\s+/g, " ").trim();
+}
+
+function researchDisplayName(value) {
+  const code = String(value || "unknown").trim();
+  const labels = {
+    BINANCE_DELIST_FORCED_FLOW: "Binance delist forced flow",
+    BOUNDED_HISTORICAL_BORROW_SOURCE_AVAILABILITY_VERDICT: "Historical borrow-source availability verdict",
+    EXECUTION_FEASIBILITY_AND_INDEPENDENT_REPLICATION: "Execution feasibility + independent replication",
+    WAITING_EXTERNAL_SOURCE: "Waiting for source",
+    WAITING_FOR_EXTERNAL_SOURCE: "Waiting for source",
+    WAITING_OWNER: "Waiting for owner",
+    WAITING_DATA: "Waiting for data",
+  };
+  if (labels[code]) return labels[code];
+  const human = humanizeResearchCode(code);
+  return human === human.toUpperCase()
+    ? human.toLowerCase().replace(/^\w/, (letter) => letter.toUpperCase())
+    : human;
 }
 
 async function refreshIntentChainCollectorHealth() {
