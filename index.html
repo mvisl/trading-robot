@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Institute Control Center</title>
-    <link rel="stylesheet" href="./styles.css?v=20260724-institute-state-v2" />
+    <link rel="stylesheet" href="./styles.css?v=20260724-institute-state-v3" />
   </head>
   <body>
     <section class="portal-auth-overlay" id="portalAuthOverlay" hidden>
@@ -663,31 +663,31 @@
           </div>
 
           <div class="institute-journey" id="instituteJourney">
-            <details class="institute-journey-step observing">
+            <details class="institute-journey-step observing" data-institute-popup="Observing">
               <summary><span>01</span><div><small>Observing</small><strong id="instituteObservingHeadline">Checking sources</strong></div><em id="instituteObservingStatus">—</em></summary>
               <p id="instituteObservingDetail">Public observations and missing-source reasons.</p>
               <div class="institute-source-list" id="instituteObservingSources"></div>
             </details>
             <span class="institute-journey-arrow" aria-hidden="true">→</span>
-            <details class="institute-journey-step understanding">
+            <details class="institute-journey-step understanding" data-institute-popup="Understanding">
               <summary><span>02</span><div><small>Understanding</small><strong id="instituteUnderstandingHeadline">Checking world model</strong></div><em id="instituteUnderstandingStatus">—</em></summary>
               <p id="instituteUnderstandingDetail">How observations are being turned into mechanism understanding.</p>
               <div class="institute-detail-box" id="instituteUnderstandingTechnical"></div>
             </details>
             <span class="institute-journey-arrow" aria-hidden="true">→</span>
-            <details class="institute-journey-step preparing">
+            <details class="institute-journey-step preparing" data-institute-popup="Preparing">
               <summary><span>03</span><div><small>Preparing</small><strong id="institutePreparingHeadline">Checking registered work</strong></div><em id="institutePreparingStatus">—</em></summary>
               <p id="institutePreparingDetail">Registered research waiting for formal admission.</p>
               <div class="institute-detail-box" id="institutePreparingTechnical"></div>
             </details>
             <span class="institute-journey-arrow" aria-hidden="true">→</span>
-            <details class="institute-journey-step checking">
+            <details class="institute-journey-step checking" data-institute-popup="Checking">
               <summary><span>04</span><div><small>Checking</small><strong id="instituteCheckingHeadline">Checking validation</strong></div><em id="instituteCheckingStatus">—</em></summary>
               <p id="instituteCheckingDetail">The evidence step never starts until its protected gates are satisfied.</p>
               <div class="institute-detail-box" id="instituteCheckingTechnical"></div>
             </details>
             <span class="institute-journey-arrow" aria-hidden="true">→</span>
-            <details class="institute-journey-step money">
+            <details class="institute-journey-step money" data-institute-popup="Money">
               <summary><span>05</span><div><small>Money</small><strong id="instituteMoneyHeadline">Checking verdict path</strong></div><em id="instituteMoneyStatus">—</em></summary>
               <p id="instituteMoneyDetail">The next honest Money Verdict and its protected path to capital.</p>
               <div class="institute-detail-box" id="instituteMoneyTechnical"></div>
@@ -695,35 +695,47 @@
           </div>
 
           <div class="institute-decision-row">
-            <article class="blocker"><span>What blocks the institute</span><strong id="instituteBlockerTitle">—</strong><p id="instituteBlockerDetail">—</p></article>
-            <article class="next"><span>What happens automatically next</span><strong id="instituteAutomaticNext">—</strong><p id="instituteAutomaticNextDetail">—</p></article>
+            <article class="blocker"><span>Current bottleneck</span><strong id="instituteBlockerTitle">—</strong><p id="instituteBlockerDetail">—</p></article>
+            <article class="next"><span>Next automatic action</span><strong id="instituteAutomaticNext">—</strong><p id="instituteAutomaticNextDetail">—</p></article>
             <article class="autonomous"><span>What works without the owner</span><strong id="instituteAutonomy">—</strong><p id="instituteAutonomyDetail">—</p></article>
             <article class="owner"><span>Where your decision is needed</span><strong id="instituteOwnerDecision">—</strong><p id="instituteOwnerDecisionDetail">—</p></article>
           </div>
         </section>
 
+        <section class="institute-stacks-section" aria-labelledby="instituteStacksTitle">
+          <header><span class="portal-kicker">One institute, five views</span><h2 id="instituteStacksTitle">Institute Stacks</h2></header>
         <nav class="institute-stack-nav" aria-label="Institute stacks">
-          <details class="institute-stack money-stack">
+          <details class="institute-stack money-stack" data-institute-popup="Money Stack">
             <summary><span>Money Stack</span><strong id="instituteMoneyStackStatus">—</strong></summary>
             <div id="instituteMoneyStackDetail"></div>
           </details>
-          <details class="institute-stack knowledge-stack">
+          <details class="institute-stack knowledge-stack" data-institute-popup="Knowledge Stack">
             <summary><span>Knowledge Stack</span><strong id="instituteKnowledgeStackStatus">—</strong></summary>
             <div id="instituteKnowledgeStackDetail"></div>
           </details>
-          <details class="institute-stack observation-stack">
+          <details class="institute-stack observation-stack" data-institute-popup="Observation Stack">
             <summary><span>Observation Stack</span><strong id="instituteObservationStackStatus">—</strong></summary>
             <div id="instituteObservationStackDetail"></div>
           </details>
-          <details class="institute-stack governance-stack">
+          <details class="institute-stack governance-stack" data-institute-popup="Governance Stack">
             <summary><span>Governance Stack</span><strong id="instituteGovernanceStackStatus">—</strong></summary>
             <div id="instituteGovernanceStackDetail"></div>
           </details>
-          <details class="institute-stack infrastructure-stack">
+          <details class="institute-stack infrastructure-stack" data-institute-popup="Infrastructure Stack">
             <summary><span>Infrastructure Stack</span><strong id="instituteInfrastructureStackStatus">—</strong></summary>
             <div id="instituteInfrastructureStackDetail"></div>
           </details>
         </nav>
+        </section>
+
+        <dialog class="institute-popup" id="institutePopup" aria-labelledby="institutePopupTitle">
+          <div class="institute-popup-head">
+            <div><span class="portal-kicker" id="institutePopupKicker">Institute detail</span><h2 id="institutePopupTitle">Details</h2></div>
+            <button type="button" id="institutePopupClose" aria-label="Close details">×</button>
+          </div>
+          <p class="institute-popup-status" id="institutePopupStatus"></p>
+          <div class="institute-popup-body" id="institutePopupBody"></div>
+        </dialog>
 
         <details class="institute-technical-surface">
           <summary><span><span class="portal-kicker">Progressive disclosure</span><strong>Technical process detail</strong></span><em>Open Registry, producers, collectors, governance and diagnostics</em></summary>
@@ -960,6 +972,6 @@
       </div>
       <div class="mobile-detail-body" id="mobileDetailBody"></div>
     </aside>
-    <script src="./app.js?v=20260724-institute-state-v2-1" type="module"></script>
+    <script src="./app.js?v=20260724-institute-state-v3" type="module"></script>
   </body>
 </html>

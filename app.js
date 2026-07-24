@@ -4932,8 +4932,48 @@ function closePortalDrawer() {
   $("portalMenuToggle")?.setAttribute("aria-expanded", "false");
 }
 
+function bindInstitutePopups() {
+  const dialog = $("institutePopup");
+  const body = $("institutePopupBody");
+  if (!dialog || !body || dialog.dataset.bound === "true") return;
+  dialog.dataset.bound = "true";
+
+  document.querySelectorAll("[data-institute-popup]").forEach((card) => {
+    const summary = card.querySelector(":scope > summary");
+    if (!summary) return;
+    summary.setAttribute("aria-haspopup", "dialog");
+    summary.addEventListener("click", (event) => {
+      event.preventDefault();
+      card.removeAttribute("open");
+
+      const popupTitle = card.dataset.institutePopup || summary.querySelector("small, span")?.textContent || "Institute detail";
+      const popupStatus = summary.querySelector("em, strong")?.textContent || "";
+      setText("institutePopupKicker", card.classList.contains("institute-stack") ? "Institute stack" : "Institute pipeline");
+      setText("institutePopupTitle", popupTitle);
+      setText("institutePopupStatus", popupStatus);
+      body.replaceChildren();
+
+      [...card.children].filter((child) => child !== summary).forEach((child) => {
+        const clone = child.cloneNode(true);
+        clone.removeAttribute?.("id");
+        clone.querySelectorAll?.("[id]").forEach((node) => node.removeAttribute("id"));
+        body.append(clone);
+      });
+
+      if (typeof dialog.showModal === "function") dialog.showModal();
+      else dialog.setAttribute("open", "");
+    });
+  });
+
+  $("institutePopupClose")?.addEventListener("click", () => dialog.close());
+  dialog.addEventListener("click", (event) => {
+    if (event.target === dialog) dialog.close();
+  });
+}
+
 function initializePortalShell() {
   renderPortalNavigation();
+  bindInstitutePopups();
   const requested = window.location.hash.replace(/^#/, "");
   setPortalPage(PORTAL_PAGES.some((page) => page.id === requested && page.visible) ? requested : "dashboard", { updateHash: false });
   $("portalMenuToggle")?.addEventListener("click", () => document.body.classList.contains("portal-drawer-open") ? closePortalDrawer() : openPortalDrawer());
@@ -5548,16 +5588,16 @@ function renderInstituteStateDashboard(operations, collectors, context) {
   const validationWaiting = ownerRequired || moneyStatus === "WAITING_OWNER" || moneyStatus === "BLOCKED";
   const exactDecision = ownerBlocker.exact_decision || "Choose a denominator definition or reject RF9-6";
   const automaticNext = ownerRequired
-    ? "Freeze the chosen denominator, then resume checking"
+    ? "Save the choice, then start checking"
     : nextMoneyTitle || "Continue the admitted Money path";
   const automaticDetail = ownerRequired
-    ? "The Control Plane will preserve the decision, run admission checks and resume the current study without opening the eight waiting studies early."
-    : `Next governed result: ${researchDisplayName(nextMoneyTitle)}.`;
+    ? "The institute will lock the chosen rules, verify that the study is safe to start, and begin checking. Eight waiting studies stay closed."
+    : `Next expected result: ${researchDisplayName(nextMoneyTitle)}.`;
 
   setText("instituteNowState", ownerRequired ? "Waiting for your decision" : institutePlainMoneyState(moneyStatus));
   setText("instituteNowSummary", ownerRequired
-    ? "The emission-subsidy study cannot move until its opportunity set is chosen. Public observations continue automatically; no new evidence has been opened."
-    : `The Money path is ${institutePlainMoneyState(moneyStatus).toLowerCase()}. Observation and preparation continue within their mandates.`);
+    ? "The current study cannot move until you choose what counts as a valid opportunity. Public observation continues automatically; checking has not started."
+    : `The path to the next Money Verdict is ${institutePlainMoneyState(moneyStatus).toLowerCase()}. Observation and preparation continue automatically.`);
   setText("instituteOwnerState", ownerRequired ? "1 owner decision needed" : "No owner decision needed");
   $("instituteOwnerState")?.classList.toggle("clear", !ownerRequired);
 
@@ -5566,7 +5606,7 @@ function renderInstituteStateDashboard(operations, collectors, context) {
     : "No verified observation output");
   setText("instituteObservingStatus", observedSources ? "Working autonomously" : "Waiting");
   setText("instituteObservingDetail", observedSources
-    ? "The institute is preserving permitted public observations without analysis or Money-path quota."
+    ? "The institute is preserving permitted public observations without starting a new study."
     : "No permitted source has produced a verified observation.");
   if ($("instituteObservingSources")) {
     $("instituteObservingSources").innerHTML = sourceRows.map((row) => `<article>
@@ -5580,8 +5620,8 @@ function renderInstituteStateDashboard(operations, collectors, context) {
   setText("instituteUnderstandingHeadline", understandingWaiting ? "Waiting for one verified source" : "World model is updating");
   setText("instituteUnderstandingStatus", understandingWaiting ? "Waiting" : researchDisplayName(atlasStatus));
   setText("instituteUnderstandingDetail", understandingWaiting
-    ? "Mechanism understanding is paused where provenance is missing. This does not block the current Money path."
-    : "New observations are being compared with known mechanisms without touching outcomes.");
+    ? "One world-model task is waiting for a verifiable source. This does not block the current study."
+    : "New observations are being compared with known mechanisms without looking at study results.");
   setHtml("instituteUnderstandingTechnical", `<article>
     <strong>Current world-model task</strong>
     <span>${escapeHtml(atlas?.current_program || "No active program")}</span>
@@ -5597,19 +5637,19 @@ function renderInstituteStateDashboard(operations, collectors, context) {
     : "No registered study family");
   setText("institutePreparingStatus", registeredCandidates ? "Ready after current decision" : "Empty");
   setText("institutePreparingDetail", registeredCandidates
-    ? "The family is registered, sealed and waiting. Registration is not execution."
-    : "No governed research family is waiting for admission.");
+    ? "Eight studies are prepared and waiting. None has started."
+    : "No prepared research family is waiting to start.");
   setHtml("institutePreparingTechnical", `<article>
     <strong>${escapeHtml(familyId)}</strong>
     <span>${escapeHtml(nearRegistry.registration_contract?.status || "REGISTERED_NOT_STARTED")}</span>
     <small>${escapeHtml(registeredCandidates)} candidates · execution authority ${escapeHtml(nearRegistry.registration_contract?.execution_authority || "NONE")} · blocked until RF9-6 closes</small>
   </article>`);
 
-  setText("instituteCheckingHeadline", validationWaiting ? "Waiting for the opportunity-set definition" : "Validation is active");
+  setText("instituteCheckingHeadline", validationWaiting ? "Waiting for the study rules" : "Checking is active");
   setText("instituteCheckingStatus", validationWaiting ? "Waiting" : `${evidenceActive} active`);
   setText("instituteCheckingDetail", validationWaiting
-    ? "No evidence work starts until the denominator decision is frozen and admission checks pass."
-    : `${evidenceActive} of ${evidenceWip?.limit ?? "?"} evidence paths are active.`);
+    ? "No checking starts until the owner choice is saved and the safety checks pass."
+    : `${evidenceActive} of ${evidenceWip?.limit ?? "?"} checks are active.`);
   setHtml("instituteCheckingTechnical", `<article>
     <strong>Protected validation gate</strong>
     <span>${escapeHtml(validationWaiting ? "CLOSED" : "OPEN")}</span>
@@ -5623,7 +5663,7 @@ function renderInstituteStateDashboard(operations, collectors, context) {
   setText("instituteMoneyHeadline", ownerRequired ? "No verdict until the study is defined" : researchDisplayName(moneyCandidate));
   setText("instituteMoneyStatus", ownerRequired ? "Owner needed" : institutePlainMoneyState(moneyStatus));
   setText("instituteMoneyDetail", ownerRequired
-    ? "Capital remains protected. The next Money Verdict cannot be estimated honestly until the denominator is frozen."
+    ? "Capital remains protected. The next Money Verdict cannot be estimated honestly until the study rules are fixed."
     : `Next result ${researchDisplayName(nextMoneyTitle)} · ${moneyEta}.`);
   setHtml("instituteMoneyTechnical", `<article>
     <strong>Current Money path</strong>
@@ -5635,41 +5675,49 @@ function renderInstituteStateDashboard(operations, collectors, context) {
     <small>${escapeHtml(profitability.days_remaining_to_decision ?? "—")} days remaining</small>
   </article>`);
 
-  setText("instituteBlockerTitle", ownerRequired ? "Choose the emission-subsidy opportunity set" : researchDisplayName(moneyBlocker));
+  setText("instituteBlockerTitle", ownerRequired ? "Choose what counts as a valid opportunity" : researchDisplayName(moneyBlocker));
   setText("instituteBlockerDetail", ownerRequired
-    ? "The recovered source card does not contain enough fields to define the opportunity set without an explicit research-discipline decision."
-    : "The current Money-path gate is machine-owned.");
+    ? "The saved study definition is incomplete. Continuing without your choice would change the rules after the fact."
+    : "The current blocker can be removed automatically.");
   setText("instituteAutomaticNext", automaticNext);
   setText("instituteAutomaticNextDetail", automaticDetail);
   setText("instituteAutonomy", observedSources ? "Observation collection continues" : "No autonomous production proven");
-  setText("instituteAutonomyDetail", `${observedSources}/${sourceRows.length} observation sources verified · ${registeredCandidates} studies remain sealed · Money-path quota unchanged.`);
+  setText("instituteAutonomyDetail", `${observedSources}/${sourceRows.length} public sources observed · ${registeredCandidates} studies remain closed · money work remains protected.`);
   setText("instituteOwnerDecision", ownerRequired ? "One bounded research decision" : "Nothing right now");
   setText("instituteOwnerDecisionDetail", ownerRequired
-    ? "Choose one of four prepared definitions or reject the study. No capital, Runtime or Atlas change is requested."
+    ? "Choose one of four prepared definitions or stop the study. No capital or system change is requested."
     : "The institute can continue under existing mandates.");
 
   const incidentSummary = instituteIncidentSummary(operations.governance_incidents || []);
   setText("instituteMoneyStackStatus", ownerRequired ? "Waiting for owner" : institutePlainMoneyState(moneyStatus));
-  setHtml("instituteMoneyStackDetail", `<article><strong>Current path</strong><span>${escapeHtml(criticalPath.candidate || moneyCandidate)}</span><small>${escapeHtml(researchDisplayName(moneyBlocker))}</small></article>
-    <article><strong>Next result</strong><span>${escapeHtml(researchDisplayName(nextMoneyTitle))}</span><small>${escapeHtml(moneyEta)}</small></article>
+  setHtml("instituteMoneyStackDetail", `<article><strong>Now</strong><span>${escapeHtml(ownerRequired ? "Study rules waiting for owner" : researchDisplayName(moneyCandidate))}</span><small>${escapeHtml(criticalPath.candidate || moneyCandidate)}</small></article>
+    <article><strong>Waiting for</strong><span>${escapeHtml(ownerRequired ? "One bounded owner choice" : researchDisplayName(moneyBlocker))}</span><small>${escapeHtml(ownerRequired ? exactDecision : moneyEta)}</small></article>
+    <article><strong>Next</strong><span>Check eligibility → run validation → issue Money Verdict</span><small>${escapeHtml(researchDisplayName(nextMoneyTitle))}</small></article>
     <a href="${CANONICAL_RESEARCH_URL}">Open canonical Money state</a>`);
 
   setText("instituteKnowledgeStackStatus", understandingWaiting ? "Waiting for source" : researchDisplayName(atlasStatus));
-  setHtml("instituteKnowledgeStackDetail", `<article><strong>Understanding</strong><span>${escapeHtml(atlas?.status || "UNKNOWN")}</span><small>${escapeHtml(atlas?.current_task || atlas?.reason || "No current task")}</small></article>
-    <article><strong>Discovery</strong><span>${escapeHtml(discovery?.status || "UNKNOWN")}</span><small>${escapeHtml(discovery?.reason || "Governed producer state")}</small></article>`);
+  setHtml("instituteKnowledgeStackDetail", `<article><strong>Now</strong><span>${escapeHtml(atlas?.current_task || "Comparing new observations with known mechanisms")}</span><small>Atlas · ${escapeHtml(atlas?.status || "UNKNOWN")}</small></article>
+    <article><strong>Waiting for</strong><span>${escapeHtml(understandingWaiting ? atlas?.reason || "One verifiable source" : "Nothing")}</span><small>Discovery · ${escapeHtml(discovery?.status || "UNKNOWN")}</small></article>
+    <article><strong>Next</strong><span>${escapeHtml(atlas?.next_task || "Continue the next governed world-model task")}</span><small>Technical producer details remain inside this popup.</small></article>`);
 
   setText("instituteObservationStackStatus", `${observedSources}/${sourceRows.length} observed`);
-  setHtml("instituteObservationStackDetail", sourceRows.map((row) => `<article><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(row.status)}</span><small>${escapeHtml(row.detail)}</small></article>`).join(""));
+  setHtml("instituteObservationStackDetail", `<article><strong>Now</strong><span>${escapeHtml(observedSources)} of ${escapeHtml(sourceRows.length)} public sources observed</span><small>Collection continues without starting research.</small></article>
+    <article><strong>Waiting for</strong><span>${escapeHtml(sourceRows.length - observedSources)} source${sourceRows.length - observedSources === 1 ? "" : "s"}</span><small>${escapeHtml(sourceRows.filter((row) => !["Observed", "Up to date"].includes(row.status)).map((row) => row.name).join(" · ") || "Nothing")}</small></article>
+    <article><strong>Next</strong><span>Run the next scheduled public-source check</span><small>Only new or changed observations are preserved.</small></article>
+    ${sourceRows.map((row) => `<article><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(row.status)}</span><small>${escapeHtml(row.detail)}</small></article>`).join("")}`);
 
   setText("instituteGovernanceStackStatus", ownerRequired ? "1 decision needed" : "Protected");
-  setHtml("instituteGovernanceStackDetail", `<article><strong>Current owner gate</strong><span>${escapeHtml(ownerRequired ? "RF9-6 denominator" : "None")}</span><small>${escapeHtml(ownerRequired ? exactDecision : "Existing mandates are sufficient")}</small></article>
-    <article><strong>Waiting family</strong><span>${escapeHtml(familyId)}</span><small>IC5 required · outcomes sealed · standard admission only</small></article>`);
+  setHtml("instituteGovernanceStackDetail", `<article><strong>Now</strong><span>${escapeHtml(ownerRequired ? "One protected decision is open" : "Existing rules are sufficient")}</span><small>${escapeHtml(ownerRequired ? "RF9-6 denominator" : "No owner gate")}</small></article>
+    <article><strong>Waiting for</strong><span>${escapeHtml(ownerRequired ? exactDecision : "Nothing")}</span><small>${escapeHtml(familyId)} remains REGISTERED_NOT_STARTED.</small></article>
+    <article><strong>Next</strong><span>Record the choice → run RVS admission → keep IC5 controls</span><small>Outcomes remain sealed until admission succeeds.</small></article>`);
 
   const mismatches = operations.reconciliation?.mismatches || [];
-  setText("instituteInfrastructureStackStatus", mismatches.length ? "Attention in detail" : "Stable");
-  setHtml("instituteInfrastructureStackDetail", `<article><strong>Current problem</strong><span>${escapeHtml(ownerRequired ? "RF9-6 owner decision" : "None")}</span><small>Infrastructure activity is not counted as profitability progress.</small></article>
-    <article><strong>History</strong><span>${escapeHtml(incidentSummary.resolved)} resolved</span><small>${escapeHtml(incidentSummary.history)}</small></article>
-    <article><strong>Recurrence</strong><span>${escapeHtml(incidentSummary.recurrence)}</span><small>${escapeHtml(incidentSummary.recurrenceDetail)}</small></article>`);
+  setText("instituteInfrastructureStackStatus", mismatches.length || incidentSummary.activeCount ? "Attention in detail" : "Stable");
+  setHtml("instituteInfrastructureStackDetail", `<article><strong>Now</strong><span>${escapeHtml(incidentSummary.activeCount ? `${incidentSummary.activeCount} active problem${incidentSummary.activeCount === 1 ? "" : "s"}` : "No active fire")}</span><small>${escapeHtml(incidentSummary.active)}</small></article>
+    <article><strong>Waiting for</strong><span>${escapeHtml(mismatches.length ? `${mismatches.length} state mismatch${mismatches.length === 1 ? "" : "es"}` : "Nothing")}</span><small>Recovered history is not displayed as a current fire.</small></article>
+    <article><strong>Next</strong><span>Continue health checks and reconcile changed fingerprints</span><small>Unchanged terminal states only increment their occurrence count.</small></article>
+    <article><strong>Active terminal state</strong><span>${escapeHtml(incidentSummary.terminal)}</span><small>${escapeHtml(incidentSummary.terminalDetail)}</small></article>
+    <article><strong>Recovered history</strong><span>${escapeHtml(incidentSummary.resolved)} resolved</span><small>${escapeHtml(incidentSummary.history)}</small></article>`);
 }
 
 function instituteObservationRows(collectors) {
@@ -5739,20 +5787,32 @@ function instituteIncidentSummary(incidents) {
   const open = incidents.filter((row) => row.status !== "RESOLVED");
   const groups = new Map();
   for (const incident of open) {
-    const key = `${incident.contour_id || "INSTITUTE"}|${incident.code || "UNKNOWN"}`;
-    const group = groups.get(key) || { count: 0, code: incident.code, contour: incident.contour_id, last: null };
-    group.count += 1;
+    const key = incident.fingerprint || `${incident.contour_id || "INSTITUTE"}|${incident.code || "UNKNOWN"}`;
+    const group = groups.get(key) || { count: 0, code: incident.code, contour: incident.contour_id, last: null, fingerprint: key };
+    group.count += Number(incident.occurrences || 1);
     if (!group.last || Date.parse(incident.detected_at || 0) > Date.parse(group.last || 0)) group.last = incident.detected_at;
     groups.set(key, group);
   }
-  const recurrent = [...groups.values()].sort((a, b) => b.count - a.count)[0];
+  const terminalPattern = /LOST|TERMINAL|UNRECOVERABLE|NOT_FOUND|EXHAUSTED/i;
+  const terminalGroups = [...groups.values()].filter((group) => terminalPattern.test(String(group.code || ""))).sort((a, b) => b.count - a.count);
+  const nonTerminalGroups = [...groups.values()].filter((group) => !terminalPattern.test(String(group.code || ""))).sort((a, b) => Date.parse(b.last || 0) - Date.parse(a.last || 0));
+  const activeGroups = nonTerminalGroups.filter((group) => Date.now() - Date.parse(group.last || 0) <= 2 * 60 * 60 * 1000);
+  const olderOpenCount = Math.max(0, nonTerminalGroups.length - activeGroups.length);
+  const recurrent = terminalGroups[0] || null;
+  const active = activeGroups[0] || null;
   return {
+    activeCount: activeGroups.length,
+    active: active
+      ? `${researchDisplayName(active.code)} · ${researchDisplayName(active.contour)} · last ${portalRelativeTime(active.last)}`
+      : olderOpenCount
+        ? `${olderOpenCount} older open state${olderOpenCount === 1 ? "" : "s"} grouped as history, not current fire.`
+        : "Recovered and terminal history is grouped below.",
     resolved: resolved.length,
     history: resolved.length ? `Last resolved ${portalRelativeTime(resolved.at(-1)?.resolved_at || resolved.at(-1)?.detected_at)}` : "No resolved incident history",
-    recurrence: recurrent ? `${researchDisplayName(recurrent.code)} ×${recurrent.count}` : "No repeated state",
-    recurrenceDetail: recurrent
-      ? `${researchDisplayName(recurrent.contour)} · last repeated ${portalRelativeTime(recurrent.last)} · grouped as one state`
-      : "No repeated terminal state is being shown.",
+    terminal: recurrent ? researchDisplayName(recurrent.code) : "None",
+    terminalDetail: recurrent
+      ? `Occurrences ${recurrent.count} · fingerprint unchanged · last occurrence ${portalRelativeTime(recurrent.last)}`
+      : "No repeated terminal state.",
   };
 }
 
