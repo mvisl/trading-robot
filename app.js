@@ -5552,8 +5552,8 @@ function nextKnowledgeResult(atlas, discovery, collectors) {
     .sort((a, b) => Date.parse(a.next_run_at) - Date.parse(b.next_run_at))[0];
   if (nextCollector) {
     return {
-      title: `${nextCollector.contour_id} snapshot`,
-      status: portalRelativeTime(nextCollector.next_run_at),
+      title: `${researchDisplayName(nextCollector.contour_id)} snapshot`,
+      status: `Next ${portalDate(nextCollector.next_run_at)}`,
       detail: nextCollector.current_blocker || `Next governed source check at ${portalDate(nextCollector.next_run_at)}.`,
     };
   }
