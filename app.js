@@ -27,6 +27,9 @@ let apiLocked = false;
 let robotStopCountdown = null;
 let activePortalPage = "dashboard";
 let researchContourFilter = "ACTIVE";
+let intentChainCollectorHealth = [];
+let intentChainCollectorHealthReadAt = 0;
+let intentChainCollectorHealthInFlight = false;
 const openLivingProgramQueues = new Set();
 const PORTAL_PAGES = [
   { id: "dashboard", label: "Dashboard", icon: "◫", visible: true, order: 10 },
@@ -5304,6 +5307,8 @@ function renderOperationalResearch(operations) {
   const background = operations.background_processes || [];
   setText("researchBackgroundMeta", background.length ? "ALL LIVE SERVICES VISIBLE" : "No service telemetry");
   if ($("researchBackgroundProcesses")) $("researchBackgroundProcesses").innerHTML = background.map((row) => `<article class="${row.status === "ONLINE" ? "online" : "offline"}"><span class="background-light" aria-hidden="true"></span><div><strong>${escapeHtml(row.name)}</strong><small>${escapeHtml(row.cadence)}</small></div><p>${escapeHtml(row.updated_at ? `updated ${portalRelativeTime(row.updated_at)}` : row.detail)}</p><details><summary>Details</summary><span>${escapeHtml(row.detail)} · ${escapeHtml(row.active_state || "unknown")}/${escapeHtml(row.sub_state || "unknown")}</span></details></article>`).join("") || `<div class="research-honest-empty"><strong>Background telemetry unavailable</strong><span>System service probes have not completed.</span></div>`;
+  renderIntentChainCollectors(intentChainCollectorHealth);
+  refreshIntentChainCollectorHealth();
 
   renderAtlasDiscoveryProducer(atlasProducerFromOperations(operations));
   renderResearchPrograms(operations.research_programs || []);
@@ -5313,6 +5318,84 @@ function renderOperationalResearch(operations) {
   const foundation = view.foundation || [];
   setText("researchFoundationCount", foundation[0]?.name ? `${foundation[0].name}${foundation.length > 1 ? ` (+${foundation.length - 1})` : ""}` : "No completed work");
   if ($("researchFoundation")) $("researchFoundation").innerHTML = foundation.map((row) => `<article><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(portalDate(row.completed_at))}</span><small>${escapeHtml(row.artifact || row.id)}</small></article>`).join("") || `<div class="portal-empty">No completed contours registered.</div>`;
+}
+
+function renderIntentChainCollectors(collectors) {
+  const producing = collectors.filter((row) => row.production_health === "PRODUCING").length;
+  const unchanged = collectors.filter((row) => row.production_health === "SOURCE_UNCHANGED").length;
+  const impaired = collectors.filter((row) => ["DEGRADED", "SCHEMA_CHANGED_FAIL_CLOSED", "STOPPED_BY_QUOTA", "DISABLED"].includes(row.production_health)).length;
+  setText("researchCollectorMeta", `${producing} producing · ${unchanged} unchanged · ${impaired} impaired`);
+  if (!$("researchCollectorContours")) return;
+  $("researchCollectorContours").innerHTML = collectors.map((row) => {
+    const sources = Object.entries(row.sources || {});
+    const primarySource = sources[0]?.[0] || "No source observed";
+    const otherSources = Math.max(0, sources.length - 1);
+    const lastSnapshot = sources.map(([, source]) => source.last_raw_path).filter(Boolean)[0] || "No raw snapshot";
+    return `<article class="research-collector-card tone-${portalTone(row.production_health)}">
+      <div class="research-collector-title"><div><span>${escapeHtml(row.unit || "isolated unit")}</span><strong>${escapeHtml(row.contour_id)}</strong></div><em>${escapeHtml(row.production_health || "UNKNOWN")}</em></div>
+      <div class="research-collector-source"><span>Source</span><strong>${escapeHtml(primarySource)}${otherSources ? ` (+${otherSources})` : ""}</strong></div>
+      <dl>
+        <div><dt>Last snapshot</dt><dd>${escapeHtml(row.last_success_at ? portalRelativeTime(row.last_success_at) : "never")}</dd></div>
+        <div><dt>New bytes</dt><dd>${escapeHtml(row.last_new_bytes_at ? portalRelativeTime(row.last_new_bytes_at) : "none")}</dd></div>
+        <div><dt>Next run</dt><dd>${escapeHtml(row.next_run_at ? portalDate(row.next_run_at) : "unscheduled")}</dd></div>
+        <div><dt>Freshness</dt><dd>${escapeHtml(row.source_freshness || "unknown")}</dd></div>
+        <div><dt>Raw</dt><dd>${escapeHtml(row.raw_artifact_count || 0)} artifacts</dd></div>
+        <div><dt>Storage</dt><dd>${escapeHtml(formatPortalBytes(row.bytes_today || 0))}/today · ${escapeHtml(formatPortalBytes(row.estimated_bytes_month || 0))}/mo projected</dd></div>
+      </dl>
+      <p>${escapeHtml(compactText(row.historical_coverage || "Coverage not reported", 170))}</p>
+      <details class="research-card-details">
+        <summary>Sources, provenance and recovery</summary>
+        <div class="research-collector-sources">${sources.map(([id, source]) => `<article><strong>${escapeHtml(id)}</strong><span>${escapeHtml(source.status || "UNKNOWN")}</span><small>${escapeHtml(source.last_error || source.last_raw_path || "No attempt recorded")}</small></article>`).join("") || "<p>No source state.</p>"}</div>
+        <p><strong>Latest raw:</strong> ${escapeHtml(lastSnapshot)}</p>
+        <p><strong>Incidents:</strong> ${escapeHtml(row.incident_count || 0)} · <strong>Blocker:</strong> ${escapeHtml(row.current_blocker || "none")}</p>
+        <p><strong>Recovery:</strong> ${escapeHtml(row.recovery_action || "none")}</p>
+        <p><strong>Critical path:</strong> ${escapeHtml(row.critical_path_quota_used || 0)} · <strong>Linked candidates:</strong> ${escapeHtml(row.linked_research_candidate_count || 0)}</p>
+      </details>
+    </article>`;
+  }).join("") || `<div class="research-honest-empty"><strong>No collector health</strong><span>No contour is claimed active without a production health artifact.</span></div>`;
+}
+
+async function refreshIntentChainCollectorHealth() {
+  if (intentChainCollectorHealthInFlight || Date.now() - intentChainCollectorHealthReadAt < 15000) return;
+  intentChainCollectorHealthInFlight = true;
+  const units = {
+    GAS_INTENT: "trading-robot-gas-intent-collector.service",
+    MARITIME_FLOW: "trading-robot-maritime-flow-collector.service",
+    EXCHANGE_AND_FORCED_FLOW_STATUS: "trading-robot-exchange-forced-flow-collector.service",
+    SCHEDULE_AND_COMMITMENT_DIFF: "trading-robot-schedule-commitment-diff-collector.service",
+    WAR_RISK_SOURCE_ACQUISITION: "trading-robot-war-risk-source-acquisition.service",
+  };
+  try {
+    intentChainCollectorHealth = await Promise.all(Object.entries(units).map(async ([contourId, unit]) => {
+      const response = await portalFetch(`/collector-health/${encodeURIComponent(contourId)}.json?t=${Date.now()}`, { cache: "no-store" });
+      if (!response.ok) {
+        return {
+          contour_id: contourId,
+          unit,
+          production_health: "DISABLED",
+          heartbeat_health: "UNOBSERVED",
+          current_blocker: `Health endpoint returned HTTP ${response.status}`,
+          recovery_action: "Run the independent collector and reconcile its health artifact.",
+          sources: {},
+        };
+      }
+      return { ...await response.json(), unit };
+    }));
+    intentChainCollectorHealthReadAt = Date.now();
+    renderIntentChainCollectors(intentChainCollectorHealth);
+  } catch (error) {
+    console.warn("intent-chain collector health refresh failed", error);
+  } finally {
+    intentChainCollectorHealthInFlight = false;
+  }
+}
+
+function formatPortalBytes(value) {
+  const bytes = Math.max(0, Number(value || 0));
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 ** 2) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 ** 3) return `${(bytes / (1024 ** 2)).toFixed(1)} MB`;
+  return `${(bytes / (1024 ** 3)).toFixed(1)} GB`;
 }
 
 function atlasProducerFromOperations(operations) {
