@@ -5255,18 +5255,13 @@ function renderResearchPortal(operations) {
   renderAutonomousActions(operations.autonomous_actions || []);
   renderOwnerAttention(operations.owner_attention || []);
   renderResearchContours(operations);
+  renderResearchDashboardV2(operations, intentChainCollectorHealth);
 }
 
 function renderOperationalResearch(operations) {
   const view = operations.operational_processes || {};
-  const summary = view.summary || {};
-  setText("researchSummaryNow", summary.now || "Operational state unavailable");
-  setText("researchSummaryResident", summary.resident || "Resident unavailable");
-  setText("researchSummaryBlocker", summary.blocker || "No critical path");
-  setText("researchSummaryNext", summary.next_result || "No result scheduled");
 
   const active = [...(view.now || []), ...(view.starting || [])];
-  setText("researchNowCount", active.length ? "RUNNING" : "NO ACTIVE PROCESS");
   if ($("researchNowList")) $("researchNowList").innerHTML = renderPrimaryProcessList(
     active,
     "running objects",
@@ -5284,7 +5279,6 @@ function renderOperationalResearch(operations) {
   if ($("researchWaitingList")) $("researchWaitingList").innerHTML = waiting.map((row) => `<article><div><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(row.status)}</span></div><p>${escapeHtml(row.reason)}</p><small>Waiting for: ${escapeHtml(compactText(row.waiting_for, 180))}</small></article>`).join("") || `<div class="portal-empty positive">No waiting contours.</div>`;
 
   const next = view.next || [];
-  setText("researchNextCount", next.length ? "ADMITTED" : "NO ADMITTED PROCESS");
   if ($("researchNextList")) $("researchNextList").innerHTML = renderPrimaryProcessList(
     next,
     "admitted objects",
@@ -5325,6 +5319,7 @@ function renderIntentChainCollectors(collectors) {
   const unchanged = collectors.filter((row) => row.production_health === "SOURCE_UNCHANGED").length;
   const impaired = collectors.filter((row) => ["DEGRADED", "SCHEMA_CHANGED_FAIL_CLOSED", "STOPPED_BY_QUOTA", "DISABLED"].includes(row.production_health)).length;
   setText("researchCollectorMeta", `${producing} producing · ${unchanged} unchanged · ${impaired} impaired`);
+  renderResearchDashboardV2(currentState?.instituteOperations || {}, collectors);
   if (!$("researchCollectorContours")) return;
   $("researchCollectorContours").innerHTML = collectors.map((row) => {
     const sources = Object.entries(row.sources || {});
@@ -5353,6 +5348,258 @@ function renderIntentChainCollectors(collectors) {
       </details>
     </article>`;
   }).join("") || `<div class="research-honest-empty"><strong>No collector health</strong><span>No contour is claimed active without a production health artifact.</span></div>`;
+}
+
+function renderResearchDashboardV2(operations, collectors = []) {
+  const profitability = operations.profitability_decision_program || {};
+  const candidates = profitability.candidates || [];
+  const currentVerdict = profitability.current_money_verdict || {};
+  const currentCandidate = candidates.find((row) => row.candidate_id === currentVerdict.candidate)
+    || candidates[0]
+    || null;
+  const criticalPath = operations.money_verdict_critical_path || {};
+  const moneyCandidate = currentCandidate?.candidate_id || currentVerdict.candidate || criticalPath.candidate || "No candidate";
+  const moneyBlocker = currentCandidate?.blocking_gate || currentVerdict.blocking_gate
+    || criticalPath.blocking_reasons?.[0]?.code
+    || "NO_BLOCKING_GATE";
+  const moneyStatus = researchMoneyPathStatus(currentCandidate, criticalPath);
+  const nextMoney = profitability.next_material_result || {};
+  const nextMoneyTitle = nextMoney.artifact || currentCandidate?.next_material_artifact
+    || criticalPath.next_step
+    || "No Money result scheduled";
+  const moneyEta = nextMoney.eta || (currentCandidate?.target_date ? `by ${currentCandidate.target_date}` : "unknown");
+
+  setText("researchMoneyPathStatus", moneyStatus);
+  setText("researchMoneyCandidate", moneyCandidate);
+  setText("researchMoneyNextResult", humanizeResearchCode(nextMoneyTitle));
+  setText("researchMoneyBlocker", humanizeResearchCode(moneyBlocker));
+  setText("researchMoneyEta", moneyEta);
+  setText("researchSummaryMoney", `${moneyStatus} · ${moneyCandidate}`);
+  renderMoneyVerdictStages(currentCandidate, criticalPath);
+
+  const atlas = atlasProducerFromOperations(operations);
+  const discovery = operations.discovery_producer || {};
+  const atlasProduced = Number(atlas.metrics?.produced_today || 0);
+  const discoveryProduced = Number(discovery.metrics?.produced_today || 0);
+  const producingCollectors = collectors.filter((row) => row.production_health === "PRODUCING").length;
+  const waitingCollectors = collectors.filter((row) => [
+    "SOURCE_UNCHANGED",
+    "WAITING_FOR_NEXT_PUBLICATION",
+    "WAITING_FOR_SOURCE_ACCESS",
+  ].includes(row.production_health)).length;
+  const degradedCollectors = collectors.filter((row) => [
+    "DEGRADED",
+    "SCHEMA_CHANGED_FAIL_CLOSED",
+    "STOPPED_BY_QUOTA",
+    "DISABLED",
+  ].includes(row.production_health)).length;
+  const snapshotsToday = collectorSnapshotLowerBoundToday(collectors);
+  const bytesToday = collectors.reduce((sum, row) => sum + Number(row.bytes_today || 0), 0);
+  const registeredCandidates = Number(
+    operations.intent_chain_candidate_registry?.candidate_count
+    ?? operations.discovery_registry?.candidate_count
+    ?? 0,
+  );
+  const immutableToday = Number(operations.artifact_activity?.registered_today || 0) + snapshotsToday;
+  const knowledgeProducing = atlasProduced > 0 || discoveryProduced > 0 || producingCollectors > 0;
+  const knowledgeStatus = knowledgeProducing ? "PRODUCING" : "IDLE";
+  const knowledgeParts = [
+    `Atlas ${truthfulProducerStatus(atlas, atlasProduced)}`,
+    `Discovery ${truthfulProducerStatus(discovery, discoveryProduced)}`,
+    `${producingCollectors}/${collectors.length || 0} collectors producing`,
+  ];
+
+  setText("researchKnowledgeStatus", knowledgeStatus);
+  setText("researchKnowledgeSummary", knowledgeParts.join(" · "));
+  setText("researchKnowledgeAtlas", truthfulProducerStatus(atlas, atlasProduced));
+  setText("researchKnowledgeDiscovery", truthfulProducerStatus(discovery, discoveryProduced));
+  setText("researchKnowledgeCollectors", `${producingCollectors}/${collectors.length || 0} PRODUCING`);
+  setText("researchKnowledgeCandidates", registeredCandidates);
+  setText("researchKnowledgeSnapshots", snapshotsToday ? `≥${snapshotsToday}` : "0");
+  setText("researchKnowledgeArtifacts", immutableToday ? `≥${immutableToday}` : "0");
+  setText("researchSummaryKnowledge", knowledgeProducing
+    ? `${producingCollectors} collectors producing; Atlas ${truthfulProducerStatus(atlas, atlasProduced)}`
+    : "No verified new knowledge output");
+
+  const ari = operations.autonomous_research_institute || {};
+  const ariHistory = ari.acceptance?.history || {};
+  const evidenceWip = operations.evidence_wip || {};
+  const evidenceActive = evidenceWip.active_contour_ids?.length || 0;
+  const authority = String(ari.mode || "").includes("NO_EXECUTION_AUTHORITY") ? "NONE" : (ari.mode || "UNKNOWN");
+  const scheduler = ari.active_scheduler_unchanged === true ? "STABLE" : "UNKNOWN";
+  const acceptanceCurrent = Number(ariHistory.completed_tasks ?? ariHistory.observed_tasks ?? 0);
+  const acceptanceRequired = Number(ariHistory.required_tasks || 0);
+  const quota = Number(ari.critical_path_quota_used || 0);
+
+  setText("researchInfrastructureStatus", ari.status || "UNAVAILABLE");
+  setText("researchInfraAri", ari.status || "UNAVAILABLE");
+  setText("researchInfraAuthority", authority);
+  setText("researchInfraAcceptance", acceptanceRequired ? `${acceptanceCurrent} / ${acceptanceRequired}` : "not exposed");
+  setText("researchInfraScheduler", scheduler);
+  setText("researchInfraQuota", `${quota}%`);
+  setText("researchInfraEvidenceWip", `${evidenceActive}/${evidenceWip.limit ?? "?"}`);
+
+  const ownerBlocker = profitability.immediate_blocker || {};
+  const ownerRequired = ownerBlocker.owner?.includes("OWNER") || ownerBlocker.state?.includes("OWNER");
+  setText("researchSummaryOwner", ownerRequired
+    ? `${ownerBlocker.candidate || "Decision"} · ${humanizeResearchCode(ownerBlocker.code || ownerBlocker.exact_decision)}`
+    : "No owner decision required");
+
+  const autonomousCount = producingCollectors
+    + (atlasProduced > 0 ? 1 : 0)
+    + (discoveryProduced > 0 ? 1 : 0);
+  setText("researchSummaryAutonomous", autonomousCount
+    ? `${autonomousCount} verified producers operating autonomously`
+    : "No verified autonomous production");
+  setText("researchSummaryIdle", moneyStatus === "RUNNING" || moneyStatus === "VALIDATING" || moneyStatus === "REPLICATING"
+    ? "Money Path is active"
+    : knowledgeProducing
+      ? `Money Path waiting · ${autonomousCount} background producers`
+      : "Institute idle");
+
+  if (ownerRequired) {
+    setText("residentOperatorStatus", "WAITING");
+    setText("residentTask", `${ownerBlocker.candidate}: Level 3 owner decision required`);
+    setText("residentMission", "Autonomous action prohibited at this gate. No new evidence is being opened.");
+  }
+
+  setText("researchNextMoneyTitle", humanizeResearchCode(nextMoneyTitle));
+  setText("researchNextMoneyStatus", nextMoney.owner_required ? "OWNER REQUIRED" : moneyEta);
+  setText("researchNextMoneyDetail", `${moneyCandidate} · ${humanizeResearchCode(moneyBlocker)}`);
+
+  const nextKnowledge = nextKnowledgeResult(atlas, discovery, collectors);
+  setText("researchNextKnowledgeTitle", nextKnowledge.title);
+  setText("researchNextKnowledgeStatus", nextKnowledge.status);
+  setText("researchNextKnowledgeDetail", nextKnowledge.detail);
+
+  setText("researchBlockerStatus", moneyStatus);
+  setText("researchBlockerTitle", moneyCandidate);
+  setText("researchBlockerReason", humanizeResearchCode(moneyBlocker));
+  setText("researchBlockerWaitingFor", nextMoneyTitle ? `Waiting for: ${humanizeResearchCode(nextMoneyTitle)}` : "No unblock trigger registered");
+  setText("researchBlockerDetail", currentCandidate?.current_stage || criticalPath.blocking_reasons?.[0]?.detail || "No additional detail");
+
+  const infrastructureBlockers = researchInfrastructureBlockers(atlas, discovery, collectors);
+  setText("researchInfrastructureBlockerCount", infrastructureBlockers.length);
+  if ($("researchInfrastructureBlockers")) {
+    $("researchInfrastructureBlockers").innerHTML = infrastructureBlockers.map((row) => `<article>
+      <div><strong>${escapeHtml(row.title)}</strong><span>${escapeHtml(row.status)}</span></div>
+      <p>${escapeHtml(row.detail)}</p>
+    </article>`).join("") || `<div class="research-honest-empty"><strong>No infrastructure blocker</strong><span>All observed background production paths are healthy.</span></div>`;
+  }
+
+  setText("researchCollectorSummaryStatus", degradedCollectors ? "DEGRADED" : producingCollectors ? "PRODUCING" : waitingCollectors ? "WAITING" : "UNOBSERVED");
+  setText("researchCollectorProducing", producingCollectors);
+  setText("researchCollectorWaiting", waitingCollectors);
+  setText("researchCollectorDegraded", degradedCollectors);
+  setText("researchCollectorSnapshots", snapshotsToday ? `≥${snapshotsToday}` : "0");
+  setText("researchCollectorBytes", formatPortalBytes(bytesToday));
+}
+
+function researchMoneyPathStatus(candidate, criticalPath) {
+  const stage = String(candidate?.current_stage || "");
+  const status = String(candidate?.status || criticalPath?.contour_status || "");
+  if (status.includes("WAITING_LEVEL3") || status.includes("WAITING_OWNER")) return "WAITING_OWNER";
+  if (status.includes("WAITING_DATA") || status.includes("DATA_INSUFFICIENT")) return "WAITING_DATA";
+  if (stage.includes("REPLICATION") && candidate?.replication_status === "ACCESSED") return "REPLICATING";
+  if (stage.includes("HOLDOUT") && candidate?.holdout_status !== "ACCESSED") return "HOLDOUT";
+  if (stage.includes("VALIDATION")) return "VALIDATING";
+  if (candidate?.blocking_gate || criticalPath?.blocking_reasons?.length) return "BLOCKED";
+  if (candidate) return "RUNNING";
+  return "BLOCKED";
+}
+
+function renderMoneyVerdictStages(candidate, criticalPath) {
+  if (!$("researchMoneyStages")) return;
+  const denominatorComplete = String(candidate?.denominator_status || "").includes("COMPLETE");
+  const hasTrial = Number(candidate?.trial_n || 0) > 0;
+  const holdoutComplete = candidate?.holdout_status === "ACCESSED";
+  const replicationComplete = candidate?.replication_status === "ACCESSED";
+  const hasCandidate = Boolean(candidate || criticalPath?.candidate);
+  const stages = [
+    ["Idea", hasCandidate ? "complete" : "pending"],
+    ["Mechanism", hasCandidate ? "complete" : "pending"],
+    ["Data", denominatorComplete ? "complete" : "blocked"],
+    ["Denominator", denominatorComplete ? "complete" : "blocked"],
+    ["Validation", hasTrial ? "complete" : "pending"],
+    ["Holdout", holdoutComplete ? "complete" : "pending"],
+    ["Replication", replicationComplete ? "complete" : holdoutComplete ? "blocked" : "pending"],
+    ["Money Verdict", replicationComplete ? "active" : "pending"],
+  ];
+  $("researchMoneyStages").innerHTML = stages.map(([label, state], index) => `<article class="${state}">
+    <span>${state === "complete" ? "✓" : state === "blocked" ? "×" : "—"}</span>
+    <strong>${escapeHtml(label)}</strong>
+  </article>${index < stages.length - 1 ? `<b aria-hidden="true">→</b>` : ""}`).join("");
+}
+
+function truthfulProducerStatus(producer, producedToday) {
+  if (Number(producedToday || 0) > 0) return "PRODUCING";
+  const status = String(producer?.status || "UNAVAILABLE");
+  if (status === "PRODUCING") return "NO NEW OUTPUT TODAY";
+  return status;
+}
+
+function collectorSnapshotLowerBoundToday(collectors) {
+  const today = new Date().toISOString().slice(0, 10);
+  return collectors.reduce((total, row) => total + Object.values(row.sources || {}).filter((source) => {
+    const timestamp = source.last_new_bytes_at;
+    return timestamp && String(timestamp).slice(0, 10) === today;
+  }).length, 0);
+}
+
+function nextKnowledgeResult(atlas, discovery, collectors) {
+  const nextCollector = [...collectors]
+    .filter((row) => row.next_run_at)
+    .sort((a, b) => Date.parse(a.next_run_at) - Date.parse(b.next_run_at))[0];
+  if (nextCollector) {
+    return {
+      title: `${nextCollector.contour_id} snapshot`,
+      status: portalRelativeTime(nextCollector.next_run_at),
+      detail: nextCollector.current_blocker || `Next governed source check at ${portalDate(nextCollector.next_run_at)}.`,
+    };
+  }
+  if (atlas?.next_task) {
+    return {
+      title: compactText(atlas.next_task, 110),
+      status: truthfulProducerStatus(atlas, atlas.metrics?.produced_today),
+      detail: atlas.current_blocker || atlas.reason || "Atlas frontier mission.",
+    };
+  }
+  return {
+    title: "No knowledge result scheduled",
+    status: discovery?.status || "IDLE",
+    detail: discovery?.reason || "No provenance-novel source row is waiting.",
+  };
+}
+
+function researchInfrastructureBlockers(atlas, discovery, collectors) {
+  const rows = [];
+  for (const collector of collectors) {
+    if (!collector.current_blocker) continue;
+    rows.push({
+      title: collector.contour_id,
+      status: collector.production_health || "BLOCKED",
+      detail: collector.current_blocker,
+    });
+  }
+  if (atlas?.current_blocker) {
+    rows.push({
+      title: "Atlas",
+      status: atlas.status || "WAITING",
+      detail: atlas.current_blocker,
+    });
+  }
+  if (discovery?.status === "IDLE" && discovery?.reason) {
+    rows.push({
+      title: "Discovery",
+      status: "IDLE",
+      detail: discovery.reason,
+    });
+  }
+  return rows;
+}
+
+function humanizeResearchCode(value) {
+  return String(value || "unknown").replaceAll("_", " ").replace(/\s+/g, " ").trim();
 }
 
 async function refreshIntentChainCollectorHealth() {

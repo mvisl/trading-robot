@@ -27,7 +27,7 @@
       <nav class="portal-navigation" id="portalNavigation"></nav>
       <div class="portal-sidebar-state">
         <span id="portalLiveDot" class="portal-live-dot"></span>
-        <div><strong id="portalStateLabel">Loading live state…</strong><small id="portalStateMeta">Loading live state…</small></div>
+        <div><strong id="portalStateLabel">__PORTAL_STATE_LABEL__</strong><small id="portalStateMeta">__PORTAL_STATE_META__</small></div>
       </div>
     </aside>
     <main class="shell portal-content">
@@ -647,57 +647,106 @@
       </section>
 
       <section class="portal-view" id="portal-research" data-portal-view="research" hidden>
-        <header class="portal-page-head research-command-head"><div><span class="portal-kicker">Live Institute</span><h1>Research Operations</h1><p>Что работает сейчас, что ждёт и что приблизит следующий Money Verdict.</p></div><span class="pill" id="researchFreshness">Loading live state…</span></header>
+        <header class="portal-page-head research-command-head"><div><span class="portal-kicker">Live Institute</span><h1>Research Operations</h1><p>Что работает сейчас, что ждёт и что приблизит следующий Money Verdict.</p></div><span class="pill" id="researchFreshness">__RESEARCH_FRESHNESS__</span></header>
 
-        <section class="research-command-strip" aria-label="Institute situation in five seconds">
-          <article><span>NOW</span><strong id="researchSummaryNow">Loading live state…</strong></article>
-          <article><span>RESIDENT</span><strong id="researchSummaryResident">Loading live state…</strong></article>
-          <article class="critical"><span>BLOCKER</span><strong id="researchSummaryBlocker">Loading live state…</strong></article>
-          <article><span>NEXT RESULT</span><strong id="researchSummaryNext">Loading live state…</strong></article>
+        <section class="research-command-strip research-command-strip-v2" aria-label="Institute situation in five seconds">
+          <article class="critical"><span>MONEY PATH</span><strong id="researchSummaryMoney">Loading canonical Money Path</strong></article>
+          <article><span>KNOWLEDGE</span><strong id="researchSummaryKnowledge">Checking production evidence</strong></article>
+          <article><span>OWNER</span><strong id="researchSummaryOwner">Checking protected decisions</strong></article>
+          <article><span>AUTONOMOUS</span><strong id="researchSummaryAutonomous">Checking autonomous work</strong></article>
+          <article><span>REAL IDLE</span><strong id="researchSummaryIdle">Calculating truthful idle state</strong></article>
         </section>
 
-        <section class="research-live-grid">
-          <article class="panel portal-section-panel research-now-panel">
-            <div class="panel-head"><div><span class="portal-kicker">NOW</span><h2>Active work</h2></div><span class="pill" id="researchNowCount">Loading live state…</span></div>
-            <div class="research-process-list" id="researchNowList"><div class="research-honest-empty"><strong>Loading live state…</strong><span>Loading live state…</span></div></div>
+        <section class="research-v2-core-grid">
+          <article class="panel portal-section-panel research-money-path-panel">
+            <div class="panel-head"><div><span class="portal-kicker">MONEY PATH</span><h2>Next Money Verdict</h2></div><span class="pill" id="researchMoneyPathStatus">—</span></div>
+            <strong class="research-decision-title" id="researchMoneyCandidate">—</strong>
+            <div class="research-v2-facts">
+              <div><span>Next result</span><strong id="researchMoneyNextResult">—</strong></div>
+              <div><span>Main blocker</span><strong id="researchMoneyBlocker">—</strong></div>
+              <div><span>ETA</span><strong id="researchMoneyEta">—</strong></div>
+            </div>
+            <div class="research-money-stages" id="researchMoneyStages"></div>
+          </article>
+
+          <article class="panel portal-section-panel research-knowledge-panel">
+            <div class="panel-head"><div><span class="portal-kicker">KNOWLEDGE PRODUCTION</span><h2>What is actually producing</h2></div><span class="pill" id="researchKnowledgeStatus">—</span></div>
+            <p class="research-program-principle" id="researchKnowledgeSummary">Waiting for production evidence.</p>
+            <div class="research-knowledge-metrics">
+              <div><span>Atlas</span><strong id="researchKnowledgeAtlas">—</strong></div>
+              <div><span>Discovery</span><strong id="researchKnowledgeDiscovery">—</strong></div>
+              <div><span>Collectors</span><strong id="researchKnowledgeCollectors">—</strong></div>
+              <div><span>Registered candidates</span><strong id="researchKnowledgeCandidates">0</strong></div>
+              <div><span>Raw snapshots today</span><strong id="researchKnowledgeSnapshots">0</strong></div>
+              <div><span>Immutable artifacts today</span><strong id="researchKnowledgeArtifacts">0</strong></div>
+            </div>
           </article>
 
           <article class="panel portal-section-panel resident-live-panel">
-            <div class="panel-head"><div><span class="portal-kicker">RESIDENT</span><h2>Resident Operator</h2></div><span class="pill" id="residentOperatorStatus">Loading live state…</span></div>
+            <div class="panel-head"><div><span class="portal-kicker">RESIDENT</span><h2>Resident Operator</h2></div><span class="pill" id="residentOperatorStatus">__RESIDENT_STATUS__</span></div>
             <div class="resident-live-task">
               <span>Current task</span>
-              <strong id="residentTask">Loading live state…</strong>
-              <small id="residentMission">Loading live state…</small>
+              <strong id="residentTask">__RESIDENT_TASK__</strong>
+              <small id="residentMission">__RESIDENT_MISSION__</small>
             </div>
             <div class="resident-live-meta">
-              <div><span>Engine</span><strong id="residentEngine">Loading live state…</strong></div>
-              <div><span>Started</span><strong id="residentStarted">Loading live state…</strong></div>
-              <div><span>ETA</span><strong id="residentEta">Loading live state…</strong></div>
+              <div><span>Engine</span><strong id="residentEngine">__RESIDENT_ENGINE__</strong></div>
+              <div><span>Started</span><strong id="residentStarted">__RESIDENT_STARTED__</strong></div>
+              <div><span>ETA</span><strong id="residentEta">__RESIDENT_ETA__</strong></div>
             </div>
-            <div class="resident-action-line"><span>Last</span><strong id="residentLastAction">Loading live state…</strong></div>
-            <div class="resident-action-line"><span>Next</span><strong id="residentNextAction">Loading live state…</strong></div>
+            <div class="resident-action-line"><span>Last</span><strong id="residentLastAction">__RESIDENT_LAST__</strong></div>
+            <div class="resident-action-line"><span>Next</span><strong id="residentNextAction">__RESIDENT_NEXT__</strong></div>
             <details class="research-card-details"><summary>Why this state</summary><p id="residentReasoning">—</p><dl class="portal-kv-grid"><div><dt>Selection</dt><dd id="residentEngineReason">—</dd></div><div><dt>Source</dt><dd id="residentSource">—</dd></div></dl><span id="residentActionCount" hidden>0</span><ol id="residentActions" class="portal-plain-list"></ol></details>
           </article>
+
+          <article class="panel portal-section-panel research-infrastructure-panel">
+            <div class="panel-head"><div><span class="portal-kicker">RESEARCH INFRASTRUCTURE</span><h2>Safety and rollout</h2></div><span class="pill" id="researchInfrastructureStatus">—</span></div>
+            <p class="research-program-principle">Infrastructure state is shown separately and never counted as profitability progress.</p>
+            <div class="research-infrastructure-facts">
+              <div><span>ARI</span><strong id="researchInfraAri">—</strong></div>
+              <div><span>Execution authority</span><strong id="researchInfraAuthority">—</strong></div>
+              <div><span>Acceptance</span><strong id="researchInfraAcceptance">—</strong></div>
+              <div><span>Scheduler</span><strong id="researchInfraScheduler">—</strong></div>
+              <div><span>Critical Path Quota</span><strong id="researchInfraQuota">—</strong></div>
+              <div><span>Evidence WIP</span><strong id="researchInfraEvidenceWip">—</strong></div>
+            </div>
+          </article>
         </section>
 
-        <section class="research-decision-grid">
+        <section class="research-result-grid">
+          <article class="panel portal-section-panel research-next-money-panel">
+            <div class="panel-head"><div><span class="portal-kicker">NEXT MONEY RESULT</span><h2 id="researchNextMoneyTitle">—</h2></div><span class="pill" id="researchNextMoneyStatus">—</span></div>
+            <p id="researchNextMoneyDetail">—</p>
+          </article>
+          <article class="panel portal-section-panel research-next-knowledge-panel">
+            <div class="panel-head"><div><span class="portal-kicker">NEXT KNOWLEDGE RESULT</span><h2 id="researchNextKnowledgeTitle">—</h2></div><span class="pill" id="researchNextKnowledgeStatus">—</span></div>
+            <p id="researchNextKnowledgeDetail">—</p>
+          </article>
+        </section>
+
+        <section class="research-decision-grid research-blocker-grid-v2">
           <article class="panel portal-section-panel research-blocker-panel">
-            <div class="panel-head"><div><span class="portal-kicker">BLOCKER</span><h2>Money path bottleneck</h2></div><span class="pill" id="researchBlockerStatus">Loading live state…</span></div>
-            <strong class="research-decision-title" id="researchBlockerTitle">Loading live state…</strong>
-            <p id="researchBlockerReason">Loading live state…</p>
-            <small id="researchBlockerWaitingFor">Loading live state…</small>
-            <details class="research-card-details"><summary id="researchWaitingSummary">Loading live state…</summary><p id="researchBlockerDetail">—</p><div class="research-waiting-list" id="researchWaitingList"></div></details>
+            <div class="panel-head"><div><span class="portal-kicker">MONEY BLOCKER</span><h2>One blocking gate</h2></div><span class="pill" id="researchBlockerStatus">__RESEARCH_BLOCKER_STATUS__</span></div>
+            <strong class="research-decision-title" id="researchBlockerTitle">__RESEARCH_BLOCKER_TITLE__</strong>
+            <p id="researchBlockerReason">__RESEARCH_BLOCKER_REASON__</p>
+            <small id="researchBlockerWaitingFor">__RESEARCH_BLOCKER_WAITING__</small>
+            <details class="research-card-details"><summary id="researchWaitingSummary">__RESEARCH_WAITING_SUMMARY__</summary><p id="researchBlockerDetail">—</p><div class="research-waiting-list" id="researchWaitingList"></div></details>
           </article>
-          <article class="panel portal-section-panel research-next-panel">
-            <div class="panel-head"><div><span class="portal-kicker">NEXT</span><h2>What happens next</h2></div><span class="pill" id="researchNextCount">Loading live state…</span></div>
-            <div class="research-process-list" id="researchNextList"><div class="research-honest-empty"><strong>Loading live state…</strong><span>Loading live state…</span></div></div>
+          <article class="panel portal-section-panel research-infrastructure-blockers-panel">
+            <div class="panel-head"><div><span class="portal-kicker">OTHER BLOCKERS</span><h2>Infrastructure and data</h2></div><span class="pill" id="researchInfrastructureBlockerCount">0</span></div>
+            <div class="research-infrastructure-blockers" id="researchInfrastructureBlockers"></div>
           </article>
         </section>
 
-        <section class="panel portal-section-panel research-flow-panel">
-          <div class="panel-head"><div><span class="portal-kicker">FLOW</span><h2>Pipeline to capital</h2></div><span id="researchPipelinePressure">—</span></div>
-          <div class="research-flow" id="researchOperationalFlow"></div>
-          <p class="research-flow-note" id="researchFlowNote">—</p>
+        <section class="panel portal-section-panel research-collector-summary-panel">
+          <div class="panel-head"><div><span class="portal-kicker">COLLECTOR SUMMARY</span><h2>Observed production</h2></div><span class="pill" id="researchCollectorSummaryStatus">—</span></div>
+          <div class="research-collector-summary">
+            <div><span>Producing</span><strong id="researchCollectorProducing">0</strong></div>
+            <div><span>Waiting / unchanged</span><strong id="researchCollectorWaiting">0</strong></div>
+            <div><span>Degraded</span><strong id="researchCollectorDegraded">0</strong></div>
+            <div><span>Raw snapshots today</span><strong id="researchCollectorSnapshots">0</strong></div>
+            <div><span>Raw bytes today</span><strong id="researchCollectorBytes">0 B</strong></div>
+          </div>
         </section>
 
         <section class="panel portal-section-panel research-background-panel">
@@ -705,11 +754,11 @@
           <div class="research-background-grid" id="researchBackgroundProcesses"></div>
         </section>
 
-        <section class="panel portal-section-panel research-collector-panel">
-          <div class="panel-head"><div><span class="portal-kicker">IRREPLACEABLE DATA</span><h2>Intent-chain collectors</h2></div><span id="researchCollectorMeta">waiting for collector health</span></div>
+        <details class="panel portal-section-panel research-collector-panel">
+          <summary><span><span class="portal-kicker">IRREPLACEABLE DATA</span><strong>Collector contours</strong></span><span id="researchCollectorMeta">waiting for collector health</span></summary>
           <p class="research-program-principle">Background-only, raw-first and isolated. These contours use zero critical-path quota and do not start Validation.</p>
           <div class="research-collector-grid" id="researchCollectorContours"></div>
-        </section>
+        </details>
 
         <section class="panel portal-section-panel research-atlas-panel">
           <div class="panel-head"><div><span class="portal-kicker">KNOWLEDGE PRODUCER</span><h2>Global Predecessor Atlas</h2></div><span class="pill" id="researchAtlasStatus">—</span></div>
@@ -766,7 +815,7 @@
         </section>
 
         <details class="panel portal-section-panel research-foundation-panel">
-          <summary><span><span class="portal-kicker">FOUNDATION</span><strong>Completed work</strong></span><span id="researchFoundationCount">Loading live state…</span></summary>
+          <summary><span><span class="portal-kicker">FOUNDATION</span><strong>Completed work</strong></span><span id="researchFoundationCount">__RESEARCH_FOUNDATION_SUMMARY__</span></summary>
           <p class="muted">Завершённые контуры — память института, а не текущая работа.</p>
           <div class="research-foundation-grid" id="researchFoundation"></div>
         </details>
