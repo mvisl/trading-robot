@@ -5647,3 +5647,139 @@ th:nth-child(3) {
     grid-template-columns: 1fr;
   }
 }
+
+/* Operator-readable desktop density. No essential dashboard text is below 12px. */
+@media (min-width: 901px) {
+  .portal-sidebar { width: 252px; padding: 28px 18px 20px; }
+  .portal-content.shell {
+    width: min(1560px, calc(100vw - 286px));
+    margin-left: 268px;
+    padding-inline: 18px;
+  }
+  .portal-brand { gap: 4px; padding: 8px 12px 26px; }
+  .portal-brand span,
+  .portal-kicker { font-size: 12px; letter-spacing: 0.13em; }
+  .portal-brand strong { font-size: 22px; }
+  .portal-navigation { gap: 9px; }
+  .portal-navigation button {
+    min-height: 56px;
+    padding: 0 14px;
+    grid-template-columns: 28px 1fr;
+    font-size: 17px;
+  }
+  .portal-navigation button span { font-size: 20px; }
+  .portal-sidebar-state { padding: 15px 12px; }
+  .portal-sidebar-state strong { font-size: 16px; }
+  .portal-sidebar-state small { font-size: 12px; }
+
+  .portal-content .topbar h1 { font-size: 36px; letter-spacing: -0.035em; }
+  .portal-content #subtitle {
+    max-width: 900px;
+    font-size: 17px;
+    line-height: 1.4;
+  }
+  .portal-content .nav-badge,
+  .portal-content #shareStatus { font-size: 14px; }
+  .portal-content .strategy-mode-buttons button { min-height: 40px; font-size: 13px; }
+  .portal-content .learning-meter-labels { font-size: 13px; }
+  .portal-content .primary-stop {
+    min-width: 210px;
+    min-height: 132px;
+    font-size: 28px;
+  }
+  .portal-content .panel p,
+  .portal-content .panel small,
+  .portal-content .portal-overview p,
+  .portal-content .portal-overview small {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .portal-content .pill {
+    min-height: 30px;
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+
+  .institute-work-center { gap: 17px; padding: 22px; }
+  .institute-work-head h2 { font-size: 30px; }
+  .institute-work-headline {
+    max-width: 1260px;
+    font-size: 20px;
+    line-height: 1.5;
+  }
+  .institute-work-answers { gap: 12px; }
+  .institute-work-answers article {
+    gap: 6px;
+    min-height: 118px;
+    padding: 16px;
+  }
+  .institute-work-answers span,
+  .living-program-current > span,
+  .living-program-progress span,
+  .living-producer-metrics span,
+  .living-program-flow span,
+  .living-program-timing span,
+  .living-program-change span,
+  .living-program-queue summary > span {
+    font-size: 12px;
+    letter-spacing: 0.065em;
+  }
+  .institute-work-answers strong { font-size: 18px; line-height: 1.35; }
+  .institute-work-answers small { font-size: 14px; }
+
+  .living-program-grid { gap: 14px; }
+  .living-program-card { gap: 13px; padding: 18px; }
+  .living-program-title span { font-size: 11px; }
+  .living-program-title strong { font-size: 21px; line-height: 1.2; }
+  .living-program-title em {
+    max-width: 48%;
+    padding: 6px 8px;
+    font-size: 11px;
+    line-height: 1.35;
+  }
+  .living-program-mission {
+    min-height: 42px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .living-program-current strong,
+  .living-program-progress strong { font-size: 15px; line-height: 1.4; }
+  .living-program-progress > i { height: 7px; }
+  .living-producer-metrics { gap: 7px; }
+  .living-producer-metrics > div { padding: 10px 7px; }
+  .living-producer-metrics strong { font-size: 17px; }
+  .living-program-flow > div {
+    gap: 5px;
+    min-height: 88px;
+    padding: 11px;
+  }
+  .living-program-flow > div strong,
+  .living-program-timing strong,
+  .living-program-queue summary strong { font-size: 13px; line-height: 1.4; }
+  .living-program-flow > b { font-size: 16px; }
+  .living-program-change {
+    gap: 9px;
+    padding-top: 10px;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+  .living-program-queue summary { padding-top: 12px; }
+  .living-program-queue > div > article {
+    grid-template-columns: 26px 1fr;
+    gap: 9px;
+    padding: 10px;
+  }
+  .living-program-queue article > span,
+  .living-program-queue article small { font-size: 12px; }
+  .living-program-queue article strong { font-size: 14px; }
+  .living-program-more > summary { padding: 13px 15px; }
+  .living-program-more > summary strong { font-size: 15px; }
+  .living-program-more > summary span { font-size: 13px; }
+
+  .portal-health-card span,
+  .portal-compact-card span { font-size: 12px; }
+  .portal-health-card strong { font-size: 21px; }
+  .portal-compact-card strong { font-size: 22px; }
+  .portal-mini-panel h3,
+  .panel-head h3 { font-size: 17px; }
+}
