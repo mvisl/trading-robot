@@ -3,6 +3,7 @@ const $ = (id) => document.getElementById(id);
 const IS_SHARED_VIEW = new URLSearchParams(window.location.search).get("shared") === "1";
 const IS_GITHUB_PORTAL = window.location.hostname === "mvisl.github.io";
 const PORTAL_API_ORIGIN = IS_GITHUB_PORTAL ? "https://institute.167-99-214-34.sslip.io" : window.location.origin;
+const CANONICAL_RESEARCH_URL = "https://mvisl.github.io/trading-robot/#research";
 const PORTAL_ACCESS_TOKEN_KEY = "institute_portal_access_token";
 let currentState = null;
 let periodRangeMs = 60 * 60 * 1000;
@@ -5311,7 +5312,7 @@ function renderOperationalResearch(operations) {
 
   const foundation = view.foundation || [];
   setText("researchFoundationCount", foundation[0]?.name ? `${foundation[0].name}${foundation.length > 1 ? ` (+${foundation.length - 1})` : ""}` : "No completed work");
-  if ($("researchFoundation")) $("researchFoundation").innerHTML = foundation.map((row) => `<article><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(portalDate(row.completed_at))}</span><small>${escapeHtml(row.artifact || row.id)}</small></article>`).join("") || `<div class="portal-empty">No completed contours registered.</div>`;
+  if ($("researchFoundation")) $("researchFoundation").innerHTML = foundation.map((row) => `<article><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(portalDate(row.completed_at))}</span><small>${escapeHtml(publicArtifactLabel(row.artifact || row.id))}</small></article>`).join("") || `<div class="portal-empty">No completed contours registered.</div>`;
 }
 
 function renderIntentChainCollectors(collectors) {
@@ -5325,7 +5326,7 @@ function renderIntentChainCollectors(collectors) {
     const sources = Object.entries(row.sources || {});
     const primarySource = sources[0]?.[0] || "No source observed";
     const otherSources = Math.max(0, sources.length - 1);
-    const lastSnapshot = sources.map(([, source]) => source.last_raw_path).filter(Boolean)[0] || "No raw snapshot";
+    const hasSnapshot = sources.some(([, source]) => Boolean(source.last_raw_path));
     return `<article class="research-collector-card tone-${portalTone(row.production_health)}">
       <div class="research-collector-title"><div><span>${escapeHtml(row.unit || "isolated unit")}</span><strong>${escapeHtml(row.contour_id)}</strong></div><em>${escapeHtml(row.production_health || "UNKNOWN")}</em></div>
       <div class="research-collector-source"><span>Source</span><strong>${escapeHtml(primarySource)}${otherSources ? ` (+${otherSources})` : ""}</strong></div>
@@ -5340,11 +5341,12 @@ function renderIntentChainCollectors(collectors) {
       <p>${escapeHtml(compactText(row.historical_coverage || "Coverage not reported", 170))}</p>
       <details class="research-card-details">
         <summary>Sources, provenance and recovery</summary>
-        <div class="research-collector-sources">${sources.map(([id, source]) => `<article><strong>${escapeHtml(id)}</strong><span>${escapeHtml(source.status || "UNKNOWN")}</span><small>${escapeHtml(source.last_error || source.last_raw_path || "No attempt recorded")}</small></article>`).join("") || "<p>No source state.</p>"}</div>
-        <p><strong>Latest raw:</strong> ${escapeHtml(lastSnapshot)}</p>
+        <div class="research-collector-sources">${sources.map(([id, source]) => `<article><strong>${escapeHtml(id)}</strong><span>${escapeHtml(source.status || "UNKNOWN")}</span><small>${escapeHtml(source.last_error || (source.last_success_at ? `Last verified ${portalRelativeTime(source.last_success_at)}` : "No attempt recorded"))}</small></article>`).join("") || "<p>No source state.</p>"}</div>
+        <p><strong>Immutable snapshot:</strong> ${hasSnapshot ? "registered and checksum-addressed" : "not yet registered"}</p>
         <p><strong>Incidents:</strong> ${escapeHtml(row.incident_count || 0)} · <strong>Blocker:</strong> ${escapeHtml(row.current_blocker || "none")}</p>
         <p><strong>Recovery:</strong> ${escapeHtml(row.recovery_action || "none")}</p>
         <p><strong>Critical path:</strong> ${escapeHtml(row.critical_path_quota_used || 0)} · <strong>Linked candidates:</strong> ${escapeHtml(row.linked_research_candidate_count || 0)}</p>
+        <p><a href="${CANONICAL_RESEARCH_URL}">Open canonical Research state</a></p>
       </details>
     </article>`;
   }).join("") || `<div class="research-honest-empty"><strong>No collector health</strong><span>No contour is claimed active without a production health artifact.</span></div>`;
@@ -5493,6 +5495,277 @@ function renderResearchDashboardV2(operations, collectors = []) {
   setText("researchCollectorDegraded", degradedCollectors);
   setText("researchCollectorSnapshots", snapshotsToday ? `≥${snapshotsToday}` : "0");
   setText("researchCollectorBytes", formatPortalBytes(bytesToday));
+  renderInstituteStateDashboard(operations, collectors, {
+    profitability,
+    currentCandidate,
+    criticalPath,
+    moneyCandidate,
+    moneyBlocker,
+    moneyStatus,
+    nextMoney,
+    nextMoneyTitle,
+    moneyEta,
+    atlas,
+    discovery,
+    producingCollectors,
+    waitingCollectors,
+    degradedCollectors,
+    registeredCandidates,
+    evidenceActive,
+    evidenceWip,
+    ownerBlocker,
+    ownerRequired,
+    autonomousCount,
+    knowledgeProducing,
+  });
+}
+
+function renderInstituteStateDashboard(operations, collectors, context) {
+  const {
+    profitability,
+    criticalPath,
+    moneyCandidate,
+    moneyBlocker,
+    moneyStatus,
+    nextMoneyTitle,
+    moneyEta,
+    atlas,
+    discovery,
+    producingCollectors,
+    degradedCollectors,
+    registeredCandidates,
+    evidenceActive,
+    evidenceWip,
+    ownerBlocker,
+    ownerRequired,
+    autonomousCount,
+  } = context;
+  const sourceRows = instituteObservationRows(collectors);
+  const observedSources = sourceRows.filter((row) => ["Observed", "Up to date"].includes(row.status)).length;
+  const nearRegistry = operations.intent_chain_candidate_registry || {};
+  const familyId = nearRegistry.family_id || "IC-NEAR-FAMILY-V1";
+  const atlasStatus = truthfulProducerStatus(atlas, atlas?.metrics?.produced_today);
+  const validationWaiting = ownerRequired || moneyStatus === "WAITING_OWNER" || moneyStatus === "BLOCKED";
+  const exactDecision = ownerBlocker.exact_decision || "Choose a denominator definition or reject RF9-6";
+  const automaticNext = ownerRequired
+    ? "Freeze the chosen denominator, then resume checking"
+    : nextMoneyTitle || "Continue the admitted Money path";
+  const automaticDetail = ownerRequired
+    ? "The Control Plane will preserve the decision, run admission checks and resume the current study without opening the eight waiting studies early."
+    : `Next governed result: ${researchDisplayName(nextMoneyTitle)}.`;
+
+  setText("instituteNowState", ownerRequired ? "Waiting for your decision" : institutePlainMoneyState(moneyStatus));
+  setText("instituteNowSummary", ownerRequired
+    ? "The emission-subsidy study cannot move until its opportunity set is chosen. Public observations continue automatically; no new evidence has been opened."
+    : `The Money path is ${institutePlainMoneyState(moneyStatus).toLowerCase()}. Observation and preparation continue within their mandates.`);
+  setText("instituteOwnerState", ownerRequired ? "1 owner decision needed" : "No owner decision needed");
+  $("instituteOwnerState")?.classList.toggle("clear", !ownerRequired);
+
+  setText("instituteObservingHeadline", observedSources
+    ? `${observedSources} of ${sourceRows.length} sources observed`
+    : "No verified observation output");
+  setText("instituteObservingStatus", observedSources ? "Working autonomously" : "Waiting");
+  setText("instituteObservingDetail", observedSources
+    ? "The institute is preserving permitted public observations without analysis or Money-path quota."
+    : "No permitted source has produced a verified observation.");
+  if ($("instituteObservingSources")) {
+    $("instituteObservingSources").innerHTML = sourceRows.map((row) => `<article>
+      <strong>${escapeHtml(row.name)}</strong>
+      <span>${escapeHtml(row.status)}</span>
+      <small>${escapeHtml(row.detail)}</small>
+    </article>`).join("");
+  }
+
+  const understandingWaiting = String(atlas?.status || "").includes("WAITING");
+  setText("instituteUnderstandingHeadline", understandingWaiting ? "Waiting for one verified source" : "World model is updating");
+  setText("instituteUnderstandingStatus", understandingWaiting ? "Waiting" : researchDisplayName(atlasStatus));
+  setText("instituteUnderstandingDetail", understandingWaiting
+    ? "Mechanism understanding is paused where provenance is missing. This does not block the current Money path."
+    : "New observations are being compared with known mechanisms without touching outcomes.");
+  setHtml("instituteUnderstandingTechnical", `<article>
+    <strong>Current world-model task</strong>
+    <span>${escapeHtml(atlas?.current_program || "No active program")}</span>
+    <small>${escapeHtml(atlas?.current_task || atlas?.reason || "No provenance-valid task")}</small>
+  </article><article>
+    <strong>Technical producer</strong>
+    <span>${escapeHtml(atlas?.status || "UNKNOWN")}</span>
+    <small>Atlas and Discovery details are available only here.</small>
+  </article>`);
+
+  setText("institutePreparingHeadline", registeredCandidates
+    ? `${registeredCandidates} studies registered`
+    : "No registered study family");
+  setText("institutePreparingStatus", registeredCandidates ? "Ready after current decision" : "Empty");
+  setText("institutePreparingDetail", registeredCandidates
+    ? "The family is registered, sealed and waiting. Registration is not execution."
+    : "No governed research family is waiting for admission.");
+  setHtml("institutePreparingTechnical", `<article>
+    <strong>${escapeHtml(familyId)}</strong>
+    <span>${escapeHtml(nearRegistry.registration_contract?.status || "REGISTERED_NOT_STARTED")}</span>
+    <small>${escapeHtml(registeredCandidates)} candidates · execution authority ${escapeHtml(nearRegistry.registration_contract?.execution_authority || "NONE")} · blocked until RF9-6 closes</small>
+  </article>`);
+
+  setText("instituteCheckingHeadline", validationWaiting ? "Waiting for the opportunity-set definition" : "Validation is active");
+  setText("instituteCheckingStatus", validationWaiting ? "Waiting" : `${evidenceActive} active`);
+  setText("instituteCheckingDetail", validationWaiting
+    ? "No evidence work starts until the denominator decision is frozen and admission checks pass."
+    : `${evidenceActive} of ${evidenceWip?.limit ?? "?"} evidence paths are active.`);
+  setHtml("instituteCheckingTechnical", `<article>
+    <strong>Protected validation gate</strong>
+    <span>${escapeHtml(validationWaiting ? "CLOSED" : "OPEN")}</span>
+    <small>${escapeHtml(researchDisplayName(moneyBlocker))}</small>
+  </article><article>
+    <strong>After the gate</strong>
+    <span>Automatic</span>
+    <small>Freeze contract → collision check → admission → validation.</small>
+  </article>`);
+
+  setText("instituteMoneyHeadline", ownerRequired ? "No verdict until the study is defined" : researchDisplayName(moneyCandidate));
+  setText("instituteMoneyStatus", ownerRequired ? "Owner needed" : institutePlainMoneyState(moneyStatus));
+  setText("instituteMoneyDetail", ownerRequired
+    ? "Capital remains protected. The next Money Verdict cannot be estimated honestly until the denominator is frozen."
+    : `Next result ${researchDisplayName(nextMoneyTitle)} · ${moneyEta}.`);
+  setHtml("instituteMoneyTechnical", `<article>
+    <strong>Current Money path</strong>
+    <span>${escapeHtml(criticalPath.candidate || moneyCandidate)}</span>
+    <small>${escapeHtml(researchDisplayName(criticalPath.blocking_reasons?.[0]?.code || moneyBlocker))}</small>
+  </article><article>
+    <strong>Profitability deadline</strong>
+    <span>${escapeHtml(profitability.decision_date || "2026-08-15")}</span>
+    <small>${escapeHtml(profitability.days_remaining_to_decision ?? "—")} days remaining</small>
+  </article>`);
+
+  setText("instituteBlockerTitle", ownerRequired ? "Choose the emission-subsidy opportunity set" : researchDisplayName(moneyBlocker));
+  setText("instituteBlockerDetail", ownerRequired
+    ? "The recovered source card does not contain enough fields to define the opportunity set without an explicit research-discipline decision."
+    : "The current Money-path gate is machine-owned.");
+  setText("instituteAutomaticNext", automaticNext);
+  setText("instituteAutomaticNextDetail", automaticDetail);
+  setText("instituteAutonomy", observedSources ? "Observation collection continues" : "No autonomous production proven");
+  setText("instituteAutonomyDetail", `${observedSources}/${sourceRows.length} observation sources verified · ${registeredCandidates} studies remain sealed · Money-path quota unchanged.`);
+  setText("instituteOwnerDecision", ownerRequired ? "One bounded research decision" : "Nothing right now");
+  setText("instituteOwnerDecisionDetail", ownerRequired
+    ? "Choose one of four prepared definitions or reject the study. No capital, Runtime or Atlas change is requested."
+    : "The institute can continue under existing mandates.");
+
+  const incidentSummary = instituteIncidentSummary(operations.governance_incidents || []);
+  setText("instituteMoneyStackStatus", ownerRequired ? "Waiting for owner" : institutePlainMoneyState(moneyStatus));
+  setHtml("instituteMoneyStackDetail", `<article><strong>Current path</strong><span>${escapeHtml(criticalPath.candidate || moneyCandidate)}</span><small>${escapeHtml(researchDisplayName(moneyBlocker))}</small></article>
+    <article><strong>Next result</strong><span>${escapeHtml(researchDisplayName(nextMoneyTitle))}</span><small>${escapeHtml(moneyEta)}</small></article>
+    <a href="${CANONICAL_RESEARCH_URL}">Open canonical Money state</a>`);
+
+  setText("instituteKnowledgeStackStatus", understandingWaiting ? "Waiting for source" : researchDisplayName(atlasStatus));
+  setHtml("instituteKnowledgeStackDetail", `<article><strong>Understanding</strong><span>${escapeHtml(atlas?.status || "UNKNOWN")}</span><small>${escapeHtml(atlas?.current_task || atlas?.reason || "No current task")}</small></article>
+    <article><strong>Discovery</strong><span>${escapeHtml(discovery?.status || "UNKNOWN")}</span><small>${escapeHtml(discovery?.reason || "Governed producer state")}</small></article>`);
+
+  setText("instituteObservationStackStatus", `${observedSources}/${sourceRows.length} observed`);
+  setHtml("instituteObservationStackDetail", sourceRows.map((row) => `<article><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(row.status)}</span><small>${escapeHtml(row.detail)}</small></article>`).join(""));
+
+  setText("instituteGovernanceStackStatus", ownerRequired ? "1 decision needed" : "Protected");
+  setHtml("instituteGovernanceStackDetail", `<article><strong>Current owner gate</strong><span>${escapeHtml(ownerRequired ? "RF9-6 denominator" : "None")}</span><small>${escapeHtml(ownerRequired ? exactDecision : "Existing mandates are sufficient")}</small></article>
+    <article><strong>Waiting family</strong><span>${escapeHtml(familyId)}</span><small>IC5 required · outcomes sealed · standard admission only</small></article>`);
+
+  const mismatches = operations.reconciliation?.mismatches || [];
+  setText("instituteInfrastructureStackStatus", mismatches.length ? "Attention in detail" : "Stable");
+  setHtml("instituteInfrastructureStackDetail", `<article><strong>Current problem</strong><span>${escapeHtml(ownerRequired ? "RF9-6 owner decision" : "None")}</span><small>Infrastructure activity is not counted as profitability progress.</small></article>
+    <article><strong>History</strong><span>${escapeHtml(incidentSummary.resolved)} resolved</span><small>${escapeHtml(incidentSummary.history)}</small></article>
+    <article><strong>Recurrence</strong><span>${escapeHtml(incidentSummary.recurrence)}</span><small>${escapeHtml(incidentSummary.recurrenceDetail)}</small></article>`);
+}
+
+function instituteObservationRows(collectors) {
+  const sources = new Map();
+  for (const collector of collectors || []) {
+    for (const [sourceId, source] of Object.entries(collector.sources || {})) {
+      sources.set(sourceId, { ...source, contour: collector });
+    }
+  }
+  const source = (id) => sources.get(id) || null;
+  const combined = (ids) => ids.map(source).filter(Boolean);
+  const row = (name, candidates, fallback) => {
+    const items = Array.isArray(candidates) ? candidates : [candidates];
+    const observed = items.find((item) => item?.last_success_at);
+    const blocked = items.find((item) => item?.last_error || String(item?.status || "").includes("WAITING"));
+    const status = observed
+      ? (observed.status === "SOURCE_UNCHANGED" ? "Up to date" : "Observed")
+      : blocked
+        ? "Waiting"
+        : "Not observed";
+    return {
+      name,
+      status,
+      detail: blocked?.last_error
+        ? institutePlainSourceReason(blocked.last_error)
+        : observed?.last_success_at
+          ? `Last verified ${portalRelativeTime(observed.last_success_at)}`
+          : fallback,
+    };
+  };
+  const warContour = (collectors || []).find((item) => item.contour_id === "WAR_RISK_SOURCE_ACQUISITION");
+  return [
+    row("AGSI", combined(["GIE_AGSI_INCREMENTAL", "GIE_AGSI_BACKFILL"]), "Official access is not configured"),
+    row("ENTSOG", source("ENTSOG_NOMINATION_INCREMENTAL"), "No nomination snapshot"),
+    row("PortWatch", combined(["IMF_PORTWATCH_OGC_CATALOG", "IMF_PORTWATCH_DCAT"]), "No public catalogue snapshot"),
+    row("Binance status", combined(["BINANCE_MARGIN_ELIGIBILITY", "BINANCE_MONITORING_TAG_CATALOG", "BINANCE_DELISTING_CATALOG"]), "No exchange-status snapshot"),
+    row("Wayback schedules", source("WAYBACK_RUSSELL_SCHEDULE_CDX"), "No schedule archive snapshot"),
+    warContour?.source_acquisition_decision?.status === "DATA_SOURCE_NOT_YET_AVAILABLE"
+      ? { name: "War Risk quotes", status: "Waiting", detail: "No legal reproducible quote series is available" }
+      : row("War Risk quotes", combined(["LMA_JWC_LISTED_AREAS", "GARD_WAR_RISK_GUIDANCE"]), "No reproducible quote source"),
+  ];
+}
+
+function institutePlainSourceReason(value) {
+  const text = String(value || "");
+  if (text.includes("GIE_API_KEY")) return "Official API access key is not configured";
+  if (text.includes("DATA_SOURCE_NOT_YET_AVAILABLE")) return "No legal reproducible source is available";
+  if (text.includes("unexpected_http_status")) return "The source returned an unexpected response";
+  return researchDisplayName(text);
+}
+
+function institutePlainMoneyState(value) {
+  const labels = {
+    WAITING_OWNER: "Waiting for owner",
+    WAITING_DATA: "Waiting for data",
+    VALIDATING: "Checking evidence",
+    HOLDOUT: "Checking holdout",
+    REPLICATING: "Replicating",
+    RUNNING: "Working",
+    BLOCKED: "Waiting",
+  };
+  return labels[String(value || "")] || researchDisplayName(value);
+}
+
+function instituteIncidentSummary(incidents) {
+  const resolved = incidents.filter((row) => row.status === "RESOLVED");
+  const open = incidents.filter((row) => row.status !== "RESOLVED");
+  const groups = new Map();
+  for (const incident of open) {
+    const key = `${incident.contour_id || "INSTITUTE"}|${incident.code || "UNKNOWN"}`;
+    const group = groups.get(key) || { count: 0, code: incident.code, contour: incident.contour_id, last: null };
+    group.count += 1;
+    if (!group.last || Date.parse(incident.detected_at || 0) > Date.parse(group.last || 0)) group.last = incident.detected_at;
+    groups.set(key, group);
+  }
+  const recurrent = [...groups.values()].sort((a, b) => b.count - a.count)[0];
+  return {
+    resolved: resolved.length,
+    history: resolved.length ? `Last resolved ${portalRelativeTime(resolved.at(-1)?.resolved_at || resolved.at(-1)?.detected_at)}` : "No resolved incident history",
+    recurrence: recurrent ? `${researchDisplayName(recurrent.code)} ×${recurrent.count}` : "No repeated state",
+    recurrenceDetail: recurrent
+      ? `${researchDisplayName(recurrent.contour)} · last repeated ${portalRelativeTime(recurrent.last)} · grouped as one state`
+      : "No repeated terminal state is being shown.",
+  };
+}
+
+function setHtml(id, html) {
+  const element = $(id);
+  if (element) element.innerHTML = html;
+}
+
+function publicArtifactLabel(value) {
+  const text = String(value || "—");
+  if (!/[\\/]/.test(text)) return text;
+  const name = text.split(/[\\/]/).filter(Boolean).at(-1) || "registered artifact";
+  return `Registered artifact · ${name.replace(/\.[A-Za-z0-9]+$/, "")}`;
 }
 
 function researchMoneyPathStatus(candidate, criticalPath) {
@@ -6047,7 +6320,7 @@ function renderResearchContours(operations) {
     : researchContourFilter === "COMPLETED"
       ? row.status === "COMPLETED"
       : !["BLOCKED", "WAITING_OWNER", "COMPLETED", "REJECTED"].includes(row.status));
-  if ($("researchContours")) $("researchContours").innerHTML = filtered.slice(0, 24).map((row) => `<article class="research-contour tone-${portalTone(row.status)}"><div><strong>${escapeHtml(row.title)}</strong><span>${escapeHtml(row.status)}</span></div><small>${escapeHtml(row.contour_id)}</small><div class="research-contour-bar"><i style="width:${Number(row.progress || 0)}%"></i></div><dl><div><dt>ETA</dt><dd>${escapeHtml(row.eta_days == null ? "unknown" : `${row.eta_days}d`)}</dd></div><div><dt>Artifact</dt><dd>${escapeHtml(row.current_artifact || "—")}</dd></div></dl><p>${escapeHtml(row.next_milestone || row.blocking_reasons?.join(", ") || "No next milestone")}</p></article>`).join("") || `<div class="portal-empty">No ${escapeHtml(researchContourFilter.toLowerCase())} contours.</div>`;
+  if ($("researchContours")) $("researchContours").innerHTML = filtered.slice(0, 24).map((row) => `<article class="research-contour tone-${portalTone(row.status)}"><div><strong>${escapeHtml(row.title)}</strong><span>${escapeHtml(row.status)}</span></div><small>${escapeHtml(row.contour_id)}</small><div class="research-contour-bar"><i style="width:${Number(row.progress || 0)}%"></i></div><dl><div><dt>ETA</dt><dd>${escapeHtml(row.eta_days == null ? "unknown" : `${row.eta_days}d`)}</dd></div><div><dt>Artifact</dt><dd>${escapeHtml(publicArtifactLabel(row.current_artifact || "—"))}</dd></div></dl><p>${escapeHtml(row.next_milestone || row.blocking_reasons?.join(", ") || "No next milestone")}</p></article>`).join("") || `<div class="portal-empty">No ${escapeHtml(researchContourFilter.toLowerCase())} contours.</div>`;
 }
 
 function renderHandoffPortal(operations) {

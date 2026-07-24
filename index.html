@@ -4,14 +4,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Institute Control Center</title>
-    <link rel="stylesheet" href="./styles.css?v=20260724-readable-portal-v1" />
+    <link rel="stylesheet" href="./styles.css?v=20260724-institute-state-v2" />
   </head>
   <body>
     <section class="portal-auth-overlay" id="portalAuthOverlay" hidden>
       <form class="portal-auth-card" id="portalAuthForm">
         <span>INSTITUTE</span>
         <h1>Open Control Center</h1>
-        <p>Enter the dashboard code. The portal stays on GitHub Pages; the code is sent only to the live institute backend.</p>
+        <p>Enter the dashboard code. Authentication is checked by the canonical institute backend.</p>
         <input id="portalAuthCode" name="code" type="password" inputmode="numeric" autocomplete="one-time-code" aria-label="Dashboard code" />
         <button type="submit">Open dashboard</button>
         <small id="portalAuthStatus"></small>
@@ -27,7 +27,7 @@
       <nav class="portal-navigation" id="portalNavigation"></nav>
       <div class="portal-sidebar-state">
         <span id="portalLiveDot" class="portal-live-dot"></span>
-        <div><strong id="portalStateLabel">__PORTAL_STATE_LABEL__</strong><small id="portalStateMeta">__PORTAL_STATE_META__</small></div>
+        <div><strong id="portalStateLabel">Loading live state…</strong><small id="portalStateMeta">Loading live state…</small></div>
       </div>
     </aside>
     <main class="shell portal-content">
@@ -600,19 +600,19 @@
           <div class="server-runbook-grid">
             <div>
               <strong>Open from anywhere</strong>
-              <span>http://167.99.214.34 · code 2501</span>
+              <span>https://mvisl.github.io/trading-robot/</span>
             </div>
             <div>
               <strong>Source of truth</strong>
-              <span>GitHub main branch; server runs /opt/trading-robot</span>
+              <span>Canonical server state through the public institute portal</span>
             </div>
             <div>
               <strong>Remote Libertex browser</strong>
-              <span>SSH tunnel to localhost:6080 only; noVNC is not public</span>
+              <span>Private browser access is not exposed through the public portal</span>
             </div>
             <div>
               <strong>Local Mac</strong>
-              <span>Do not start localhost:3000 for daily operation; avoid two robots</span>
+              <span>Do not create a second live portal or runner</span>
             </div>
           </div>
         </section>
@@ -647,7 +647,86 @@
       </section>
 
       <section class="portal-view" id="portal-research" data-portal-view="research" hidden>
-        <header class="portal-page-head research-command-head"><div><span class="portal-kicker">Live Institute</span><h1>Research Operations</h1><p>Что работает сейчас, что ждёт и что приблизит следующий Money Verdict.</p></div><span class="pill" id="researchFreshness">__RESEARCH_FRESHNESS__</span></header>
+        <header class="portal-page-head institute-state-head">
+          <div><span class="portal-kicker">Institute now</span><h1>Institute State</h1><p>Где находится институт, что его блокирует и что произойдёт дальше.</p></div>
+          <span class="pill" id="researchFreshness">Loading live state…</span>
+        </header>
+
+        <section class="institute-state-hero" aria-label="Current institute state">
+          <div class="institute-state-message">
+            <div>
+              <span class="portal-kicker">Right now</span>
+              <h2 id="instituteNowState">Reading canonical state</h2>
+              <p id="instituteNowSummary">Checking the Money path and autonomous observation work.</p>
+            </div>
+            <span class="institute-owner-pill" id="instituteOwnerState">Checking owner decision</span>
+          </div>
+
+          <div class="institute-journey" id="instituteJourney">
+            <details class="institute-journey-step observing">
+              <summary><span>01</span><div><small>Observing</small><strong id="instituteObservingHeadline">Checking sources</strong></div><em id="instituteObservingStatus">—</em></summary>
+              <p id="instituteObservingDetail">Public observations and missing-source reasons.</p>
+              <div class="institute-source-list" id="instituteObservingSources"></div>
+            </details>
+            <span class="institute-journey-arrow" aria-hidden="true">→</span>
+            <details class="institute-journey-step understanding">
+              <summary><span>02</span><div><small>Understanding</small><strong id="instituteUnderstandingHeadline">Checking world model</strong></div><em id="instituteUnderstandingStatus">—</em></summary>
+              <p id="instituteUnderstandingDetail">How observations are being turned into mechanism understanding.</p>
+              <div class="institute-detail-box" id="instituteUnderstandingTechnical"></div>
+            </details>
+            <span class="institute-journey-arrow" aria-hidden="true">→</span>
+            <details class="institute-journey-step preparing">
+              <summary><span>03</span><div><small>Preparing</small><strong id="institutePreparingHeadline">Checking registered work</strong></div><em id="institutePreparingStatus">—</em></summary>
+              <p id="institutePreparingDetail">Registered research waiting for formal admission.</p>
+              <div class="institute-detail-box" id="institutePreparingTechnical"></div>
+            </details>
+            <span class="institute-journey-arrow" aria-hidden="true">→</span>
+            <details class="institute-journey-step checking">
+              <summary><span>04</span><div><small>Checking</small><strong id="instituteCheckingHeadline">Checking validation</strong></div><em id="instituteCheckingStatus">—</em></summary>
+              <p id="instituteCheckingDetail">The evidence step never starts until its protected gates are satisfied.</p>
+              <div class="institute-detail-box" id="instituteCheckingTechnical"></div>
+            </details>
+            <span class="institute-journey-arrow" aria-hidden="true">→</span>
+            <details class="institute-journey-step money">
+              <summary><span>05</span><div><small>Money</small><strong id="instituteMoneyHeadline">Checking verdict path</strong></div><em id="instituteMoneyStatus">—</em></summary>
+              <p id="instituteMoneyDetail">The next honest Money Verdict and its protected path to capital.</p>
+              <div class="institute-detail-box" id="instituteMoneyTechnical"></div>
+            </details>
+          </div>
+
+          <div class="institute-decision-row">
+            <article class="blocker"><span>What blocks the institute</span><strong id="instituteBlockerTitle">—</strong><p id="instituteBlockerDetail">—</p></article>
+            <article class="next"><span>What happens automatically next</span><strong id="instituteAutomaticNext">—</strong><p id="instituteAutomaticNextDetail">—</p></article>
+            <article class="autonomous"><span>What works without the owner</span><strong id="instituteAutonomy">—</strong><p id="instituteAutonomyDetail">—</p></article>
+            <article class="owner"><span>Where your decision is needed</span><strong id="instituteOwnerDecision">—</strong><p id="instituteOwnerDecisionDetail">—</p></article>
+          </div>
+        </section>
+
+        <nav class="institute-stack-nav" aria-label="Institute stacks">
+          <details class="institute-stack money-stack">
+            <summary><span>Money Stack</span><strong id="instituteMoneyStackStatus">—</strong></summary>
+            <div id="instituteMoneyStackDetail"></div>
+          </details>
+          <details class="institute-stack knowledge-stack">
+            <summary><span>Knowledge Stack</span><strong id="instituteKnowledgeStackStatus">—</strong></summary>
+            <div id="instituteKnowledgeStackDetail"></div>
+          </details>
+          <details class="institute-stack observation-stack">
+            <summary><span>Observation Stack</span><strong id="instituteObservationStackStatus">—</strong></summary>
+            <div id="instituteObservationStackDetail"></div>
+          </details>
+          <details class="institute-stack governance-stack">
+            <summary><span>Governance Stack</span><strong id="instituteGovernanceStackStatus">—</strong></summary>
+            <div id="instituteGovernanceStackDetail"></div>
+          </details>
+          <details class="institute-stack infrastructure-stack">
+            <summary><span>Infrastructure Stack</span><strong id="instituteInfrastructureStackStatus">—</strong></summary>
+            <div id="instituteInfrastructureStackDetail"></div>
+          </details>
+        </nav>
+
+        <details class="institute-technical-surface">
+          <summary><span><span class="portal-kicker">Progressive disclosure</span><strong>Technical process detail</strong></span><em>Open Registry, producers, collectors, governance and diagnostics</em></summary>
 
         <section class="research-command-strip research-command-strip-v2" aria-label="Institute situation in five seconds">
           <article class="critical"><span>MONEY PATH</span><strong id="researchSummaryMoney">Loading canonical Money Path</strong></article>
@@ -683,19 +762,19 @@
           </article>
 
           <article class="panel portal-section-panel resident-live-panel">
-            <div class="panel-head"><div><span class="portal-kicker">RESIDENT</span><h2>Resident Operator</h2></div><span class="pill" id="residentOperatorStatus">__RESIDENT_STATUS__</span></div>
+            <div class="panel-head"><div><span class="portal-kicker">RESIDENT</span><h2>Resident Operator</h2></div><span class="pill" id="residentOperatorStatus">Loading live state…</span></div>
             <div class="resident-live-task">
               <span>Current task</span>
-              <strong id="residentTask">__RESIDENT_TASK__</strong>
-              <small id="residentMission">__RESIDENT_MISSION__</small>
+              <strong id="residentTask">Loading live state…</strong>
+              <small id="residentMission">Loading live state…</small>
             </div>
             <div class="resident-live-meta">
-              <div><span>Engine</span><strong id="residentEngine">__RESIDENT_ENGINE__</strong></div>
-              <div><span>Started</span><strong id="residentStarted">__RESIDENT_STARTED__</strong></div>
-              <div><span>ETA</span><strong id="residentEta">__RESIDENT_ETA__</strong></div>
+              <div><span>Engine</span><strong id="residentEngine">Loading live state…</strong></div>
+              <div><span>Started</span><strong id="residentStarted">Loading live state…</strong></div>
+              <div><span>ETA</span><strong id="residentEta">Loading live state…</strong></div>
             </div>
-            <div class="resident-action-line"><span>Last</span><strong id="residentLastAction">__RESIDENT_LAST__</strong></div>
-            <div class="resident-action-line"><span>Next</span><strong id="residentNextAction">__RESIDENT_NEXT__</strong></div>
+            <div class="resident-action-line"><span>Last</span><strong id="residentLastAction">Loading live state…</strong></div>
+            <div class="resident-action-line"><span>Next</span><strong id="residentNextAction">Loading live state…</strong></div>
             <details class="research-card-details"><summary>Why this state</summary><p id="residentReasoning">—</p><dl class="portal-kv-grid"><div><dt>Selection</dt><dd id="residentEngineReason">—</dd></div><div><dt>Source</dt><dd id="residentSource">—</dd></div></dl><span id="residentActionCount" hidden>0</span><ol id="residentActions" class="portal-plain-list"></ol></details>
           </article>
 
@@ -726,11 +805,11 @@
 
         <section class="research-decision-grid research-blocker-grid-v2">
           <article class="panel portal-section-panel research-blocker-panel">
-            <div class="panel-head"><div><span class="portal-kicker">MONEY BLOCKER</span><h2>One blocking gate</h2></div><span class="pill" id="researchBlockerStatus">__RESEARCH_BLOCKER_STATUS__</span></div>
-            <strong class="research-decision-title" id="researchBlockerTitle">__RESEARCH_BLOCKER_TITLE__</strong>
-            <p id="researchBlockerReason">__RESEARCH_BLOCKER_REASON__</p>
-            <small id="researchBlockerWaitingFor">__RESEARCH_BLOCKER_WAITING__</small>
-            <details class="research-card-details"><summary id="researchWaitingSummary">__RESEARCH_WAITING_SUMMARY__</summary><p id="researchBlockerDetail">—</p><div class="research-waiting-list" id="researchWaitingList"></div></details>
+            <div class="panel-head"><div><span class="portal-kicker">MONEY BLOCKER</span><h2>One blocking gate</h2></div><span class="pill" id="researchBlockerStatus">Loading live state…</span></div>
+            <strong class="research-decision-title" id="researchBlockerTitle">Loading live state…</strong>
+            <p id="researchBlockerReason">Loading live state…</p>
+            <small id="researchBlockerWaitingFor">Loading live state…</small>
+            <details class="research-card-details"><summary id="researchWaitingSummary">Loading live state…</summary><p id="researchBlockerDetail">—</p><div class="research-waiting-list" id="researchWaitingList"></div></details>
           </article>
           <article class="panel portal-section-panel research-infrastructure-blockers-panel">
             <div class="panel-head"><div><span class="portal-kicker">OTHER BLOCKERS</span><h2>Infrastructure and data</h2></div><span class="pill" id="researchInfrastructureBlockerCount">0</span></div>
@@ -815,7 +894,7 @@
         </section>
 
         <details class="panel portal-section-panel research-foundation-panel">
-          <summary><span><span class="portal-kicker">FOUNDATION</span><strong>Completed work</strong></span><span id="researchFoundationCount">__RESEARCH_FOUNDATION_SUMMARY__</span></summary>
+          <summary><span><span class="portal-kicker">FOUNDATION</span><strong>Completed work</strong></span><span id="researchFoundationCount">Loading live state…</span></summary>
           <p class="muted">Завершённые контуры — память института, а не текущая работа.</p>
           <div class="research-foundation-grid" id="researchFoundation"></div>
         </details>
@@ -852,6 +931,7 @@
           <section class="panel portal-section-panel"><div class="panel-head"><h2>Autonomous Actions</h2><span id="autonomousActionCount">0</span></div><div id="autonomousActions" class="autonomous-action-list"></div></section>
           <section class="panel portal-section-panel"><div class="panel-head"><h2>Contours</h2><div class="portal-filter-group" id="contourFilters"></div></div><div class="research-contours" id="researchContours"></div></section>
         </details>
+        </details>
       </section>
 
       <section class="portal-view" id="portal-handoff" data-portal-view="handoff" hidden>
@@ -861,7 +941,7 @@
           <article class="panel portal-section-panel"><div class="panel-head"><h2>Next Agent Must Know</h2><span>canonical</span></div><ul id="handoffFacts" class="portal-fact-list"></ul></article>
         </section>
         <section class="panel portal-section-panel"><div class="panel-head"><h2>Recent Immutable Artifacts</h2><span id="handoffArtifactCount">0</span></div><div id="handoffArtifacts" class="artifact-grid"></div></section>
-        <section class="panel portal-section-panel"><div class="panel-head"><h2>Operational Access</h2><span>single server</span></div><div class="handoff-grid"><div><strong>Canonical Portal</strong><span>One public link; read-only institute state.</span></div><div><strong>Server</strong><span>trading-robot-01 · /opt/trading-robot</span></div><div><strong>State Integrity</strong><span id="handoffIntegrity">—</span></div><div><strong>Do not split brain</strong><span>Do not launch localhost UI or a second live runner.</span></div></div></section>
+        <section class="panel portal-section-panel"><div class="panel-head"><h2>Operational Access</h2><span>single public portal</span></div><div class="handoff-grid"><div><strong>Canonical Portal</strong><span>https://mvisl.github.io/trading-robot/#research</span></div><div><strong>State source</strong><span>Canonical server state through this portal.</span></div><div><strong>State Integrity</strong><span id="handoffIntegrity">—</span></div><div><strong>Do not split brain</strong><span>Do not launch localhost UI or a second live runner.</span></div></div></section>
       </section>
 
       <section class="portal-view" id="portal-council" data-portal-view="council" hidden>
@@ -880,6 +960,6 @@
       </div>
       <div class="mobile-detail-body" id="mobileDetailBody"></div>
     </aside>
-    <script src="./app.js?v=20260724-research-operations-v2-3" type="module"></script>
+    <script src="./app.js?v=20260724-institute-state-v2-1" type="module"></script>
   </body>
 </html>
