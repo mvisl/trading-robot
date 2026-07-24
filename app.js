@@ -5591,7 +5591,7 @@ function renderInstituteStateDashboard(operations, collectors, context) {
     ? "Save the choice, then start checking"
     : nextMoneyTitle || "Continue the admitted Money path";
   const automaticDetail = ownerRequired
-    ? "The institute will lock the chosen rules, verify that the study is safe to start, and begin checking. Eight waiting studies stay closed."
+    ? "Save the choice → run safety checks → start Checking → produce the next Money Verdict. Eight waiting studies stay closed."
     : `Next expected result: ${researchDisplayName(nextMoneyTitle)}.`;
 
   setText("instituteNowState", ownerRequired ? "Waiting for your decision" : institutePlainMoneyState(moneyStatus));
@@ -5677,7 +5677,7 @@ function renderInstituteStateDashboard(operations, collectors, context) {
 
   setText("instituteBlockerTitle", ownerRequired ? "Choose what counts as a valid opportunity" : researchDisplayName(moneyBlocker));
   setText("instituteBlockerDetail", ownerRequired
-    ? "The saved study definition is incomplete. Continuing without your choice would change the rules after the fact."
+    ? "The saved study rules are incomplete. Continuing without your choice would change the rules after the fact. After your choice: safety check → Checking → Money Verdict."
     : "The current blocker can be removed automatically.");
   setText("instituteAutomaticNext", automaticNext);
   setText("instituteAutomaticNextDetail", automaticDetail);
@@ -5688,7 +5688,7 @@ function renderInstituteStateDashboard(operations, collectors, context) {
     ? "Choose one of four prepared definitions or stop the study. No capital or system change is requested."
     : "The institute can continue under existing mandates.");
 
-  const incidentSummary = instituteIncidentSummary(operations.governance_incidents || []);
+  const incidentSummary = instituteIncidentSummary(operations.governance_incidents || operations.open_incidents || []);
   setText("instituteMoneyStackStatus", ownerRequired ? "Waiting for owner" : institutePlainMoneyState(moneyStatus));
   setHtml("instituteMoneyStackDetail", `<article><strong>Now</strong><span>${escapeHtml(ownerRequired ? "Study rules waiting for owner" : researchDisplayName(moneyCandidate))}</span><small>${escapeHtml(criticalPath.candidate || moneyCandidate)}</small></article>
     <article><strong>Waiting for</strong><span>${escapeHtml(ownerRequired ? "One bounded owner choice" : researchDisplayName(moneyBlocker))}</span><small>${escapeHtml(ownerRequired ? exactDecision : moneyEta)}</small></article>
@@ -5712,9 +5712,10 @@ function renderInstituteStateDashboard(operations, collectors, context) {
     <article><strong>Next</strong><span>Record the choice → run RVS admission → keep IC5 controls</span><small>Outcomes remain sealed until admission succeeds.</small></article>`);
 
   const mismatches = operations.reconciliation?.mismatches || [];
+  const blockingMismatches = mismatches.filter((row) => row.blocking).length;
   setText("instituteInfrastructureStackStatus", mismatches.length || incidentSummary.activeCount ? "Attention in detail" : "Stable");
-  setHtml("instituteInfrastructureStackDetail", `<article><strong>Now</strong><span>${escapeHtml(incidentSummary.activeCount ? `${incidentSummary.activeCount} active problem${incidentSummary.activeCount === 1 ? "" : "s"}` : "No active fire")}</span><small>${escapeHtml(incidentSummary.active)}</small></article>
-    <article><strong>Waiting for</strong><span>${escapeHtml(mismatches.length ? `${mismatches.length} state mismatch${mismatches.length === 1 ? "" : "es"}` : "Nothing")}</span><small>Recovered history is not displayed as a current fire.</small></article>
+  setHtml("instituteInfrastructureStackDetail", `<article><strong>Now</strong><span>${escapeHtml(mismatches.length ? `${mismatches.length} state integrity problem${mismatches.length === 1 ? "" : "s"}` : incidentSummary.activeCount ? `${incidentSummary.activeCount} active problem${incidentSummary.activeCount === 1 ? "" : "s"}` : "No active fire")}</span><small>${escapeHtml(mismatches.length ? `${blockingMismatches} blocking · ${mismatches.length - blockingMismatches} non-blocking · no runner fire claimed` : incidentSummary.active)}</small></article>
+    <article><strong>Waiting for</strong><span>${escapeHtml(mismatches.length ? "State reconciliation" : "Nothing")}</span><small>Recovered history is not displayed as a current fire.</small></article>
     <article><strong>Next</strong><span>Continue health checks and reconcile changed fingerprints</span><small>Unchanged terminal states only increment their occurrence count.</small></article>
     <article><strong>Active terminal state</strong><span>${escapeHtml(incidentSummary.terminal)}</span><small>${escapeHtml(incidentSummary.terminalDetail)}</small></article>
     <article><strong>Recovered history</strong><span>${escapeHtml(incidentSummary.resolved)} resolved</span><small>${escapeHtml(incidentSummary.history)}</small></article>`);
