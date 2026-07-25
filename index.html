@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Institute Control Center</title>
-    <link rel="stylesheet" href="./styles.css?v=20260724-institute-state-v3" />
+    <link rel="stylesheet" href="./styles.css?v=20260725-pipeline-truth-v1" />
   </head>
   <body>
     <section class="portal-auth-overlay" id="portalAuthOverlay" hidden>
@@ -662,6 +662,31 @@
             <span class="institute-owner-pill" id="instituteOwnerState">Checking owner decision</span>
           </div>
 
+          <div class="pipeline-truth-grid" aria-label="Research pipeline truth">
+            <details class="pipeline-truth-card" data-institute-popup="Executing now">
+              <summary><span>Executing now</span><strong id="pipelineTruthExecuting">0</strong><small id="pipelineTruthExecutingBrief">No executable research</small></summary>
+              <div id="pipelineTruthExecutingDetail"></div>
+            </details>
+            <details class="pipeline-truth-card" data-institute-popup="Committed next">
+              <summary><span>Committed next</span><strong id="pipelineTruthCommitted">8</strong><small id="pipelineTruthCommittedBrief">Waiting behind RF9-6</small></summary>
+              <div id="pipelineTruthCommittedDetail"></div>
+            </details>
+            <details class="pipeline-truth-card" data-institute-popup="Blocked work">
+              <summary><span>Blocked</span><strong id="pipelineTruthBlocked">4</strong><small id="pipelineTruthBlockedBrief">Recovery or terminal outcome recorded</small></summary>
+              <div id="pipelineTruthBlockedDetail"></div>
+            </details>
+            <details class="pipeline-truth-card" data-institute-popup="Collectors">
+              <summary><span>Collectors producing</span><strong id="pipelineTruthCollectors">0/0</strong><small>Independent timer contours</small></summary>
+              <div id="pipelineTruthCollectorsDetail"></div>
+            </details>
+            <article class="pipeline-truth-card emphasis">
+              <span>Current bottleneck</span><strong id="pipelineTruthBottleneck">RF9-6</strong><small id="pipelineTruthBottleneckDetail">Owner denominator decision</small>
+            </article>
+            <article class="pipeline-truth-card next-action">
+              <span>Next automatic action</span><strong id="pipelineTruthNext">RVS admission after RF9-6</strong><small>IC-NEAR remains closed until authority is granted</small>
+            </article>
+          </div>
+
           <div class="institute-journey" id="instituteJourney">
             <details class="institute-journey-step observing" data-institute-popup="Observing">
               <summary><span>01</span><div><small>Observing</small><strong id="instituteObservingHeadline">Checking sources</strong></div><em id="instituteObservingStatus">—</em></summary>
@@ -972,6 +997,6 @@
       </div>
       <div class="mobile-detail-body" id="mobileDetailBody"></div>
     </aside>
-    <script src="./app.js?v=20260724-institute-state-v3-1" type="module"></script>
+    <script src="./app.js?v=20260725-pipeline-truth-v1" type="module"></script>
   </body>
 </html>

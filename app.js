@@ -5581,6 +5581,12 @@ function renderInstituteStateDashboard(operations, collectors, context) {
     autonomousCount,
   } = context;
   const sourceRows = instituteObservationRows(collectors);
+  const pipelineTruth = operations.pipeline_truth || {};
+  const executingTruth = pipelineTruth.executing_now || {};
+  const committedTruth = pipelineTruth.committed_next || {};
+  const blockedTruth = pipelineTruth.blocked_recovery || {};
+  const blockedRows = blockedTruth.jobs || [];
+  const collectorTotal = sourceRows.length;
   const observedSources = sourceRows.filter((row) => ["Observed", "Up to date"].includes(row.status)).length;
   const nearRegistry = operations.intent_chain_candidate_registry || {};
   const familyId = nearRegistry.family_id || "IC-NEAR-FAMILY-V1";
@@ -5593,6 +5599,46 @@ function renderInstituteStateDashboard(operations, collectors, context) {
   const automaticDetail = ownerRequired
     ? "Save the choice → run safety checks → start Checking → produce the next Money Verdict. Eight waiting studies stay closed."
     : `Next expected result: ${researchDisplayName(nextMoneyTitle)}.`;
+
+  setText("pipelineTruthExecuting", executingTruth.count ?? 0);
+  setText("pipelineTruthExecutingBrief", executingTruth.count
+    ? `${executingTruth.running?.length || 0} running · ${executingTruth.queued?.length || 0} queued`
+    : "No executable research — policy-blocked");
+  setHtml("pipelineTruthExecutingDetail", `<article>
+    <strong>Canonical idle reason</strong>
+    <span>${escapeHtml(executingTruth.idle_reason || "No idle reason published")}</span>
+    <small>${escapeHtml(executingTruth.summary || "Execution state is unavailable.")}</small>
+  </article>${[...(executingTruth.running || []), ...(executingTruth.queued || [])].map((id) => `<article><strong>${escapeHtml(id)}</strong><span>Executable research</span></article>`).join("")}`);
+
+  setText("pipelineTruthCommitted", committedTruth.count ?? registeredCandidates);
+  setText("pipelineTruthCommittedBrief", committedTruth.family_id || familyId);
+  setHtml("pipelineTruthCommittedDetail", `<article>
+    <strong>Dependency order</strong>
+    <span>RF9-6 → RVS admission → IC-NEAR family → individual jobs → Validation → Verdicts</span>
+    <small>${escapeHtml(committedTruth.admission_condition || "Waiting for the current Money-path blocker to close.")}</small>
+  </article>${(committedTruth.candidates || []).map((row) => `<article>
+    <strong>${escapeHtml(row.candidate_id)}</strong>
+    <span>${escapeHtml(row.materialization_status || "COMMITTED_NEXT")}</span>
+    <small>${escapeHtml(row.prereg_manifest_path || "Prereg manifest not published")}</small>
+  </article>`).join("")}`);
+
+  setText("pipelineTruthBlocked", blockedTruth.count ?? blockedRows.length);
+  setText("pipelineTruthBlockedBrief", blockedRows.length ? researchDisplayName(blockedRows[0].job_id) : "No runner blocker details");
+  setHtml("pipelineTruthBlockedDetail", blockedRows.map((row) => `<article>
+    <strong>${escapeHtml(researchDisplayName(row.job_id))}</strong>
+    <span>${escapeHtml(row.outcome || "BLOCKED")}</span>
+    <small>Owner: ${escapeHtml(row.blocker_owner || "unassigned")} · ${escapeHtml(row.recovery_task || row.terminal_verdict || row.closure_condition || "No recovery contract")}</small>
+  </article>`).join("") || "<article><strong>No blocked runner jobs reported</strong></article>");
+
+  setText("pipelineTruthCollectors", `${producingCollectors}/${collectorTotal}`);
+  setHtml("pipelineTruthCollectorsDetail", sourceRows.map((row) => `<article>
+    <strong>${escapeHtml(row.name)}</strong>
+    <span>${escapeHtml(row.status)}</span>
+    <small>${escapeHtml(row.detail)}</small>
+  </article>`).join(""));
+  setText("pipelineTruthBottleneck", blockedTruth.active_money_blocker?.contour_id || moneyCandidate || "RF9-6");
+  setText("pipelineTruthBottleneckDetail", researchDisplayName(blockedTruth.active_money_blocker?.blocker || moneyBlocker));
+  setText("pipelineTruthNext", committedTruth.next_automatic_action || "RVS admission after RF9-6");
 
   setText("instituteNowState", ownerRequired ? "Waiting for your decision" : institutePlainMoneyState(moneyStatus));
   setText("instituteNowSummary", ownerRequired
