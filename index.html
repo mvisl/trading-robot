@@ -725,6 +725,35 @@
             <article class="autonomous"><span>What works without the owner</span><strong id="instituteAutonomy">—</strong><p id="instituteAutonomyDetail">—</p></article>
             <article class="owner"><span>Where your decision is needed</span><strong id="instituteOwnerDecision">—</strong><p id="instituteOwnerDecisionDetail">—</p></article>
           </div>
+
+          <section class="institute-capacity" aria-labelledby="instituteCapacityTitle">
+            <header>
+              <div><span class="portal-kicker">Runnable first, priority second</span><h2 id="instituteCapacityTitle">Institute capacity</h2></div>
+              <span id="instituteCapacityMeta">Reading scheduler state</span>
+            </header>
+            <div class="institute-capacity-grid" id="instituteCapacityGrid"></div>
+          </section>
+
+          <section class="level3-recommendation" id="level3RecommendationPanel" hidden aria-labelledby="level3RecommendationTitle">
+            <div>
+              <span class="portal-kicker">One recommendation</span>
+              <h2 id="level3RecommendationTitle">Institute recommendation</h2>
+              <strong id="level3RecommendationName">—</strong>
+              <p id="level3RecommendationReason">—</p>
+              <small id="level3RecommendationConfidence">—</small>
+            </div>
+            <div class="level3-recommendation-actions">
+              <button type="button" class="primary" id="level3ApproveRecommendation">Approve recommendation</button>
+              <button type="button" id="level3RejectRecommendation">Reject recommendation</button>
+              <button type="button" class="quiet" id="level3DelegateChoice">You choose</button>
+              <span id="level3RecommendationActionStatus" role="status"></span>
+            </div>
+            <details>
+              <summary>View alternative evaluations</summary>
+              <p>Alternative definitions are shown for transparency. They are internal implementation evaluations, not choices the owner must make.</p>
+              <div id="level3AlternativeDetails"></div>
+            </details>
+          </section>
         </section>
 
         <section class="institute-stacks-section" aria-labelledby="instituteStacksTitle">

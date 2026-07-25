@@ -4974,6 +4974,7 @@ function bindInstitutePopups() {
 function initializePortalShell() {
   renderPortalNavigation();
   bindInstitutePopups();
+  bindLevel3RecommendationActions();
   const requested = window.location.hash.replace(/^#/, "");
   setPortalPage(PORTAL_PAGES.some((page) => page.id === requested && page.visible) ? requested : "dashboard", { updateHash: false });
   $("portalMenuToggle")?.addEventListener("click", () => document.body.classList.contains("portal-drawer-open") ? closePortalDrawer() : openPortalDrawer());
@@ -4991,6 +4992,38 @@ function initializePortalShell() {
       $("contourFilters").querySelectorAll("[data-contour-filter]").forEach((row) => row.classList.toggle("active", row === button));
       renderResearchContours(currentState?.instituteOperations);
     }));
+  }
+}
+
+function bindLevel3RecommendationActions() {
+  const actions = [
+    ["level3ApproveRecommendation", "APPROVE_RECOMMENDATION"],
+    ["level3RejectRecommendation", "REJECT_RECOMMENDATION"],
+    ["level3DelegateChoice", "OWNER_DELEGATES_IMPLEMENTATION_CHOICE"],
+  ];
+  for (const [id, action] of actions) {
+    const button = $(id);
+    if (!button || button.dataset.bound === "true") continue;
+    button.dataset.bound = "true";
+    button.addEventListener("click", async () => {
+      setText("level3RecommendationActionStatus", "Saving owner action…");
+      actions.forEach(([buttonId]) => { if ($(buttonId)) $(buttonId).disabled = true; });
+      try {
+        const response = await portalFetch("/api/institute/level3-decision", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ action }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || `decision_http_${response.status}`);
+        setText("level3RecommendationActionStatus", payload.effect || "Saved. The Control Plane will reconcile this action.");
+        window.setTimeout(() => refreshInstituteWorkState("level3-owner-action"), 1200);
+      } catch (error) {
+        setText("level3RecommendationActionStatus", error.message || "Could not save owner action.");
+      } finally {
+        actions.forEach(([buttonId]) => { if ($(buttonId)) $(buttonId).disabled = false; });
+      }
+    });
   }
 }
 
@@ -5592,12 +5625,12 @@ function renderInstituteStateDashboard(operations, collectors, context) {
   const familyId = nearRegistry.family_id || "IC-NEAR-FAMILY-V1";
   const atlasStatus = truthfulProducerStatus(atlas, atlas?.metrics?.produced_today);
   const validationWaiting = ownerRequired || moneyStatus === "WAITING_OWNER" || moneyStatus === "BLOCKED";
-  const exactDecision = ownerBlocker.exact_decision || "Choose a denominator definition or reject RF9-6";
+  const exactDecision = ownerBlocker.exact_decision || "Approve or reject the institute recommendation";
   const automaticNext = ownerRequired
-    ? "Save the choice, then start checking"
+    ? "Approve the recommendation, then start checking"
     : nextMoneyTitle || "Continue the admitted Money path";
   const automaticDetail = ownerRequired
-    ? "Save the choice → run safety checks → start Checking → produce the next Money Verdict. Eight waiting studies stay closed."
+    ? "Save approval → run safety checks → start Checking → produce the next Money Verdict. Eight waiting studies stay closed."
     : `Next expected result: ${researchDisplayName(nextMoneyTitle)}.`;
 
   setText("pipelineTruthExecuting", executingTruth.count ?? 0);
@@ -5642,7 +5675,7 @@ function renderInstituteStateDashboard(operations, collectors, context) {
 
   setText("instituteNowState", ownerRequired ? "Waiting for your decision" : institutePlainMoneyState(moneyStatus));
   setText("instituteNowSummary", ownerRequired
-    ? "The current study cannot move until you choose what counts as a valid opportunity. Public observation continues automatically; checking has not started."
+    ? "The institute has selected one study definition. It now needs your approval or rejection. Public observation continues automatically; checking has not started."
     : `The path to the next Money Verdict is ${institutePlainMoneyState(moneyStatus).toLowerCase()}. Observation and preparation continue automatically.`);
   setText("instituteOwnerState", ownerRequired ? "1 owner decision needed" : "No owner decision needed");
   $("instituteOwnerState")?.classList.toggle("clear", !ownerRequired);
@@ -5694,7 +5727,7 @@ function renderInstituteStateDashboard(operations, collectors, context) {
   setText("instituteCheckingHeadline", validationWaiting ? "Waiting for the study rules" : "Checking is active");
   setText("instituteCheckingStatus", validationWaiting ? "Waiting" : `${evidenceActive} active`);
   setText("instituteCheckingDetail", validationWaiting
-    ? "No checking starts until the owner choice is saved and the safety checks pass."
+    ? "No checking starts until the recommendation decision is saved and the safety checks pass."
     : `${evidenceActive} of ${evidenceWip?.limit ?? "?"} checks are active.`);
   setHtml("instituteCheckingTechnical", `<article>
     <strong>Protected validation gate</strong>
@@ -5721,9 +5754,9 @@ function renderInstituteStateDashboard(operations, collectors, context) {
     <small>${escapeHtml(profitability.days_remaining_to_decision ?? "—")} days remaining</small>
   </article>`);
 
-  setText("instituteBlockerTitle", ownerRequired ? "Choose what counts as a valid opportunity" : researchDisplayName(moneyBlocker));
+  setText("instituteBlockerTitle", ownerRequired ? "Approve or reject the institute recommendation" : researchDisplayName(moneyBlocker));
   setText("instituteBlockerDetail", ownerRequired
-    ? "The saved study rules are incomplete. Continuing without your choice would change the rules after the fact. After your choice: safety check → Checking → Money Verdict."
+    ? "The institute compared all admissible definitions and recommends D2. Your decision is only approve or reject. After approval: safety check → Checking → Money Verdict."
     : "The current blocker can be removed automatically.");
   setText("instituteAutomaticNext", automaticNext);
   setText("instituteAutomaticNextDetail", automaticDetail);
@@ -5731,13 +5764,13 @@ function renderInstituteStateDashboard(operations, collectors, context) {
   setText("instituteAutonomyDetail", `${observedSources}/${sourceRows.length} public sources observed · ${registeredCandidates} studies remain closed · money work remains protected.`);
   setText("instituteOwnerDecision", ownerRequired ? "One bounded research decision" : "Nothing right now");
   setText("instituteOwnerDecisionDetail", ownerRequired
-    ? "Choose one of four prepared definitions or stop the study. No capital or system change is requested."
+    ? "Approve or reject one recommendation. Alternative definitions are visible only as supporting evaluation. No capital or system change is requested."
     : "The institute can continue under existing mandates.");
 
   const incidentSummary = instituteIncidentSummary(operations.governance_incidents || operations.open_incidents || []);
   setText("instituteMoneyStackStatus", ownerRequired ? "Waiting for owner" : institutePlainMoneyState(moneyStatus));
   setHtml("instituteMoneyStackDetail", `<article><strong>Now</strong><span>${escapeHtml(ownerRequired ? "Study rules waiting for owner" : researchDisplayName(moneyCandidate))}</span><small>${escapeHtml(criticalPath.candidate || moneyCandidate)}</small></article>
-    <article><strong>Waiting for</strong><span>${escapeHtml(ownerRequired ? "One bounded owner choice" : researchDisplayName(moneyBlocker))}</span><small>${escapeHtml(ownerRequired ? exactDecision : moneyEta)}</small></article>
+    <article><strong>Waiting for</strong><span>${escapeHtml(ownerRequired ? "Recommendation approval or rejection" : researchDisplayName(moneyBlocker))}</span><small>${escapeHtml(ownerRequired ? exactDecision : moneyEta)}</small></article>
     <article><strong>Next</strong><span>Check eligibility → run validation → issue Money Verdict</span><small>${escapeHtml(researchDisplayName(nextMoneyTitle))}</small></article>
     <a href="${CANONICAL_RESEARCH_URL}">Open canonical Money state</a>`);
 
@@ -5755,7 +5788,7 @@ function renderInstituteStateDashboard(operations, collectors, context) {
   setText("instituteGovernanceStackStatus", ownerRequired ? "1 decision needed" : "Protected");
   setHtml("instituteGovernanceStackDetail", `<article><strong>Now</strong><span>${escapeHtml(ownerRequired ? "One protected decision is open" : "Existing rules are sufficient")}</span><small>${escapeHtml(ownerRequired ? "RF9-6 denominator" : "No owner gate")}</small></article>
     <article><strong>Waiting for</strong><span>${escapeHtml(ownerRequired ? exactDecision : "Nothing")}</span><small>${escapeHtml(familyId)} remains REGISTERED_NOT_STARTED.</small></article>
-    <article><strong>Next</strong><span>Record the choice → run RVS admission → keep IC5 controls</span><small>Outcomes remain sealed until admission succeeds.</small></article>`);
+    <article><strong>Next</strong><span>Record approval → run RVS admission → keep IC5 controls</span><small>Outcomes remain sealed until admission succeeds.</small></article>`);
 
   const mismatches = operations.reconciliation?.mismatches || [];
   const blockingMismatches = mismatches.filter((row) => row.blocking).length;
@@ -5765,6 +5798,49 @@ function renderInstituteStateDashboard(operations, collectors, context) {
     <article><strong>Next</strong><span>Continue health checks and reconcile changed fingerprints</span><small>Unchanged terminal states only increment their occurrence count.</small></article>
     <article><strong>Active terminal state</strong><span>${escapeHtml(incidentSummary.terminal)}</span><small>${escapeHtml(incidentSummary.terminalDetail)}</small></article>
     <article><strong>Recovered history</strong><span>${escapeHtml(incidentSummary.resolved)} resolved</span><small>${escapeHtml(incidentSummary.history)}</small></article>`);
+
+  renderInstituteCapacity(operations.adaptive_resource_orchestrator || {});
+  renderLevel3Recommendation(profitability.level3_decision || {}, ownerRequired);
+}
+
+function renderInstituteCapacity(aro) {
+  const capacity = aro.capacity_by_class || {};
+  const rows = capacity.classes || [];
+  setText("instituteCapacityMeta", rows.length
+    ? `${aro.status || "UNKNOWN"} · ${capacity.cpu_capacity_units ?? "?"} CPU units · eligibility is separate from priority`
+    : "No canonical scheduler allocation published");
+  if (!$("instituteCapacityGrid")) return;
+  $("instituteCapacityGrid").innerHTML = rows.map((row) => {
+    const logical = row.logical_priority ? "Owns logical priority · " : "";
+    const waiting = row.waiting_reason ? ` · ${researchDisplayName(row.waiting_reason)}` : "";
+    return `<article class="institute-capacity-card">
+      <strong>${escapeHtml(row.label || row.class_id)}</strong>
+      <em>${escapeHtml(researchDisplayName(row.status))}</em>
+      <small>${escapeHtml(logical)}CPU ${escapeHtml(row.cpu_percent ?? 0)}% now · shadow proposal ${escapeHtml(row.shadow_cpu_percent ?? 0)}%${escapeHtml(waiting)}</small>
+      <span>${escapeHtml(row.allocated_tasks ?? 0)} executing</span>
+      <span>${escapeHtml(row.runnable_tasks ?? 0)} runnable · ${escapeHtml(row.waiting_tasks ?? 0)} waiting</span>
+    </article>`;
+  }).join("") || `<article class="institute-capacity-card"><strong>Capacity unavailable</strong><em>UNKNOWN</em><small>No scheduler allocation has been published.</small></article>`;
+}
+
+function renderLevel3Recommendation(level3, ownerRequired) {
+  const panel = $("level3RecommendationPanel");
+  if (!panel) return;
+  const recommendation = level3.recommendation || {};
+  const visible = ownerRequired && Boolean(recommendation.decision_code);
+  panel.toggleAttribute("hidden", !visible);
+  if (!visible) return;
+  setText("level3RecommendationName", recommendation.display_name || recommendation.variant || "Recommended definition");
+  setText("level3RecommendationReason", recommendation.reason || "The institute selected the strongest governance-compliant option.");
+  setText("level3RecommendationConfidence", `Confidence ${researchDisplayName(recommendation.confidence || "UNKNOWN")} · owner approves or rejects; internal variants are not owner choices.`);
+  const alternatives = level3.alternative_evaluations || [];
+  setHtml("level3AlternativeDetails", alternatives.map((row) => `<article class="institute-capacity-card">
+    <strong>${escapeHtml(row.variant)}${row.recommended ? " · recommended" : ""}</strong>
+    <em>${escapeHtml(row.statistical_quality || "—")}</em>
+    <small>${escapeHtml(row.denominator || "—")} · N ${escapeHtml(row.historical_n || "—")}</small>
+    <span>Bias: ${escapeHtml(row.bias_risk || "—")}</span>
+    <span>${escapeHtml(row.governance || "—")} · cost ${escapeHtml(row.cost || "—")}</span>
+  </article>`).join(""));
 }
 
 function instituteObservationRows(collectors) {
