@@ -3435,6 +3435,70 @@ body {
   background: rgba(96, 24, 28, 0.12);
 }
 
+.action-provenance-list {
+  display: grid;
+  gap: 12px;
+}
+
+.action-provenance-list article {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(12, 17, 23, 0.62);
+  padding: 14px;
+}
+
+.action-provenance-list article.provenance-defect {
+  border-color: rgba(255, 96, 96, 0.8);
+  box-shadow: inset 4px 0 0 rgba(255, 96, 96, 0.9);
+}
+
+.action-provenance-head {
+  display: grid;
+  grid-template-columns: minmax(120px, auto) 1fr auto;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.action-provenance-head time {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.action-provenance-head strong {
+  font-size: 1rem;
+}
+
+.action-provenance-list dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 18px;
+  margin: 0;
+}
+
+.action-provenance-list dl div {
+  min-width: 0;
+}
+
+.action-provenance-list dt {
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.action-provenance-list dd {
+  margin: 3px 0 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .action-provenance-head,
+  .action-provenance-list dl {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 1320px) {
   .portal-health-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .portal-overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }

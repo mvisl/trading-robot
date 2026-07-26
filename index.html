@@ -998,6 +998,14 @@
             <article class="panel portal-section-panel fire-monitor-panel"><div class="panel-head"><h2>Fire Monitor</h2><span class="pill" id="fireOpen">0 open</span></div><div class="fire-window-grid"><div><strong id="fireToday">0</strong><span>Today</span></div><div><strong id="fireWeek">0</strong><span>Week</span></div><div><strong id="fireMonth">0</strong><span>Month</span></div></div><div id="fireCategories" class="fire-categories"></div><p id="fireObjective" class="muted"></p></article>
             <article class="panel portal-section-panel owner-attention-panel"><div class="panel-head"><h2>Need Owner</h2><span id="ownerAttentionCount">0</span></div><div id="ownerAttention" class="owner-attention-list"></div></article>
           </section>
+          <section class="panel portal-section-panel action-provenance-panel">
+            <div class="panel-head">
+              <div><span class="portal-kicker">INCIDENTS · PROVENANCE</span><h2>Recent Actions</h2></div>
+              <span class="pill" id="actionProvenanceStatus">—</span>
+            </div>
+            <p class="muted" id="actionProvenanceSummary">Every state change must identify who, why, under which rule, and with what result.</p>
+            <div class="action-provenance-list" id="actionProvenanceList"></div>
+          </section>
           <section class="panel portal-section-panel reasoning-governor-panel">
             <div class="panel-head"><h2>Reasoning Engines</h2><span class="pill" id="reasoningBudgetMode">—</span></div>
             <div class="reasoning-engine-grid"><article><div><strong>Rule Engine</strong><span id="reasoningRuleStatus">—</span></div><dl id="reasoningRuleMetrics"></dl></article><article><div><strong>Local LLM</strong><span id="reasoningLocalStatus">—</span></div><dl id="reasoningLocalMetrics"></dl></article><article><div><strong>Gemini</strong><span id="reasoningGeminiStatus">—</span></div><dl id="reasoningGeminiMetrics"></dl></article></div>

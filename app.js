@@ -5809,7 +5809,38 @@ function renderInstituteStateDashboard(operations, collectors, context) {
 
   renderInstituteCapacity(operations.adaptive_resource_orchestrator || {});
   renderAutonomyActionSystem(operations.autonomy_action_system || {});
+  renderActionProvenance(operations.action_provenance || {});
   renderLevel3Recommendation(profitability.level3_decision || {}, ownerRequired);
+}
+
+function renderActionProvenance(provenance) {
+  const actions = provenance.recent_actions || [];
+  const defects = Number(provenance.defect_count || 0);
+  const unknown = Number(provenance.unknown_actor_count || 0);
+  setText("actionProvenanceStatus", unknown ? "UNKNOWN RESTART SOURCE" : provenance.status || "NO LEDGER");
+  setText("actionProvenanceSummary", provenance.entry_count
+    ? `${provenance.entry_count} append-only actions · ${defects} defects · last verified sequence ${provenance.last_sequence || 0}`
+    : "No action provenance has been published yet.");
+  setHtml("actionProvenanceList", actions.slice(0, 12).map((row) => {
+    const defective = row.actor === "Unknown" || row.provenance_status === "DEFECT";
+    const parent = row.parent_incident || "No incident";
+    const services = (row.affected_services || []).join(", ") || "No service";
+    return `<article class="${defective ? "provenance-defect" : ""}">
+      <div class="action-provenance-head">
+        <time>${escapeHtml(portalDate(row.timestamp))}</time>
+        <strong>${escapeHtml(defective && row.action_type === "SERVICE_START" ? "UNKNOWN RESTART SOURCE" : researchDisplayName(row.action_type))}</strong>
+        <span class="pill">${escapeHtml(row.acceptance_result || "UNKNOWN")}</span>
+      </div>
+      <dl>
+        <div><dt>Actor</dt><dd>${escapeHtml(row.actor || "Unknown")}</dd></div>
+        <div><dt>Reason</dt><dd>${escapeHtml(row.reason || "Missing")}</dd></div>
+        <div><dt>Rule</dt><dd>${escapeHtml(row.triggering_rule || "Missing")}</dd></div>
+        <div><dt>Correlation</dt><dd>${escapeHtml(row.correlation_id || "Missing")}</dd></div>
+        <div><dt>Parent</dt><dd>${escapeHtml(parent)}</dd></div>
+        <div><dt>Services</dt><dd>${escapeHtml(services)}</dd></div>
+      </dl>
+    </article>`;
+  }).join("") || `<div class="portal-empty">No recorded actions.</div>`);
 }
 
 function renderAutonomyActionSystem(system) {
