@@ -5513,14 +5513,29 @@ function renderResearchDashboardV2(operations, collectors = []) {
   const acceptanceCurrent = Number(ariHistory.completed_tasks ?? ariHistory.observed_tasks ?? 0);
   const acceptanceRequired = Number(ariHistory.required_tasks || 0);
   const quota = Number(ari.critical_path_quota_used || 0);
+  const infrastructureProducer = operations.research_infrastructure_producer || {};
+  const sourceCounts = infrastructureProducer.counts || {};
 
-  setText("researchInfrastructureStatus", ari.status || "UNAVAILABLE");
+  setText("researchInfrastructureStatus", infrastructureProducer.declared_state || ari.status || "UNAVAILABLE");
+  setText("researchInfraSourceMissions", `${sourceCounts.total_directions || 0}`);
+  setText("researchInfraAcquisition", `${sourceCounts.acquisition_jobs || 0}`);
+  setText("researchInfraQualification", `${sourceCounts.qualification_jobs || 0}`);
+  setText("researchInfraAdmissionJobs", `${sourceCounts.admission_jobs || 0}`);
+  setText("researchInfraBlockedAdmission", `${sourceCounts.blocked_candidates || 0}`);
+  setText("researchInfraOwnerGates", `${infrastructureProducer.owner_gates?.length || 0}`);
   setText("researchInfraAri", ari.status || "UNAVAILABLE");
   setText("researchInfraAuthority", authority);
   setText("researchInfraAcceptance", acceptanceRequired ? `${acceptanceCurrent} / ${acceptanceRequired}` : "not exposed");
   setText("researchInfraScheduler", scheduler);
   setText("researchInfraQuota", `${quota}%`);
   setText("researchInfraEvidenceWip", `${evidenceActive}/${evidenceWip.limit ?? "?"}`);
+  if ($("researchSourceAdmissionDirections")) {
+    $("researchSourceAdmissionDirections").innerHTML = (infrastructureProducer.directions || []).map((row) => `<article>
+      <div><strong>${escapeHtml(researchDisplayName(row.canonical_id))}</strong><span>${escapeHtml(row.admission_status || row.qualification_status || "NOT EVALUATED")}</span></div>
+      <p>${escapeHtml(row.required_source || "Source requirement not declared")}</p>
+      <small>${escapeHtml(row.producer_task?.status || "NO PRODUCER TASK")} · ${escapeHtml(row.blocker || "no blocker")} · ${escapeHtml(row.owner_action_required ? "Owner boundary" : "Autonomous")}</small>
+    </article>`).join("") || `<div class="research-honest-empty"><strong>No source mission state</strong><span>The Research Infrastructure Producer has not published a fresh machine snapshot.</span></div>`;
+  }
 
   const ownerBlocker = profitability.immediate_blocker || {};
   const ownerRequired = ownerBlocker.owner?.includes("OWNER") || ownerBlocker.state?.includes("OWNER");

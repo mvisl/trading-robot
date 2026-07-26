@@ -858,9 +858,15 @@
           </article>
 
           <article class="panel portal-section-panel research-infrastructure-panel">
-            <div class="panel-head"><div><span class="portal-kicker">RESEARCH INFRASTRUCTURE</span><h2>Safety and rollout</h2></div><span class="pill" id="researchInfrastructureStatus">—</span></div>
+            <div class="panel-head"><div><span class="portal-kicker">RESEARCH INFRASTRUCTURE</span><h2>Sources → admission</h2></div><span class="pill" id="researchInfrastructureStatus">—</span></div>
             <p class="research-program-principle">Infrastructure state is shown separately and never counted as profitability progress.</p>
             <div class="research-infrastructure-facts">
+              <div><span>Source missions</span><strong id="researchInfraSourceMissions">—</strong></div>
+              <div><span>Acquisition</span><strong id="researchInfraAcquisition">—</strong></div>
+              <div><span>Qualification</span><strong id="researchInfraQualification">—</strong></div>
+              <div><span>Admission checks</span><strong id="researchInfraAdmissionJobs">—</strong></div>
+              <div><span>Draft, not admitted</span><strong id="researchInfraBlockedAdmission">—</strong></div>
+              <div><span>Owner gates</span><strong id="researchInfraOwnerGates">—</strong></div>
               <div><span>ARI</span><strong id="researchInfraAri">—</strong></div>
               <div><span>Execution authority</span><strong id="researchInfraAuthority">—</strong></div>
               <div><span>Acceptance</span><strong id="researchInfraAcceptance">—</strong></div>
@@ -868,6 +874,7 @@
               <div><span>Critical Path Quota</span><strong id="researchInfraQuota">—</strong></div>
               <div><span>Evidence WIP</span><strong id="researchInfraEvidenceWip">—</strong></div>
             </div>
+            <details class="research-card-details"><summary>Candidate source-to-admission state</summary><div class="research-infrastructure-blockers" id="researchSourceAdmissionDirections"></div></details>
           </article>
         </section>
 
