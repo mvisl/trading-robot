@@ -5641,6 +5641,8 @@ function renderInstituteStateDashboard(operations, collectors, context) {
   } = context;
   const sourceRows = instituteObservationRows(collectors);
   const pipelineTruth = operations.pipeline_truth || {};
+  const successorAdmission = operations.successor_admission || {};
+  const noSuccessor = successorAdmission.no_admissible_successor || null;
   const executingTruth = pipelineTruth.executing_now || {};
   const committedTruth = pipelineTruth.committed_next || {};
   const blockedTruth = pipelineTruth.blocked_recovery || {};
@@ -5664,6 +5666,8 @@ function renderInstituteStateDashboard(operations, collectors, context) {
   setText("pipelineTruthExecuting", executingTruth.count ?? 0);
   setText("pipelineTruthExecutingBrief", executingTruth.count
     ? `${executingTruth.running?.length || 0} running · ${executingTruth.queued?.length || 0} queued`
+    : noSuccessor
+      ? `Missing: ${researchDisplayName(noSuccessor.exact_missing_condition)}`
     : executingTruth.idle_reason === "BLOCKED_BY_POLICY_WAITING_FOR_RF9_6_OWNER_DECISION"
       ? "No executable research — waiting for owner"
       : "No runnable research after fail-closed checks");
@@ -5700,7 +5704,9 @@ function renderInstituteStateDashboard(operations, collectors, context) {
     <small>${escapeHtml(row.detail)}</small>
   </article>`).join(""));
   setText("pipelineTruthBottleneck", blockedTruth.active_money_blocker?.contour_id || (autonomouslyApproved ? delegatedCurrent : moneyCandidate) || "RF9-6");
-  setText("pipelineTruthBottleneckDetail", researchDisplayName(blockedTruth.active_money_blocker?.blocker || (autonomouslyApproved ? delegatedBlocker : moneyBlocker)));
+  setText("pipelineTruthBottleneckDetail", noSuccessor
+    ? `No admissible successor · missing ${researchDisplayName(noSuccessor.exact_missing_condition)}`
+    : researchDisplayName(blockedTruth.active_money_blocker?.blocker || (autonomouslyApproved ? delegatedBlocker : moneyBlocker)));
   setText("pipelineTruthNext", committedTruth.next_automatic_action || "RVS admission after RF9-6");
 
   setText("instituteNowState", ownerRequired ? "Waiting for your decision" : autonomouslyApproved ? "Moving under delegated authority" : institutePlainMoneyState(moneyStatus));
@@ -5848,10 +5854,11 @@ function renderInstituteStateDashboard(operations, collectors, context) {
 function renderActionProvenance(provenance) {
   const actions = provenance.recent_actions || [];
   const defects = Number(provenance.defect_count || 0);
-  const unknown = Number(provenance.unknown_actor_count || 0);
-  setText("actionProvenanceStatus", unknown ? "UNKNOWN RESTART SOURCE" : provenance.status || "NO LEDGER");
+  const historicalUnknown = Number(provenance.historical_unknown_total || 0);
+  const newUnknown = Number(provenance.new_unknown_since_provenance_v1 || 0);
+  setText("actionProvenanceStatus", newUnknown ? "UNKNOWN RESTART SOURCE" : "NEW UNKNOWN 0");
   setText("actionProvenanceSummary", provenance.entry_count
-    ? `${provenance.entry_count} append-only actions · ${defects} defects · last verified sequence ${provenance.last_sequence || 0}`
+    ? `${provenance.entry_count} append-only actions · historical unknown ${historicalUnknown} · new since Provenance v1 ${newUnknown} · last verified sequence ${provenance.last_sequence || 0}`
     : "No action provenance has been published yet.");
   setHtml("actionProvenanceList", actions.slice(0, 12).map((row) => {
     const defective = row.actor === "Unknown" || row.provenance_status === "DEFECT";
