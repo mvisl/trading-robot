@@ -5654,10 +5654,14 @@ function renderInstituteStateDashboard(operations, collectors, context) {
   const atlasStatus = truthfulProducerStatus(atlas, atlas?.metrics?.produced_today);
   const validationWaiting = ownerRequired || moneyStatus === "WAITING_OWNER" || moneyStatus === "BLOCKED";
   const exactDecision = ownerBlocker.exact_decision || "Approve or reject the institute recommendation";
-  const automaticNext = ownerRequired
+  const automaticNext = noSuccessor
+    ? "Wait for a provenance-complete RF9-6 event source"
+    : ownerRequired
     ? "Approve the recommendation, then start checking"
     : nextMoneyTitle || "Continue the admitted Money path";
-  const automaticDetail = ownerRequired
+  const automaticDetail = noSuccessor
+    ? "The bounded source scan is complete. The pipeline resumes automatically when a verifiable protocol-event source appears; no owner choice is pending."
+    : ownerRequired
     ? "Save approval → run safety checks → start Checking → produce the next Money Verdict. Eight waiting studies stay closed."
     : `Next expected result: ${researchDisplayName(nextMoneyTitle)}.`;
   const delegatedCurrent = profitability.immediate_blocker?.candidate || "RF9-6";
@@ -5709,9 +5713,13 @@ function renderInstituteStateDashboard(operations, collectors, context) {
     : researchDisplayName(blockedTruth.active_money_blocker?.blocker || (autonomouslyApproved ? delegatedBlocker : moneyBlocker)));
   setText("pipelineTruthNext", committedTruth.next_automatic_action || "RVS admission after RF9-6");
 
-  setText("instituteNowState", ownerRequired ? "Waiting for your decision" : autonomouslyApproved ? "Moving under delegated authority" : institutePlainMoneyState(moneyStatus));
+  setText("instituteNowState", noSuccessor
+    ? "Waiting for a verifiable source"
+    : ownerRequired ? "Waiting for your decision" : autonomouslyApproved ? "Moving under delegated authority" : institutePlainMoneyState(moneyStatus));
   setText("instituteNowSummary", ownerRequired
     ? "The institute has selected one study definition. It now needs your approval or rejection. Public observation continues automatically; checking has not started."
+    : noSuccessor
+      ? "RF9-6 preparation, event inventory and bounded source acquisition are complete. No local successor is admissible until a provenance-complete protocol-event source exists. No owner decision is required."
     : autonomouslyApproved
       ? rvsPrepCompleted
         ? "RF9-6 was approved under Delegated Governance. D2 preparation and RVS-readiness are complete; the outcome-sealed event inventory is next."
@@ -5796,9 +5804,13 @@ function renderInstituteStateDashboard(operations, collectors, context) {
     <small>${escapeHtml(profitability.days_remaining_to_decision ?? "—")} days remaining</small>
   </article>`);
 
-  setText("instituteBlockerTitle", ownerRequired ? "Approve or reject the institute recommendation" : autonomouslyApproved ? (rvsPrepCompleted ? "No owner gate — RF9-6 event inventory is next" : "No owner gate — RF9-6 preparation is continuing") : researchDisplayName(moneyBlocker));
+  setText("instituteBlockerTitle", noSuccessor
+    ? "RF9-6 needs a provenance-complete event source"
+    : ownerRequired ? "Approve or reject the institute recommendation" : autonomouslyApproved ? (rvsPrepCompleted ? "No owner gate — RF9-6 event inventory is next" : "No owner gate — RF9-6 preparation is continuing") : researchDisplayName(moneyBlocker));
   setText("instituteBlockerDetail", ownerRequired
     ? "The institute compared all admissible definitions and selected the strict event definition. Your decision is only approve or reject. After approval: safety check → Checking → Money Verdict."
+    : noSuccessor
+      ? "All locally admissible outcome-sealed preparation is complete. The missing condition is external source provenance, not an owner decision."
     : autonomouslyApproved
       ? "D2 was fixed prospectively under the permanent delegated rule. Outcomes remain sealed; the next admissible task was created automatically."
       : "The current blocker can be removed automatically.");
