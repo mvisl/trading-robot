@@ -5010,7 +5010,6 @@ function bindLevel3RecommendationActions() {
   const actions = [
     ["level3ApproveRecommendation", "APPROVE_RECOMMENDATION"],
     ["level3RejectRecommendation", "REJECT_RECOMMENDATION"],
-    ["level3DelegateChoice", "OWNER_DELEGATES_IMPLEMENTATION_CHOICE"],
   ];
   for (const [id, action] of actions) {
     const button = $(id);
@@ -5526,7 +5525,7 @@ function renderResearchDashboardV2(operations, collectors = []) {
   const ownerBlocker = profitability.immediate_blocker || {};
   const ownerRequired = ownerBlocker.owner?.includes("OWNER") || ownerBlocker.state?.includes("OWNER");
   setText("researchSummaryOwner", ownerRequired
-    ? `${ownerBlocker.candidate || "Decision"} denominator decision`
+    ? `${ownerBlocker.candidate || "Decision"} recommendation approval`
     : "No owner decision required");
 
   const autonomousCount = producingCollectors
@@ -5543,8 +5542,8 @@ function renderResearchDashboardV2(operations, collectors = []) {
 
   if (ownerRequired) {
     setText("residentOperatorStatus", "WAITING");
-    setText("residentTask", `${ownerBlocker.candidate}: Level 3 owner decision required`);
-    setText("residentMission", "Autonomous action prohibited at this gate. No new evidence is being opened.");
+    setText("residentTask", `${ownerBlocker.candidate}: approve or reject one institute recommendation`);
+    setText("residentMission", "The internal method has been selected. No new evidence is opened before your signature.");
   }
 
   setText("researchNextMoneyTitle", researchDisplayName(nextMoneyTitle));
@@ -5765,7 +5764,7 @@ function renderInstituteStateDashboard(operations, collectors, context) {
 
   setText("instituteBlockerTitle", ownerRequired ? "Approve or reject the institute recommendation" : researchDisplayName(moneyBlocker));
   setText("instituteBlockerDetail", ownerRequired
-    ? "The institute compared all admissible definitions and recommends D2. Your decision is only approve or reject. After approval: safety check → Checking → Money Verdict."
+    ? "The institute compared all admissible definitions and selected the strict event definition. Your decision is only approve or reject. After approval: safety check → Checking → Money Verdict."
     : "The current blocker can be removed automatically.");
   setText("instituteAutomaticNext", automaticNext);
   setText("instituteAutomaticNextDetail", automaticDetail);
@@ -5809,7 +5808,31 @@ function renderInstituteStateDashboard(operations, collectors, context) {
     <article><strong>Recovered history</strong><span>${escapeHtml(incidentSummary.resolved)} resolved</span><small>${escapeHtml(incidentSummary.history)}</small></article>`);
 
   renderInstituteCapacity(operations.adaptive_resource_orchestrator || {});
+  renderAutonomyActionSystem(operations.autonomy_action_system || {});
   renderLevel3Recommendation(profitability.level3_decision || {}, ownerRequired);
+}
+
+function renderAutonomyActionSystem(system) {
+  const dashboard = system.dashboard || {};
+  const resolved = dashboard.resolved_autonomously || [];
+  const waiting = dashboard.waiting_for_new_data || [];
+  const owner = dashboard.owner_signature_required || [];
+  const gaps = dashboard.autonomy_gaps || [];
+  const latest = (rows) => rows[rows.length - 1] || null;
+  const label = (row, fallback) => row
+    ? researchDisplayName(row.action_code || row.target_contour_id || row.candidate_id || fallback)
+    : fallback;
+  setText("instituteAutonomySummaryStatus", system.status || "MONITORING");
+  setText("autonomyResolvedCount", resolved.length);
+  setText("autonomyResolvedDetail", label(latest(resolved), "Нет нового автономного действия"));
+  setText("autonomyWaitingCount", waiting.length);
+  setText("autonomyWaitingDetail", label(latest(waiting), "Ничего не ждёт новых доказательств"));
+  setText("autonomyOwnerCount", owner.length);
+  setText("autonomyOwnerDetail", label(latest(owner), "Нет защищённого решения"));
+  setText("autonomyGapCount", gaps.length);
+  setText("autonomyGapDetail", gaps.length
+    ? `${gaps[gaps.length - 1].what_system_could_do || "Действие не материализовано"}`
+    : "Известных невыполненных безопасных действий нет");
 }
 
 function renderInstituteCapacity(aro) {
@@ -5841,7 +5864,8 @@ function renderLevel3Recommendation(level3, ownerRequired) {
   if (!visible) return;
   setText("level3RecommendationName", recommendation.display_name || recommendation.variant || "Recommended definition");
   setText("level3RecommendationReason", recommendation.reason || "The institute selected the strongest governance-compliant option.");
-  setText("level3RecommendationConfidence", `Confidence ${researchDisplayName(recommendation.confidence || "UNKNOWN")} · owner approves or rejects; internal variants are not owner choices.`);
+  setText("level3RecommendationRisk", `Главный риск: ${recommendation.primary_risk || "Ограниченная историческая выборка."}`);
+  setText("level3RecommendationConfidence", `Confidence ${researchDisplayName(recommendation.confidence || "UNKNOWN")} · outcomes sealed · внутренние варианты уже оценены институтом.`);
   const alternatives = level3.alternative_evaluations || [];
   setHtml("level3AlternativeDetails", alternatives.map((row) => `<article class="institute-capacity-card">
     <strong>${escapeHtml(row.variant)}${row.recommended ? " · recommended" : ""}</strong>

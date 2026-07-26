@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Institute Control Center</title>
-    <link rel="stylesheet" href="./styles.css?v=20260725-pipeline-truth-v1" />
+    <link rel="stylesheet" href="./styles.css?v=20260726-autonomy-action-v1" />
   </head>
   <body>
     <section class="portal-auth-overlay" id="portalAuthOverlay" hidden>
@@ -726,6 +726,19 @@
             <article class="owner"><span>Where your decision is needed</span><strong id="instituteOwnerDecision">—</strong><p id="instituteOwnerDecisionDetail">—</p></article>
           </div>
 
+          <section class="institute-autonomy-summary" aria-labelledby="instituteAutonomySummaryTitle">
+            <header>
+              <div><span class="portal-kicker">Автономность</span><h2 id="instituteAutonomySummaryTitle">Что система решила сама</h2></div>
+              <span id="instituteAutonomySummaryStatus">—</span>
+            </header>
+            <div>
+              <article><span>Решено автономно</span><strong id="autonomyResolvedCount">0</strong><p id="autonomyResolvedDetail">—</p></article>
+              <article><span>Ждёт новых данных</span><strong id="autonomyWaitingCount">0</strong><p id="autonomyWaitingDetail">—</p></article>
+              <article><span>Нужна подпись владельца</span><strong id="autonomyOwnerCount">0</strong><p id="autonomyOwnerDetail">—</p></article>
+              <article><span>Брешь автономности</span><strong id="autonomyGapCount">0</strong><p id="autonomyGapDetail">—</p></article>
+            </div>
+          </section>
+
           <section class="institute-capacity" aria-labelledby="instituteCapacityTitle">
             <header>
               <div><span class="portal-kicker">Runnable first, priority second</span><h2 id="instituteCapacityTitle">Institute capacity</h2></div>
@@ -740,12 +753,12 @@
               <h2 id="level3RecommendationTitle">Institute recommendation</h2>
               <strong id="level3RecommendationName">—</strong>
               <p id="level3RecommendationReason">—</p>
+              <p id="level3RecommendationRisk">—</p>
               <small id="level3RecommendationConfidence">—</small>
             </div>
             <div class="level3-recommendation-actions">
               <button type="button" class="primary" id="level3ApproveRecommendation">Approve recommendation</button>
               <button type="button" id="level3RejectRecommendation">Reject recommendation</button>
-              <button type="button" class="quiet" id="level3DelegateChoice">You choose</button>
               <span id="level3RecommendationActionStatus" role="status"></span>
             </div>
             <details>
@@ -1026,6 +1039,6 @@
       </div>
       <div class="mobile-detail-body" id="mobileDetailBody"></div>
     </aside>
-    <script src="./app.js?v=20260725-pipeline-truth-v1" type="module"></script>
+    <script src="./app.js?v=20260726-autonomy-action-v1" type="module"></script>
   </body>
 </html>
