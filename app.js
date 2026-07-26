@@ -5526,6 +5526,12 @@ function renderResearchDashboardV2(operations, collectors = []) {
   const ownerRequired = ownerBlocker.owner?.includes("OWNER") || ownerBlocker.state?.includes("OWNER");
   const delegatedRf9 = operations.delegated_governance?.decisions?.RF9_6;
   const autonomouslyApproved = delegatedRf9?.decision === "AUTONOMOUS_APPROVED";
+  const delegatedPrepCompleted = (operations.contours || []).some((row) =>
+    row.contour_id === "RF9-6-D2-PREREG-PREP-V1" && row.status === "COMPLETED"
+  );
+  const rvsPrepCompleted = (operations.contours || []).some((row) =>
+    row.contour_id === "RVS-ADMISSION-IC-NEAR-FAMILY-V1" && row.status === "COMPLETED"
+  );
   setText("researchSummaryOwner", ownerRequired
     ? `${ownerBlocker.candidate || "Decision"} recommendation approval`
     : autonomouslyApproved
@@ -5602,6 +5608,8 @@ function renderResearchDashboardV2(operations, collectors = []) {
     ownerRequired,
     autonomouslyApproved,
     delegatedRf9,
+    delegatedPrepCompleted,
+    rvsPrepCompleted,
     autonomousCount,
     knowledgeProducing,
   });
@@ -5627,6 +5635,8 @@ function renderInstituteStateDashboard(operations, collectors, context) {
     ownerRequired,
     autonomouslyApproved,
     delegatedRf9,
+    delegatedPrepCompleted,
+    rvsPrepCompleted,
     autonomousCount,
   } = context;
   const sourceRows = instituteObservationRows(collectors);
@@ -5648,6 +5658,8 @@ function renderInstituteStateDashboard(operations, collectors, context) {
   const automaticDetail = ownerRequired
     ? "Save approval → run safety checks → start Checking → produce the next Money Verdict. Eight waiting studies stay closed."
     : `Next expected result: ${researchDisplayName(nextMoneyTitle)}.`;
+  const delegatedCurrent = profitability.immediate_blocker?.candidate || "RF9-6";
+  const delegatedBlocker = profitability.immediate_blocker?.code || moneyBlocker;
 
   setText("pipelineTruthExecuting", executingTruth.count ?? 0);
   setText("pipelineTruthExecutingBrief", executingTruth.count
@@ -5687,15 +5699,19 @@ function renderInstituteStateDashboard(operations, collectors, context) {
     <span>${escapeHtml(row.status)}</span>
     <small>${escapeHtml(row.detail)}</small>
   </article>`).join(""));
-  setText("pipelineTruthBottleneck", blockedTruth.active_money_blocker?.contour_id || moneyCandidate || "RF9-6");
-  setText("pipelineTruthBottleneckDetail", researchDisplayName(blockedTruth.active_money_blocker?.blocker || moneyBlocker));
+  setText("pipelineTruthBottleneck", blockedTruth.active_money_blocker?.contour_id || (autonomouslyApproved ? delegatedCurrent : moneyCandidate) || "RF9-6");
+  setText("pipelineTruthBottleneckDetail", researchDisplayName(blockedTruth.active_money_blocker?.blocker || (autonomouslyApproved ? delegatedBlocker : moneyBlocker)));
   setText("pipelineTruthNext", committedTruth.next_automatic_action || "RVS admission after RF9-6");
 
   setText("instituteNowState", ownerRequired ? "Waiting for your decision" : autonomouslyApproved ? "Moving under delegated authority" : institutePlainMoneyState(moneyStatus));
   setText("instituteNowSummary", ownerRequired
     ? "The institute has selected one study definition. It now needs your approval or rejection. Public observation continues automatically; checking has not started."
     : autonomouslyApproved
-      ? "RF9-6 was approved under Delegated Governance. The prospective preparation step is running without opening outcomes."
+      ? rvsPrepCompleted
+        ? "RF9-6 was approved under Delegated Governance. D2 preparation and RVS-readiness are complete; the outcome-sealed event inventory is next."
+        : delegatedPrepCompleted
+          ? "RF9-6 D2 preparation is complete. RVS-readiness is continuing automatically without opening outcomes."
+          : "RF9-6 was approved under Delegated Governance. The prospective preparation step is running without opening outcomes."
       : `The path to the next Money Verdict is ${institutePlainMoneyState(moneyStatus).toLowerCase()}. Observation and preparation continue automatically.`);
   setText("instituteOwnerState", ownerRequired ? "1 owner decision needed" : autonomouslyApproved ? "Delegated by Owner" : "No owner decision needed");
   $("instituteOwnerState")?.classList.toggle("clear", !ownerRequired);
@@ -5734,7 +5750,7 @@ function renderInstituteStateDashboard(operations, collectors, context) {
   setText("institutePreparingHeadline", registeredCandidates
     ? `${registeredCandidates} studies registered`
     : "No registered study family");
-  setText("institutePreparingStatus", registeredCandidates ? "Ready after current decision" : "Empty");
+  setText("institutePreparingStatus", registeredCandidates ? (rvsPrepCompleted ? "RVS readiness complete" : "Ready after current decision") : "Empty");
   setText("institutePreparingDetail", registeredCandidates
     ? "Eight studies are prepared and waiting. None has started."
     : "No prepared research family is waiting to start.");
@@ -5774,7 +5790,7 @@ function renderInstituteStateDashboard(operations, collectors, context) {
     <small>${escapeHtml(profitability.days_remaining_to_decision ?? "—")} days remaining</small>
   </article>`);
 
-  setText("instituteBlockerTitle", ownerRequired ? "Approve or reject the institute recommendation" : autonomouslyApproved ? "No owner gate — RF9-6 preparation is continuing" : researchDisplayName(moneyBlocker));
+  setText("instituteBlockerTitle", ownerRequired ? "Approve or reject the institute recommendation" : autonomouslyApproved ? (rvsPrepCompleted ? "No owner gate — RF9-6 event inventory is next" : "No owner gate — RF9-6 preparation is continuing") : researchDisplayName(moneyBlocker));
   setText("instituteBlockerDetail", ownerRequired
     ? "The institute compared all admissible definitions and selected the strict event definition. Your decision is only approve or reject. After approval: safety check → Checking → Money Verdict."
     : autonomouslyApproved
