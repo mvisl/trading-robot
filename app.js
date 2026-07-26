@@ -5820,7 +5820,7 @@ function renderAutonomyActionSystem(system) {
   const gaps = dashboard.autonomy_gaps || [];
   const latest = (rows) => rows[rows.length - 1] || null;
   const label = (row, fallback) => row
-    ? researchDisplayName(row.action_code || row.target_contour_id || row.candidate_id || fallback)
+    ? row.display_name || researchDisplayName(row.action_code || row.target_contour_id || row.candidate_id || fallback)
     : fallback;
   setText("instituteAutonomySummaryStatus", system.status || "MONITORING");
   setText("autonomyResolvedCount", resolved.length);
