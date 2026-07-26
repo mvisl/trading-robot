@@ -5515,14 +5515,23 @@ function renderResearchDashboardV2(operations, collectors = []) {
   const quota = Number(ari.critical_path_quota_used || 0);
   const infrastructureProducer = operations.research_infrastructure_producer || {};
   const sourceCounts = infrastructureProducer.counts || {};
+  const atlasSourceMissions = infrastructureProducer.atlas_missions
+    || (infrastructureProducer.directions || []).filter((row) => row.kind === "ATLAS");
+  const atlasSourcePathCount = atlasSourceMissions.reduce((sum, row) => sum + (row.acquisition_paths?.length || 0), 0);
+  const atlasPreparationCount = atlasSourceMissions.reduce((sum, row) => sum + (row.active_preparation_tasks?.length || 0), 0);
+  const gieChain = infrastructureProducer.gie_post_credential_chain || {};
 
   setText("researchInfrastructureStatus", infrastructureProducer.declared_state || ari.status || "UNAVAILABLE");
   setText("researchInfraSourceMissions", `${sourceCounts.total_directions || 0}`);
+  setText("researchInfraAtlasMissions", `${atlasSourceMissions.length}`);
+  setText("researchInfraAtlasPaths", `${atlasSourcePathCount}`);
+  setText("researchInfraAtlasPreparation", `${atlasPreparationCount}`);
   setText("researchInfraAcquisition", `${sourceCounts.acquisition_jobs || 0}`);
   setText("researchInfraQualification", `${sourceCounts.qualification_jobs || 0}`);
   setText("researchInfraAdmissionJobs", `${sourceCounts.admission_jobs || 0}`);
   setText("researchInfraBlockedAdmission", `${sourceCounts.blocked_candidates || 0}`);
   setText("researchInfraOwnerGates", `${infrastructureProducer.owner_gates?.length || 0}`);
+  setText("researchInfraGieChain", gieChain.trigger_present ? "AUTO RUNNING" : `${gieChain.tasks?.length || 0} tasks ready`);
   setText("researchInfraAri", ari.status || "UNAVAILABLE");
   setText("researchInfraAuthority", authority);
   setText("researchInfraAcceptance", acceptanceRequired ? `${acceptanceCurrent} / ${acceptanceRequired}` : "not exposed");
@@ -5530,11 +5539,29 @@ function renderResearchDashboardV2(operations, collectors = []) {
   setText("researchInfraQuota", `${quota}%`);
   setText("researchInfraEvidenceWip", `${evidenceActive}/${evidenceWip.limit ?? "?"}`);
   if ($("researchSourceAdmissionDirections")) {
-    $("researchSourceAdmissionDirections").innerHTML = (infrastructureProducer.directions || []).map((row) => `<article>
-      <div><strong>${escapeHtml(researchDisplayName(row.canonical_id))}</strong><span>${escapeHtml(row.admission_status || row.qualification_status || "NOT EVALUATED")}</span></div>
-      <p>${escapeHtml(row.required_source || "Source requirement not declared")}</p>
-      <small>${escapeHtml(row.producer_task?.status || "NO PRODUCER TASK")} · ${escapeHtml(row.blocker || "no blocker")} · ${escapeHtml(row.owner_action_required ? "Owner boundary" : "Autonomous")}</small>
-    </article>`).join("") || `<div class="research-honest-empty"><strong>No source mission state</strong><span>The Research Infrastructure Producer has not published a fresh machine snapshot.</span></div>`;
+    $("researchSourceAdmissionDirections").innerHTML = (infrastructureProducer.directions || []).map((row) => {
+      if (row.kind === "ATLAS") {
+        const found = row.acquisition_summary?.paths_accessible || 0;
+        const total = row.acquisition_summary?.paths_materialized || row.acquisition_paths?.length || 0;
+        const current = row.producer_task?.status === "QUEUED"
+          ? row.active_preparation_tasks?.[0]?.class || "Layer qualification"
+          : row.producer_task?.class || "Source acquisition";
+        return `<article>
+          <div><strong>${escapeHtml(researchDisplayName(row.canonical_id))}</strong><span>${escapeHtml(row.mission_state || "STATE MISSING")}</span></div>
+          <p><b>Seeking:</b> ${escapeHtml(row.required_signal || row.required_source || "signal not declared")}</p>
+          <small><b>Found:</b> ${found}/${total} paths · <b>Now:</b> ${escapeHtml(current)} · <b>Next:</b> ${escapeHtml(row.next_autonomous_step || "not materialized")}</small>
+          <details><summary>Layers and exact source gap</summary>
+            <p>${escapeHtml(row.missing_source_component || "No exact missing component recorded")}</p>
+            <small>${escapeHtml((row.source_layers || []).map((layer) => `${layer.layer}: ${layer.status}`).join(" · "))}</small>
+          </details>
+        </article>`;
+      }
+      return `<article>
+        <div><strong>${escapeHtml(researchDisplayName(row.canonical_id))}</strong><span>${escapeHtml(row.admission_status || row.qualification_status || "NOT EVALUATED")}</span></div>
+        <p>${escapeHtml(row.required_source || "Source requirement not declared")}</p>
+        <small>${escapeHtml(row.producer_task?.status || "NO PRODUCER TASK")} · ${escapeHtml(row.blocker || "no blocker")} · ${escapeHtml(row.owner_action_required ? "Owner boundary" : "Autonomous")}</small>
+      </article>`;
+    }).join("") || `<div class="research-honest-empty"><strong>No source mission state</strong><span>The Research Infrastructure Producer has not published a fresh machine snapshot.</span></div>`;
   }
 
   const ownerBlocker = profitability.immediate_blocker || {};
