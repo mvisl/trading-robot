@@ -5652,7 +5652,9 @@ function renderInstituteStateDashboard(operations, collectors, context) {
   setText("pipelineTruthExecuting", executingTruth.count ?? 0);
   setText("pipelineTruthExecutingBrief", executingTruth.count
     ? `${executingTruth.running?.length || 0} running · ${executingTruth.queued?.length || 0} queued`
-    : "No executable research — policy-blocked");
+    : executingTruth.idle_reason === "BLOCKED_BY_POLICY_WAITING_FOR_RF9_6_OWNER_DECISION"
+      ? "No executable research — waiting for owner"
+      : "No runnable research after fail-closed checks");
   setHtml("pipelineTruthExecutingDetail", `<article>
     <strong>Canonical idle reason</strong>
     <span>${escapeHtml(executingTruth.idle_reason || "No idle reason published")}</span>
