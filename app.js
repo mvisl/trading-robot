@@ -5524,9 +5524,13 @@ function renderResearchDashboardV2(operations, collectors = []) {
 
   const ownerBlocker = profitability.immediate_blocker || {};
   const ownerRequired = ownerBlocker.owner?.includes("OWNER") || ownerBlocker.state?.includes("OWNER");
+  const delegatedRf9 = operations.delegated_governance?.decisions?.RF9_6;
+  const autonomouslyApproved = delegatedRf9?.decision === "AUTONOMOUS_APPROVED";
   setText("researchSummaryOwner", ownerRequired
     ? `${ownerBlocker.candidate || "Decision"} recommendation approval`
-    : "No owner decision required");
+    : autonomouslyApproved
+      ? "RF9-6 delegated by Owner · approved autonomously"
+      : "No owner decision required");
 
   const autonomousCount = producingCollectors
     + (atlasProduced > 0 ? 1 : 0)
@@ -5596,6 +5600,8 @@ function renderResearchDashboardV2(operations, collectors = []) {
     evidenceWip,
     ownerBlocker,
     ownerRequired,
+    autonomouslyApproved,
+    delegatedRf9,
     autonomousCount,
     knowledgeProducing,
   });
@@ -5619,6 +5625,8 @@ function renderInstituteStateDashboard(operations, collectors, context) {
     evidenceWip,
     ownerBlocker,
     ownerRequired,
+    autonomouslyApproved,
+    delegatedRf9,
     autonomousCount,
   } = context;
   const sourceRows = instituteObservationRows(collectors);
@@ -5681,11 +5689,13 @@ function renderInstituteStateDashboard(operations, collectors, context) {
   setText("pipelineTruthBottleneckDetail", researchDisplayName(blockedTruth.active_money_blocker?.blocker || moneyBlocker));
   setText("pipelineTruthNext", committedTruth.next_automatic_action || "RVS admission after RF9-6");
 
-  setText("instituteNowState", ownerRequired ? "Waiting for your decision" : institutePlainMoneyState(moneyStatus));
+  setText("instituteNowState", ownerRequired ? "Waiting for your decision" : autonomouslyApproved ? "Moving under delegated authority" : institutePlainMoneyState(moneyStatus));
   setText("instituteNowSummary", ownerRequired
     ? "The institute has selected one study definition. It now needs your approval or rejection. Public observation continues automatically; checking has not started."
-    : `The path to the next Money Verdict is ${institutePlainMoneyState(moneyStatus).toLowerCase()}. Observation and preparation continue automatically.`);
-  setText("instituteOwnerState", ownerRequired ? "1 owner decision needed" : "No owner decision needed");
+    : autonomouslyApproved
+      ? "RF9-6 was approved under Delegated Governance. The prospective preparation step is running without opening outcomes."
+      : `The path to the next Money Verdict is ${institutePlainMoneyState(moneyStatus).toLowerCase()}. Observation and preparation continue automatically.`);
+  setText("instituteOwnerState", ownerRequired ? "1 owner decision needed" : autonomouslyApproved ? "Delegated by Owner" : "No owner decision needed");
   $("instituteOwnerState")?.classList.toggle("clear", !ownerRequired);
 
   setText("instituteObservingHeadline", observedSources
@@ -5762,18 +5772,22 @@ function renderInstituteStateDashboard(operations, collectors, context) {
     <small>${escapeHtml(profitability.days_remaining_to_decision ?? "—")} days remaining</small>
   </article>`);
 
-  setText("instituteBlockerTitle", ownerRequired ? "Approve or reject the institute recommendation" : researchDisplayName(moneyBlocker));
+  setText("instituteBlockerTitle", ownerRequired ? "Approve or reject the institute recommendation" : autonomouslyApproved ? "No owner gate — RF9-6 preparation is continuing" : researchDisplayName(moneyBlocker));
   setText("instituteBlockerDetail", ownerRequired
     ? "The institute compared all admissible definitions and selected the strict event definition. Your decision is only approve or reject. After approval: safety check → Checking → Money Verdict."
-    : "The current blocker can be removed automatically.");
+    : autonomouslyApproved
+      ? "D2 was fixed prospectively under the permanent delegated rule. Outcomes remain sealed; the next admissible task was created automatically."
+      : "The current blocker can be removed automatically.");
   setText("instituteAutomaticNext", automaticNext);
   setText("instituteAutomaticNextDetail", automaticDetail);
   setText("instituteAutonomy", observedSources ? "Observation collection continues" : "No autonomous production proven");
   setText("instituteAutonomyDetail", `${observedSources}/${sourceRows.length} public sources observed · ${registeredCandidates} studies remain closed · money work remains protected.`);
-  setText("instituteOwnerDecision", ownerRequired ? "One bounded research decision" : "Nothing right now");
+  setText("instituteOwnerDecision", ownerRequired ? "One bounded research decision" : autonomouslyApproved ? "No action · notified post-factum" : "Nothing right now");
   setText("instituteOwnerDecisionDetail", ownerRequired
     ? "Approve or reject one recommendation. Alternative definitions are visible only as supporting evaluation. No capital or system change is requested."
-    : "The institute can continue under existing mandates.");
+    : autonomouslyApproved
+      ? "Autonomously approved under Delegated Governance. The owner is informed; no signature is requested."
+      : "The institute can continue under existing mandates.");
 
   const incidentSummary = instituteIncidentSummary(operations.governance_incidents || operations.open_incidents || []);
   setText("instituteMoneyStackStatus", ownerRequired ? "Waiting for owner" : institutePlainMoneyState(moneyStatus));
@@ -5793,10 +5807,10 @@ function renderInstituteStateDashboard(operations, collectors, context) {
     <article><strong>Next</strong><span>Run the next scheduled public-source check</span><small>Only new or changed observations are preserved.</small></article>
     ${sourceRows.map((row) => `<article><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(row.status)}</span><small>${escapeHtml(row.detail)}</small></article>`).join("")}`);
 
-  setText("instituteGovernanceStackStatus", ownerRequired ? "1 decision needed" : "Protected");
-  setHtml("instituteGovernanceStackDetail", `<article><strong>Now</strong><span>${escapeHtml(ownerRequired ? "One protected decision is open" : "Existing rules are sufficient")}</span><small>${escapeHtml(ownerRequired ? "RF9-6 denominator" : "No owner gate")}</small></article>
+  setText("instituteGovernanceStackStatus", ownerRequired ? "1 decision needed" : autonomouslyApproved ? "Delegated by Owner" : "Protected");
+  setHtml("instituteGovernanceStackDetail", `<article><strong>Now</strong><span>${escapeHtml(ownerRequired ? "One protected decision is open" : autonomouslyApproved ? "RF9-6 approved autonomously" : "Existing rules are sufficient")}</span><small>${escapeHtml(ownerRequired ? "RF9-6 denominator" : autonomouslyApproved ? "Delegated Governance · outcomes sealed" : "No owner gate")}</small></article>
     <article><strong>Waiting for</strong><span>${escapeHtml(ownerRequired ? exactDecision : "Nothing")}</span><small>${escapeHtml(familyId)} remains REGISTERED_NOT_STARTED.</small></article>
-    <article><strong>Next</strong><span>Record approval → run RVS admission → keep IC5 controls</span><small>Outcomes remain sealed until admission succeeds.</small></article>`);
+    <article><strong>Next</strong><span>${escapeHtml(ownerRequired ? "Record approval → run RVS admission → keep IC5 controls" : autonomouslyApproved ? "Continue outcome-sealed RF9-6 preparation → keep IC5 controls" : "Run the next governed admission step")}</span><small>Outcomes remain sealed until admission succeeds.</small></article>`);
 
   const mismatches = operations.reconciliation?.mismatches || [];
   const blockingMismatches = mismatches.filter((row) => row.blocking).length;
@@ -5810,7 +5824,7 @@ function renderInstituteStateDashboard(operations, collectors, context) {
   renderInstituteCapacity(operations.adaptive_resource_orchestrator || {});
   renderAutonomyActionSystem(operations.autonomy_action_system || {});
   renderActionProvenance(operations.action_provenance || {});
-  renderLevel3Recommendation(profitability.level3_decision || {}, ownerRequired);
+  renderLevel3Recommendation(profitability.level3_decision || {}, ownerRequired, operations.delegated_governance || null);
 }
 
 function renderActionProvenance(provenance) {
@@ -5886,17 +5900,23 @@ function renderInstituteCapacity(aro) {
   }).join("") || `<article class="institute-capacity-card"><strong>Capacity unavailable</strong><em>UNKNOWN</em><small>No scheduler allocation has been published.</small></article>`;
 }
 
-function renderLevel3Recommendation(level3, ownerRequired) {
+function renderLevel3Recommendation(level3, ownerRequired, delegatedGovernance) {
   const panel = $("level3RecommendationPanel");
   if (!panel) return;
   const recommendation = level3.recommendation || {};
-  const visible = ownerRequired && Boolean(recommendation.decision_code);
+  const delegated = delegatedGovernance?.decisions?.RF9_6?.decision === "AUTONOMOUS_APPROVED";
+  const visible = (ownerRequired || delegated) && Boolean(recommendation.decision_code);
   panel.toggleAttribute("hidden", !visible);
   if (!visible) return;
+  $("level3ApproveRecommendation")?.toggleAttribute("hidden", delegated);
+  $("level3RejectRecommendation")?.toggleAttribute("hidden", delegated);
+  setText("level3RecommendationActionStatus", delegated ? "Owner notified post-factum · no action required." : "");
   setText("level3RecommendationName", recommendation.display_name || recommendation.variant || "Recommended definition");
   setText("level3RecommendationReason", recommendation.reason || "The institute selected the strongest governance-compliant option.");
   setText("level3RecommendationRisk", `Главный риск: ${recommendation.primary_risk || "Ограниченная историческая выборка."}`);
-  setText("level3RecommendationConfidence", `Confidence ${researchDisplayName(recommendation.confidence || "UNKNOWN")} · outcomes sealed · внутренние варианты уже оценены институтом.`);
+  setText("level3RecommendationConfidence", delegated
+    ? "Delegated by Owner · Autonomously approved under Delegated Governance · outcomes sealed."
+    : `Confidence ${researchDisplayName(recommendation.confidence || "UNKNOWN")} · outcomes sealed · внутренние варианты уже оценены институтом.`);
   const alternatives = level3.alternative_evaluations || [];
   setHtml("level3AlternativeDetails", alternatives.map((row) => `<article class="institute-capacity-card">
     <strong>${escapeHtml(row.variant)}${row.recommended ? " · recommended" : ""}</strong>
