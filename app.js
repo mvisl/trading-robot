@@ -4886,6 +4886,17 @@ function portalDate(value) {
   return new Intl.DateTimeFormat(undefined, { month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit" }).format(parsed);
 }
 
+function instituteFreshness(operations = {}) {
+  if (operations.status === "LIVE") {
+    return `live · revision ${operations.state_revision || "—"}`;
+  }
+  const update = operations.last_successful_update || operations.last_success_at || operations.generated_at;
+  const age = Number.isFinite(Number(operations.status_age_seconds))
+    ? shortDurationSeconds(Number(operations.status_age_seconds))
+    : "unknown age";
+  return `${operations.status || "unavailable"} · last successful update ${portalDate(update)} · ${age} old`;
+}
+
 function setPortalCardTone(id, tone) {
   const element = $(id);
   if (!element) return;
@@ -5031,7 +5042,7 @@ function renderInstitutePortal(state) {
   const operations = state?.instituteOperations || { status: "UNAVAILABLE" };
   const live = operations.status === "LIVE";
   setText("portalStateLabel", operations.status || "UNAVAILABLE");
-  setText("portalStateMeta", operations.state_revision ? `revision ${operations.state_revision} · ${portalDate(operations.generated_at)}` : "canonical state unavailable");
+  setText("portalStateMeta", instituteFreshness(operations));
   $("portalLiveDot")?.classList.toggle("offline", !live);
   renderPortalOverview(state, operations);
   renderLivingInstituteWork(operations);
@@ -5067,7 +5078,7 @@ function renderPortalOverview(state, operations) {
     { label: "Owner Attention", value: owner.length ? `${owner.length} REQUIRED` : "CLEAR", detail: owner[0]?.what || "No genuine owner decision required" },
   ];
   if ($("portalHealthGrid")) $("portalHealthGrid").innerHTML = cards.map((card) => `<article class="portal-health-card tone-${portalTone(card.value)}"><span>${escapeHtml(card.label)}</span><strong>${escapeHtml(card.value)}</strong><small>${escapeHtml(compactText(card.detail, 100))}</small></article>`).join("");
-  setText("portalOverviewFreshness", operations.status === "LIVE" ? `live · revision ${operations.state_revision}` : operations.status || "unavailable");
+  setText("portalOverviewFreshness", instituteFreshness(operations));
   setText("portalCapacityValue", `${occupied}/${capacity.limit || (capacity.slots || []).length}`);
   setText("portalCapacityMeta", occupied ? "preparation slots occupied" : (capacity.slots?.[0]?.idle_reason || "no active preparation"));
   setPortalCardTone("portalCapacityCard", occupied ? "RUNNING" : health.level);
@@ -5113,9 +5124,7 @@ function renderLivingInstituteWork(operations) {
   const runningContours = view.now || [];
   const onlineBackground = background.filter((row) => row.status === "ONLINE").length;
 
-  setText("instituteWorkFreshness", operations.status === "LIVE"
-    ? `live process state · revision ${operations.state_revision || "—"}`
-    : operations.status || "unavailable");
+  setText("instituteWorkFreshness", instituteFreshness(operations));
   setText("instituteWorkHeadline", aro
     ? `${aro.name}: ${aro.progress?.label || aro.current_task}. ${runningContours.length ? `${runningContours.length} admitted research process${runningContours.length === 1 ? "" : "es"} executing.` : "No evidence contour is executing."} ${onlineBackground} background processes observed online.`
     : `${runningContours.length} admitted research processes executing · ${onlineBackground} background processes observed online.`);
@@ -5295,7 +5304,7 @@ function shortDurationSeconds(seconds) {
 }
 
 function renderResearchPortal(operations) {
-  setText("researchFreshness", operations.status === "LIVE" ? `live · revision ${operations.state_revision}` : operations.status || "unavailable");
+  setText("researchFreshness", instituteFreshness(operations));
   renderOperationalResearch(operations);
   const stages = operations.institute_progress || [];
   setText("instituteProgressMeta", `${stages.length} canonical stages`);
@@ -6895,7 +6904,7 @@ async function refreshInstituteWorkState(reason = "manual") {
     const operations = payload.instituteOperations || payload.operations;
     if (!operations) return;
     setText("portalStateLabel", operations.status || "UNAVAILABLE");
-    setText("portalStateMeta", operations.state_revision ? `revision ${operations.state_revision} · ${portalDate(operations.generated_at)}` : "canonical state unavailable");
+    setText("portalStateMeta", instituteFreshness(operations));
     $("portalLiveDot")?.classList.toggle("offline", operations.status !== "LIVE");
     if (currentState) currentState = { ...currentState, instituteOperations: operations };
     renderLivingInstituteWork(operations);
