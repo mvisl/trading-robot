@@ -5519,13 +5519,23 @@ function renderResearchDashboardV2(operations, collectors = []) {
     || (infrastructureProducer.directions || []).filter((row) => row.kind === "ATLAS");
   const atlasSourcePathCount = atlasSourceMissions.reduce((sum, row) => sum + (row.acquisition_paths?.length || 0), 0);
   const atlasPreparationCount = atlasSourceMissions.reduce((sum, row) => sum + (row.active_preparation_tasks?.length || 0), 0);
+  const atlasPreparationRows = atlasSourceMissions.flatMap((row) => row.active_preparation_tasks || []);
+  const atlasPreparationRunning = atlasPreparationRows.filter((row) => row.status === "RUNNING").length;
+  const atlasPreparationCompleted = atlasPreparationRows.filter((row) => row.status === "COMPLETED").length;
   const gieChain = infrastructureProducer.gie_post_credential_chain || {};
+  const admissionMetrics = infrastructureProducer.admission_output_metrics || {};
+  const endToEndPilot = infrastructureProducer.end_to_end_admission_pilot || {};
 
   setText("researchInfrastructureStatus", infrastructureProducer.declared_state || ari.status || "UNAVAILABLE");
   setText("researchInfraSourceMissions", `${sourceCounts.total_directions || 0}`);
   setText("researchInfraAtlasMissions", `${atlasSourceMissions.length}`);
   setText("researchInfraAtlasPaths", `${atlasSourcePathCount}`);
   setText("researchInfraAtlasPreparation", `${atlasPreparationCount}`);
+  setText("researchInfraPreparationRunning", `${atlasPreparationRunning}`);
+  setText("researchInfraPreparationCompleted", `${atlasPreparationCompleted}`);
+  setText("researchInfraAdmissionProgress", `${admissionMetrics.ADMISSION_CHECKS_CLOSED || 0}`);
+  setText("researchInfraAdmissionReady", `${admissionMetrics.ADMISSION_READY_COUNT || 0}`);
+  setText("researchInfraAdmitted", `${sourceCounts.admitted_candidates || admissionMetrics.ADMITTED_PER_24H || 0}`);
   setText("researchInfraAcquisition", `${sourceCounts.acquisition_jobs || 0}`);
   setText("researchInfraQualification", `${sourceCounts.qualification_jobs || 0}`);
   setText("researchInfraAdmissionJobs", `${sourceCounts.admission_jobs || 0}`);
@@ -5538,6 +5548,17 @@ function renderResearchDashboardV2(operations, collectors = []) {
   setText("researchInfraScheduler", scheduler);
   setText("researchInfraQuota", `${quota}%`);
   setText("researchInfraEvidenceWip", `${evidenceActive}/${evidenceWip.limit ?? "?"}`);
+  setText("e2ePilotStage", endToEndPilot.current_stage || "NOT MATERIALIZED");
+  setText("e2ePilotChecks", `${endToEndPilot.admission_checks_closed || 0} / ${endToEndPilot.admission_checks_total || 0}`);
+  setText("e2ePilotBlocker", endToEndPilot.exact_blocker || "none");
+  setText("e2ePilotTask", endToEndPilot.blocker_task || "automatic successor");
+  setText("e2ePilotPrereg", endToEndPilot.final_prereg_status || "NOT VISIBLE");
+  setText("e2ePilotSource", endToEndPilot.source_package_status || "NOT EVALUATED");
+  setText("e2ePilotProvenance", endToEndPilot.provenance_status || "NOT EVALUATED");
+  setText("e2ePilotTemporal", endToEndPilot.temporal_observability_verdict || "NOT EVALUATED");
+  setText("e2ePilotRvs", endToEndPilot.formal_rvs_verdict || "NOT EVALUATED");
+  setText("e2ePilotRunner", endToEndPilot.runner_state || "NOT MATERIALIZED");
+  setText("e2ePilotSealing", endToEndPilot.outcome_sealing_state || "SEALED");
   if ($("researchSourceAdmissionDirections")) {
     $("researchSourceAdmissionDirections").innerHTML = (infrastructureProducer.directions || []).map((row) => {
       if (row.kind === "ATLAS") {

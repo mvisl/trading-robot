@@ -27,7 +27,7 @@
       <nav class="portal-navigation" id="portalNavigation"></nav>
       <div class="portal-sidebar-state">
         <span id="portalLiveDot" class="portal-live-dot"></span>
-        <div><strong id="portalStateLabel">__PORTAL_STATE_LABEL__</strong><small id="portalStateMeta">__PORTAL_STATE_META__</small></div>
+        <div><strong id="portalStateLabel">Loading live state…</strong><small id="portalStateMeta">Loading live state…</small></div>
       </div>
     </aside>
     <main class="shell portal-content">
@@ -649,7 +649,7 @@
       <section class="portal-view" id="portal-research" data-portal-view="research" hidden>
         <header class="portal-page-head institute-state-head">
           <div><span class="portal-kicker">Institute now</span><h1>Institute State</h1><p>Где находится институт, что его блокирует и что произойдёт дальше.</p></div>
-          <span class="pill" id="researchFreshness">__RESEARCH_FRESHNESS__</span>
+          <span class="pill" id="researchFreshness">Loading live state…</span>
         </header>
 
         <section class="institute-state-hero" aria-label="Current institute state">
@@ -841,30 +841,49 @@
           </article>
 
           <article class="panel portal-section-panel resident-live-panel">
-            <div class="panel-head"><div><span class="portal-kicker">RESIDENT</span><h2>Resident Operator</h2></div><span class="pill" id="residentOperatorStatus">__RESIDENT_STATUS__</span></div>
+            <div class="panel-head"><div><span class="portal-kicker">RESIDENT</span><h2>Resident Operator</h2></div><span class="pill" id="residentOperatorStatus">Loading live state…</span></div>
             <div class="resident-live-task">
               <span>Current task</span>
-              <strong id="residentTask">__RESIDENT_TASK__</strong>
-              <small id="residentMission">__RESIDENT_MISSION__</small>
+              <strong id="residentTask">Loading live state…</strong>
+              <small id="residentMission">Loading live state…</small>
             </div>
             <div class="resident-live-meta">
-              <div><span>Engine</span><strong id="residentEngine">__RESIDENT_ENGINE__</strong></div>
-              <div><span>Started</span><strong id="residentStarted">__RESIDENT_STARTED__</strong></div>
-              <div><span>ETA</span><strong id="residentEta">__RESIDENT_ETA__</strong></div>
+              <div><span>Engine</span><strong id="residentEngine">Loading live state…</strong></div>
+              <div><span>Started</span><strong id="residentStarted">Loading live state…</strong></div>
+              <div><span>ETA</span><strong id="residentEta">Loading live state…</strong></div>
             </div>
-            <div class="resident-action-line"><span>Last</span><strong id="residentLastAction">__RESIDENT_LAST__</strong></div>
-            <div class="resident-action-line"><span>Next</span><strong id="residentNextAction">__RESIDENT_NEXT__</strong></div>
+            <div class="resident-action-line"><span>Last</span><strong id="residentLastAction">Loading live state…</strong></div>
+            <div class="resident-action-line"><span>Next</span><strong id="residentNextAction">Loading live state…</strong></div>
             <details class="research-card-details"><summary>Why this state</summary><p id="residentReasoning">—</p><dl class="portal-kv-grid"><div><dt>Selection</dt><dd id="residentEngineReason">—</dd></div><div><dt>Source</dt><dd id="residentSource">—</dd></div></dl><span id="residentActionCount" hidden>0</span><ol id="residentActions" class="portal-plain-list"></ol></details>
           </article>
 
           <article class="panel portal-section-panel research-infrastructure-panel">
             <div class="panel-head"><div><span class="portal-kicker">RESEARCH INFRASTRUCTURE</span><h2>Sources → admission</h2></div><span class="pill" id="researchInfrastructureStatus">—</span></div>
             <p class="research-program-principle">Infrastructure state is shown separately and never counted as profitability progress.</p>
+            <article class="research-live-item" id="endToEndAdmissionPilot">
+              <div><span>END-TO-END PILOT</span><strong>Gas nominations → TTF</strong></div>
+              <p><b id="e2ePilotStage">—</b> · checks <span id="e2ePilotChecks">—</span></p>
+              <small>Blocker: <span id="e2ePilotBlocker">—</span> · task: <span id="e2ePilotTask">—</span></small>
+              <details><summary>Admission and Runner truth</summary><dl class="portal-kv-grid">
+                <div><dt>Final prereg</dt><dd id="e2ePilotPrereg">—</dd></div>
+                <div><dt>Source package</dt><dd id="e2ePilotSource">—</dd></div>
+                <div><dt>Provenance</dt><dd id="e2ePilotProvenance">—</dd></div>
+                <div><dt>Temporal observability</dt><dd id="e2ePilotTemporal">—</dd></div>
+                <div><dt>Formal RVS</dt><dd id="e2ePilotRvs">—</dd></div>
+                <div><dt>Runner</dt><dd id="e2ePilotRunner">—</dd></div>
+                <div><dt>Outcomes</dt><dd id="e2ePilotSealing">—</dd></div>
+              </dl></details>
+            </article>
             <div class="research-infrastructure-facts">
               <div><span>Source missions</span><strong id="researchInfraSourceMissions">—</strong></div>
               <div><span>Atlas missions</span><strong id="researchInfraAtlasMissions">—</strong></div>
               <div><span>Atlas source paths</span><strong id="researchInfraAtlasPaths">—</strong></div>
               <div><span>Atlas preparation</span><strong id="researchInfraAtlasPreparation">—</strong></div>
+              <div><span>Preparation running</span><strong id="researchInfraPreparationRunning">—</strong></div>
+              <div><span>Preparation completed</span><strong id="researchInfraPreparationCompleted">—</strong></div>
+              <div><span>Tasks with admission progress</span><strong id="researchInfraAdmissionProgress">—</strong></div>
+              <div><span>Admission ready</span><strong id="researchInfraAdmissionReady">—</strong></div>
+              <div><span>Admitted</span><strong id="researchInfraAdmitted">—</strong></div>
               <div><span>Acquisition</span><strong id="researchInfraAcquisition">—</strong></div>
               <div><span>Qualification</span><strong id="researchInfraQualification">—</strong></div>
               <div><span>Admission checks</span><strong id="researchInfraAdmissionJobs">—</strong></div>
@@ -895,11 +914,11 @@
 
         <section class="research-decision-grid research-blocker-grid-v2">
           <article class="panel portal-section-panel research-blocker-panel">
-            <div class="panel-head"><div><span class="portal-kicker">MONEY BLOCKER</span><h2>One blocking gate</h2></div><span class="pill" id="researchBlockerStatus">__RESEARCH_BLOCKER_STATUS__</span></div>
-            <strong class="research-decision-title" id="researchBlockerTitle">__RESEARCH_BLOCKER_TITLE__</strong>
-            <p id="researchBlockerReason">__RESEARCH_BLOCKER_REASON__</p>
-            <small id="researchBlockerWaitingFor">__RESEARCH_BLOCKER_WAITING__</small>
-            <details class="research-card-details"><summary id="researchWaitingSummary">__RESEARCH_WAITING_SUMMARY__</summary><p id="researchBlockerDetail">—</p><div class="research-waiting-list" id="researchWaitingList"></div></details>
+            <div class="panel-head"><div><span class="portal-kicker">MONEY BLOCKER</span><h2>One blocking gate</h2></div><span class="pill" id="researchBlockerStatus">Loading live state…</span></div>
+            <strong class="research-decision-title" id="researchBlockerTitle">Loading live state…</strong>
+            <p id="researchBlockerReason">Loading live state…</p>
+            <small id="researchBlockerWaitingFor">Loading live state…</small>
+            <details class="research-card-details"><summary id="researchWaitingSummary">Loading live state…</summary><p id="researchBlockerDetail">—</p><div class="research-waiting-list" id="researchWaitingList"></div></details>
           </article>
           <article class="panel portal-section-panel research-infrastructure-blockers-panel">
             <div class="panel-head"><div><span class="portal-kicker">OTHER BLOCKERS</span><h2>Infrastructure and data</h2></div><span class="pill" id="researchInfrastructureBlockerCount">0</span></div>
@@ -984,7 +1003,7 @@
         </section>
 
         <details class="panel portal-section-panel research-foundation-panel">
-          <summary><span><span class="portal-kicker">FOUNDATION</span><strong>Completed work</strong></span><span id="researchFoundationCount">__RESEARCH_FOUNDATION_SUMMARY__</span></summary>
+          <summary><span><span class="portal-kicker">FOUNDATION</span><strong>Completed work</strong></span><span id="researchFoundationCount">Loading live state…</span></summary>
           <p class="muted">Завершённые контуры — память института, а не текущая работа.</p>
           <div class="research-foundation-grid" id="researchFoundation"></div>
         </details>
