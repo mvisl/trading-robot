@@ -5530,6 +5530,7 @@ function renderResearchDashboardV2(operations, collectors = []) {
   const decisionCapacity = operations.decision_capacity || {};
   const agsiRevisionSemantics = operations.agsi_revision_semantics || {};
   const weakSignalComposition = operations.weak_signal_composition || {};
+  const atlasComponentSupply = operations.atlas_component_supply || {};
 
   setText("researchInfrastructureStatus", infrastructureProducer.declared_state || ari.status || "UNAVAILABLE");
   setText("researchInfraSourceMissions", `${sourceCounts.total_directions || 0}`);
@@ -5629,6 +5630,59 @@ function renderResearchDashboardV2(operations, collectors = []) {
         <small><b>Component:</b> ${escapeHtml(composition.component_pool_status || "NOT ELIGIBLE")} · <b>Cluster:</b> ${escapeHtml(composition.causal_cluster || "unknown")} · <b>Independence:</b> ${escapeHtml(composition.independence_gate_status || "NOT OPENED")} · <b>Revision:</b> ${escapeHtml(revision || "NOT APPLICABLE")}</small>
       </article>`;
     }).join("") || `<div class="portal-empty">Decision-capacity audit has not been published.</div>`;
+  }
+  const atlasThroughput = atlasComponentSupply.throughput || {};
+  const atlasComponents = atlasComponentSupply.component_supply || {};
+  const atlasCoverage = atlasComponentSupply.cluster_coverage || {};
+  const atlasCombination = atlasComponentSupply.combination_readiness || {};
+  const atlasMeta = atlasComponentSupply.meta_holdout || {};
+  const atlasNextVerdict = atlasThroughput.expected_next_verdicts?.[0] || {};
+  setText("atlasSupplyStatus", atlasComponentSupply.artifact_contract
+    ? (atlasComponents.admission_buffer_count > 0 ? "BUFFERED" : "SUPPLY BUILDING")
+    : "NOT PUBLISHED");
+  setText("atlasSupplyCurrent", atlasComponentSupply.pension?.state
+    ? `Pension evidence is sealed; Barge and ${researchDisplayName(atlasComponentSupply.next_cluster_diverse_candidate?.candidate_id)} are advancing through admission.`
+    : "Waiting for the component-supply state.");
+  setText("atlasSupplyEvidenceJobs", `${atlasThroughput.active_sealed_evidence_jobs || 0}`);
+  setText("atlasSupplyAdmissionBuffer", `${atlasComponents.admission_buffer_count || 0}`);
+  setText("atlasSupplyEligible", `${atlasComponents.component_eligible_signals || 0}`);
+  setText("atlasSupplyClusters", `${atlasCoverage.represented_candidate_clusters || 0} represented · ${atlasCoverage.component_pool_clusters || 0} eligible`);
+  setText("atlasSupplyMetaHoldout", humanizeResearchCode(atlasMeta.state || "not materialized"));
+  setText("atlasSupplyNextVerdict", atlasNextVerdict.candidate_id
+    ? `${researchDisplayName(atlasNextVerdict.candidate_id)} · ${humanizeResearchCode(atlasNextVerdict.eta || atlasNextVerdict.date)}`
+    : "No ETA yet");
+  setText("atlasSupplyBlocker", `First combination: ${humanizeResearchCode((atlasCombination.exact_blockers || [])[0] || "fewer than two eligible components")}.`);
+  setText("atlasSupplyWeakDirectional", `${atlasComponents.weak_but_directional_signals || 0}`);
+  setText("atlasSupplyInconclusive", `${atlasComponents.inconclusive_sign_candidates || 0}`);
+  setText("atlasSupplyIndependence", humanizeResearchCode(atlasCombination.portfolio_independence_gate_state || "not opened"));
+  setText("atlasSupplyMetaObservations", `${atlasCombination.prospective_observation_count || 0}`);
+  if ($("atlasSupplyCandidates")) {
+    const atlasSupplyRows = [
+      {
+        title: "Pension calendar → index flows",
+        state: atlasComponentSupply.pension?.state,
+        detail: `Evidence ${atlasComponentSupply.pension?.runner_execution || "unknown"} · outcomes ${atlasComponentSupply.pension?.outcomes_exposed ? "exposed" : "sealed"}`,
+      },
+      {
+        title: "Barge rates → grain basis",
+        state: atlasComponentSupply.barge?.state,
+        detail: humanizeResearchCode(atlasComponentSupply.barge?.exact_blocker || "no blocker"),
+      },
+      {
+        title: researchDisplayName(atlasComponentSupply.next_cluster_diverse_candidate?.candidate_id),
+        state: atlasComponentSupply.next_cluster_diverse_candidate?.state,
+        detail: `${humanizeResearchCode(atlasComponentSupply.next_cluster_diverse_candidate?.cluster_coverage_gain || "unknown gain")} · ${humanizeResearchCode(atlasComponentSupply.next_cluster_diverse_candidate?.exact_blocker || "no blocker")}`,
+      },
+      {
+        title: "AGSI → gas spread",
+        state: atlasComponentSupply.agsi?.state,
+        detail: `Prospective ${atlasComponentSupply.agsi?.prospective_collection || "unknown"} · historical point-in-time ${humanizeResearchCode(atlasComponentSupply.agsi?.historical_point_in_time || "unknown")}`,
+      },
+    ];
+    $("atlasSupplyCandidates").innerHTML = atlasSupplyRows.map((row) => `<article>
+      <div><strong>${escapeHtml(row.title || "Candidate")}</strong><span>${escapeHtml(humanizeResearchCode(row.state || "unknown"))}</span></div>
+      <small>${escapeHtml(row.detail || "No detail")}</small>
+    </article>`).join("");
   }
   if ($("researchSourceAdmissionDirections")) {
     $("researchSourceAdmissionDirections").innerHTML = (infrastructureProducer.directions || []).map((row) => {
