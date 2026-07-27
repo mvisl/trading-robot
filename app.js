@@ -5529,6 +5529,7 @@ function renderResearchDashboardV2(operations, collectors = []) {
   const admissionContinuity = operations.admission_continuity || {};
   const decisionCapacity = operations.decision_capacity || {};
   const agsiRevisionSemantics = operations.agsi_revision_semantics || {};
+  const weakSignalComposition = operations.weak_signal_composition || {};
 
   setText("researchInfrastructureStatus", infrastructureProducer.declared_state || ari.status || "UNAVAILABLE");
   setText("researchInfraSourceMissions", `${sourceCounts.total_directions || 0}`);
@@ -5598,15 +5599,34 @@ function renderResearchDashboardV2(operations, collectors = []) {
   setText("decisionCapacityAccumulation", `${capacityMetrics.ACCUMULATION_ONLY_COUNT || 0}`);
   setText("decisionCapacityUnderpowered", `${capacityMetrics.STRUCTURALLY_UNDERPOWERED_COUNT || 0}`);
   setText("decisionCapacityImplausible", `${capacityMetrics.ECONOMICALLY_IMPLAUSIBLE_COUNT || 0}`);
+  const compositionMetrics = weakSignalComposition.metrics || {};
+  setText("weakDirectionalCount", `${compositionMetrics.WEAK_BUT_DIRECTIONAL_COUNT || 0}`);
+  setText("inconclusiveSignCount", `${compositionMetrics.INCONCLUSIVE_SIGN_COUNT || 0}`);
+  setText("componentPoolCount", `${compositionMetrics.COMPONENT_POOL_COUNT || 0}`);
+  setText("combinationReadyCount", `${compositionMetrics.COMBINATION_READY_COUNT || 0}`);
+  setText("independencePassCount", `${compositionMetrics.INDEPENDENCE_GATE_PASS_COUNT || 0}`);
+  setText("activeCombinationTests", `${compositionMetrics.ACTIVE_COMBINATION_TESTS || 0}`);
+  setText("firstCombinationBlocker", weakSignalComposition.first_combination?.created
+    ? `Combination ${researchDisplayName(weakSignalComposition.first_combination.candidate_id)} is active.`
+    : `No combination opened: ${humanizeResearchCode(weakSignalComposition.first_combination?.blocker_artifact_id || "fewer than two eligible components")}.`);
   if ($("decisionCapacityPortfolio")) {
+    const compositionById = new Map(
+      (weakSignalComposition.candidates || []).map((row) => [row.candidate_id, row]),
+    );
     $("decisionCapacityPortfolio").innerHTML = (decisionCapacity.candidates || []).map((row) => {
       const revision = row.candidate_id === "IC-NEAR-AGSI-SUMMER-WINTER-SPREAD"
         ? (agsiRevisionSemantics.historical_verdict || row.revision_semantics)
         : row.revision_semantics;
+      const composition = compositionById.get(row.candidate_id) || {};
+      const capacity = composition.capacity || {};
+      const economics = composition.economics || {};
       return `<article>
-        <div><strong>${escapeHtml(researchDisplayName(row.candidate_id))}</strong><span>${escapeHtml(row.decision_capacity || "NOT EVALUATED")}</span></div>
-        <p><b>N:</b> ${escapeHtml(row.historical_eligible_n ?? "unknown")} · <b>holdout:</b> ${escapeHtml(row.holdout_eligible_n ?? "unknown")} / ${escapeHtml(row.minimum_required_n ?? "unknown")} · <b>effective:</b> ${escapeHtml(row.effective_n ?? "unknown")}</p>
-        <small><b>Verdict date:</b> ${escapeHtml(row.expected_verdict_date || "unknown")} · <b>Economics:</b> ${escapeHtml(row.economic_breakeven || "NOT EVALUATED")} · <b>Revision:</b> ${escapeHtml(revision || "NOT APPLICABLE")} · <b>Admission:</b> ${escapeHtml(row.admission_state || "NOT ADMITTED")} · <b>Runner:</b> ${escapeHtml(row.runner_state || "NOT RUNNING")}</small>
+        <div><strong>${escapeHtml(researchDisplayName(row.candidate_id))}</strong><span>${escapeHtml(composition.lifecycle || row.decision_capacity || "NOT EVALUATED")}</span></div>
+        <p><b>Science:</b> ${escapeHtml(composition.direction_status || "NOT EVALUATED")} · ${escapeHtml(composition.effect_size_status || "NOT EVALUATED")} · <b>Use:</b> ${escapeHtml(composition.intended_research_use || "NOT DECLARED")}</p>
+        <small><b>N:</b> ${escapeHtml(row.historical_eligible_n ?? "unknown")} · <b>holdout:</b> ${escapeHtml(row.holdout_eligible_n ?? "unknown")} / ${escapeHtml(row.minimum_required_n ?? "unknown")} · <b>effective:</b> ${escapeHtml(composition.effective_n ?? row.effective_n ?? "unknown")}</small>
+        <small><b>Capacity:</b> solo ${escapeHtml(capacity.SOLO_SIZE_CAPACITY?.verdict || capacity.SOLO_SIZE_CAPACITY || "unknown")} · direction ${escapeHtml(capacity.DIRECTION_CAPACITY?.verdict || capacity.DIRECTION_CAPACITY || "unknown")} · combination ${escapeHtml(capacity.COMBINATION_VALIDATION_CAPACITY?.verdict || capacity.COMBINATION_VALIDATION_CAPACITY || "unknown")}</small>
+        <small><b>Economics:</b> solo ${escapeHtml(economics.STANDALONE_NET_FEASIBILITY?.verdict || economics.STANDALONE_NET_FEASIBILITY || row.economic_breakeven || "unknown")} · incremental ${escapeHtml(economics.INCREMENTAL_COMBINATION_FEASIBILITY?.verdict || economics.INCREMENTAL_COMBINATION_FEASIBILITY || "unknown")}</small>
+        <small><b>Component:</b> ${escapeHtml(composition.component_pool_status || "NOT ELIGIBLE")} · <b>Cluster:</b> ${escapeHtml(composition.causal_cluster || "unknown")} · <b>Independence:</b> ${escapeHtml(composition.independence_gate_status || "NOT OPENED")} · <b>Revision:</b> ${escapeHtml(revision || "NOT APPLICABLE")}</small>
       </article>`;
     }).join("") || `<div class="portal-empty">Decision-capacity audit has not been published.</div>`;
   }
