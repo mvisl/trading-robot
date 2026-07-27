@@ -5531,6 +5531,7 @@ function renderResearchDashboardV2(operations, collectors = []) {
   const agsiRevisionSemantics = operations.agsi_revision_semantics || {};
   const weakSignalComposition = operations.weak_signal_composition || {};
   const atlasComponentSupply = operations.atlas_component_supply || {};
+  const evidenceWipLineage = operations.evidence_wip_lineage || {};
 
   setText("researchInfrastructureStatus", infrastructureProducer.declared_state || ari.status || "UNAVAILABLE");
   setText("researchInfraSourceMissions", `${sourceCounts.total_directions || 0}`);
@@ -5641,7 +5642,7 @@ function renderResearchDashboardV2(operations, collectors = []) {
     ? (atlasComponents.admission_buffer_count > 0 ? "BUFFERED" : "SUPPLY BUILDING")
     : "NOT PUBLISHED");
   setText("atlasSupplyCurrent", atlasComponentSupply.pension?.state
-    ? `Pension evidence is sealed; Barge and ${researchDisplayName(atlasComponentSupply.next_cluster_diverse_candidate?.candidate_id)} are advancing through admission.`
+    ? `Pension: ${humanizeResearchCode(atlasComponentSupply.pension.money_verdict || atlasComponentSupply.pension.state)} · direction ${humanizeResearchCode(atlasComponentSupply.pension.direction_status || "not established")} · component ${humanizeResearchCode(atlasComponentSupply.pension.component_eligibility || "not eligible")}.`
     : "Waiting for the component-supply state.");
   setText("atlasSupplyEvidenceJobs", `${atlasThroughput.active_sealed_evidence_jobs || 0}`);
   setText("atlasSupplyAdmissionBuffer", `${atlasComponents.admission_buffer_count || 0}`);
@@ -5656,12 +5657,29 @@ function renderResearchDashboardV2(operations, collectors = []) {
   setText("atlasSupplyInconclusive", `${atlasComponents.inconclusive_sign_candidates || 0}`);
   setText("atlasSupplyIndependence", humanizeResearchCode(atlasCombination.portfolio_independence_gate_state || "not opened"));
   setText("atlasSupplyMetaObservations", `${atlasCombination.prospective_observation_count || 0}`);
+  const wipCanary = evidenceWipLineage.canary || {};
+  const lineageRows = evidenceWipLineage.lineage?.evaluated_candidates || [];
+  const birthBatch = evidenceWipLineage.candidate_birth_batch || {};
+  const targetProducer = evidenceWipLineage.pension_target_producer || {};
+  setText("evidenceWipLimit", `${wipCanary.final_evidence_wip_limit ?? operations.evidence_wip?.limit ?? 1}`);
+  setText("evidenceWipCanary", humanizeResearchCode(wipCanary.verdict || "not evaluated"));
+  setText("evidenceTargetPackages", targetProducer.state
+    ? humanizeResearchCode(targetProducer.state)
+    : "not materialized");
+  setText("candidateLineageProspective", `${lineageRows.filter((row) =>
+    row.verdict === "PROSPECTIVE_CONFIRMATORY_REQUIRED").length}/${lineageRows.length || 0}`);
+  setText("candidateBirthBatch", birthBatch.batch_id
+    ? `${birthBatch.candidate_count || birthBatch.candidates?.length || 0} generated · ${researchDisplayName(birthBatch.selected_candidate_id)} selected`
+    : "not published");
+  setText("atlasMetaGenesis", humanizeResearchCode(
+    evidenceWipLineage.meta_holdout_genesis?.state || "scheduled",
+  ));
   if ($("atlasSupplyCandidates")) {
     const atlasSupplyRows = [
       {
         title: "Pension calendar → index flows",
-        state: atlasComponentSupply.pension?.state,
-        detail: `Evidence ${atlasComponentSupply.pension?.runner_execution || "unknown"} · outcomes ${atlasComponentSupply.pension?.outcomes_exposed ? "exposed" : "sealed"}`,
+        state: atlasComponentSupply.pension?.money_verdict || atlasComponentSupply.pension?.state,
+        detail: `Direction ${humanizeResearchCode(atlasComponentSupply.pension?.direction_status || "not established")} · component ${humanizeResearchCode(atlasComponentSupply.pension?.component_eligibility || "not eligible")} · outcomes ${atlasComponentSupply.pension?.outcomes_exposed ? "exposed" : "sealed"}`,
       },
       {
         title: "Barge rates → grain basis",
