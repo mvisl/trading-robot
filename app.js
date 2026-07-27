@@ -5532,6 +5532,10 @@ function renderResearchDashboardV2(operations, collectors = []) {
   const weakSignalComposition = operations.weak_signal_composition || {};
   const atlasComponentSupply = operations.atlas_component_supply || {};
   const evidenceWipLineage = operations.evidence_wip_lineage || {};
+  const dependencyAwareEvidence = operations.dependency_aware_evidence || {};
+  const evidenceExecution = dependencyAwareEvidence.evidence_execution || {};
+  const sourceIntegrity = dependencyAwareEvidence.source_integrity || {};
+  const maturityState = dependencyAwareEvidence.prospective_maturity || {};
 
   setText("researchInfrastructureStatus", infrastructureProducer.declared_state || ari.status || "UNAVAILABLE");
   setText("researchInfraSourceMissions", `${sourceCounts.total_directions || 0}`);
@@ -5662,6 +5666,10 @@ function renderResearchDashboardV2(operations, collectors = []) {
   const birthBatch = evidenceWipLineage.candidate_birth_batch || {};
   const targetProducer = evidenceWipLineage.pension_target_producer || {};
   setText("evidenceWipLimit", `${wipCanary.final_evidence_wip_limit ?? operations.evidence_wip?.limit ?? 1}`);
+  setText("evidenceLeaseOccupancy",
+    `${evidenceExecution.occupied_evidence_leases || 0}/${evidenceExecution.wip_limit || 1}`);
+  setText("evidenceWaitingDependencies", `${evidenceExecution.waiting_dependency?.length || 0}`);
+  setText("evidenceReadyExecution", `${evidenceExecution.ready_for_execution?.length || 0}`);
   setText("evidenceWipCanary", humanizeResearchCode(wipCanary.verdict || "not evaluated"));
   setText("evidenceTargetPackages", targetProducer.state
     ? humanizeResearchCode(targetProducer.state)
@@ -5674,6 +5682,37 @@ function renderResearchDashboardV2(operations, collectors = []) {
   setText("atlasMetaGenesis", humanizeResearchCode(
     evidenceWipLineage.meta_holdout_genesis?.state || "scheduled",
   ));
+  const integrityCounts = sourceIntegrity.verdict_counts || {};
+  setText("sourceIntegrityPaths",
+    `${sourceIntegrity.scope?.atlas_source_paths_characterized || 0}/${sourceIntegrity.scope?.atlas_source_paths_expected || 26}`);
+  setText("sourceIntegrityReady",
+    `${Number(integrityCounts.POINT_IN_TIME_READY || 0) + Number(integrityCounts.POINT_IN_TIME_READY_WITH_SAFE_LAG || 0)}`);
+  setText("sourceIntegrityProspective", `${integrityCounts.PROSPECTIVE_ONLY || 0}`);
+  setText("sourceIntegrityInsufficient", `${integrityCounts.INSUFFICIENT_REVISION_EVIDENCE || 0}`);
+  setText("sourceIntegrityCacheReuse",
+    `${sourceIntegrity.cache?.repeated_candidate_checks_eliminated || 0} checks eliminated`);
+  setText("maturityForecastCount", `${maturityState.counts?.total || 0}`);
+  if ($("evidenceDependencyRows")) {
+    const rows = [
+      ...(evidenceExecution.waiting_dependency || []),
+      ...(evidenceExecution.ready_for_execution || []),
+      ...(evidenceExecution.running || []),
+    ];
+    $("evidenceDependencyRows").innerHTML = rows.map((row) => {
+      const dependency = row.dependency_state?.dependencies?.[0] || {};
+      return `<article>
+        <div><strong>${escapeHtml(researchDisplayName(row.experiment_id))}</strong><span>${escapeHtml(humanizeResearchCode(row.logical_state))}</span></div>
+        <small>Lease: ${escapeHtml(humanizeResearchCode(row.resource_lease))} · dependency: ${escapeHtml(humanizeResearchCode(dependency.dependency_id || "none"))}</small>
+        <small>Producer: ${escapeHtml(researchDisplayName(dependency.producer_task_id || "none"))} · wakes on ${escapeHtml(humanizeResearchCode(dependency.wake_up_event || row.dependency_state?.wake_up_event || "state change"))}</small>
+      </article>`;
+    }).join("") || `<div class="portal-empty">No active or waiting evidence execution. Pension is terminal and its lease is released.</div>`;
+  }
+  if ($("prospectiveMaturityRows")) {
+    $("prospectiveMaturityRows").innerHTML = (maturityState.forecasts || []).map((row) => `<article>
+      <div><strong>${escapeHtml(researchDisplayName(row.candidate_id))}</strong><span>${escapeHtml(row.current_eligible_event_count ?? 0)} / ${escapeHtml(row.required_event_count ?? "not frozen")}</span></div>
+      <small>Maturity: ${escapeHtml(row.optimistic_maturity_date || "unknown")} → ${escapeHtml(row.pessimistic_maturity_date || "unknown")} · reassess ${escapeHtml(portalDate(row.next_scheduled_reassessment))}</small>
+    </article>`).join("") || `<div class="portal-empty">No prospective maturity forecasts.</div>`;
+  }
   if ($("atlasSupplyCandidates")) {
     const atlasSupplyRows = [
       {
