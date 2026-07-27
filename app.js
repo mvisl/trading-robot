@@ -5525,6 +5525,8 @@ function renderResearchDashboardV2(operations, collectors = []) {
   const gieChain = infrastructureProducer.gie_post_credential_chain || {};
   const admissionMetrics = infrastructureProducer.admission_output_metrics || {};
   const endToEndPilot = infrastructureProducer.end_to_end_admission_pilot || {};
+  const firstMoneyVerdict = operations.first_money_verdict || {};
+  const admissionContinuity = operations.admission_continuity || {};
 
   setText("researchInfrastructureStatus", infrastructureProducer.declared_state || ari.status || "UNAVAILABLE");
   setText("researchInfraSourceMissions", `${sourceCounts.total_directions || 0}`);
@@ -5559,6 +5561,34 @@ function renderResearchDashboardV2(operations, collectors = []) {
   setText("e2ePilotRvs", endToEndPilot.formal_rvs_verdict || "NOT EVALUATED");
   setText("e2ePilotRunner", endToEndPilot.runner_state || "NOT MATERIALIZED");
   setText("e2ePilotSealing", endToEndPilot.outcome_sealing_state || "SEALED");
+  const firstVerdict = firstMoneyVerdict.money_verdict || "NOT RELEASED";
+  const firstCandidate = firstMoneyVerdict.candidate_name
+    || researchDisplayName(firstMoneyVerdict.candidate_id)
+    || "Gas nominations → TTF proxy";
+  const nextCandidate = admissionContinuity.candidate_2 || {};
+  const thirdCandidate = admissionContinuity.candidate_3 || {};
+  setText("firstMoneyVerdictStatus", firstVerdict);
+  setText("firstMoneyVerdictCandidate", firstCandidate);
+  setText("firstMoneyVerdictStage", firstMoneyVerdict.artifact_contract
+    ? "COMPLETED · OUTCOME SEALED"
+    : "WAITING FOR PROTOCOL RELEASE");
+  setText("firstMoneyVerdictResult", firstMoneyVerdict.canonical_interpretation || firstVerdict);
+  setText("firstMoneyVerdictEvents", firstMoneyVerdict.event_count === undefined
+    ? "—"
+    : `${firstMoneyVerdict.event_count} total · ${firstMoneyVerdict.holdout_event_count || 0} holdout`);
+  setText("firstMoneyVerdictBlocker", firstVerdict === "INCONCLUSIVE"
+    ? `Holdout ${firstMoneyVerdict.holdout_event_count || 0} < 30; adjusted interval crosses zero`
+    : (firstMoneyVerdict.limitations?.[0] || "none"));
+  setText("firstMoneyVerdictNext", nextCandidate.candidate_id
+    ? `${researchDisplayName(nextCandidate.candidate_id)} · ${nextCandidate.state || "UNKNOWN"}`
+    : "No admitted successor");
+  setText("firstMoneyVerdictBuffer", `${admissionContinuity.admission_buffer_count || 0}`);
+  setText("firstMoneyVerdictDetails", firstMoneyVerdict.artifact_contract
+    ? `Net holdout mean ${firstMoneyVerdict.net_expectancy_range_eur_per_mwh?.mean ?? "—"} EUR/MWh; family-adjusted interval ${firstMoneyVerdict.net_expectancy_range_eur_per_mwh?.adjusted_lower ?? "—"} to ${firstMoneyVerdict.net_expectancy_range_eur_per_mwh?.adjusted_upper ?? "—"}. Raw rows remain sealed.`
+    : "No protocol-safe Money Verdict is available.");
+  setText("firstMoneyVerdictThird", thirdCandidate.candidate_id
+    ? `Third candidate: ${researchDisplayName(thirdCandidate.candidate_id)} · ${thirdCandidate.state || "UNKNOWN"} · blocker: ${humanizeResearchCode(thirdCandidate.blocker || "none")}`
+    : "Third candidate is not materialized.");
   if ($("researchSourceAdmissionDirections")) {
     $("researchSourceAdmissionDirections").innerHTML = (infrastructureProducer.directions || []).map((row) => {
       if (row.kind === "ATLAS") {
