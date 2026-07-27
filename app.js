@@ -5527,6 +5527,8 @@ function renderResearchDashboardV2(operations, collectors = []) {
   const endToEndPilot = infrastructureProducer.end_to_end_admission_pilot || {};
   const firstMoneyVerdict = operations.first_money_verdict || {};
   const admissionContinuity = operations.admission_continuity || {};
+  const decisionCapacity = operations.decision_capacity || {};
+  const agsiRevisionSemantics = operations.agsi_revision_semantics || {};
 
   setText("researchInfrastructureStatus", infrastructureProducer.declared_state || ari.status || "UNAVAILABLE");
   setText("researchInfraSourceMissions", `${sourceCounts.total_directions || 0}`);
@@ -5566,7 +5568,9 @@ function renderResearchDashboardV2(operations, collectors = []) {
     || researchDisplayName(firstMoneyVerdict.candidate_id)
     || "Gas nominations → TTF proxy";
   const nextCandidate = admissionContinuity.candidate_2 || {};
-  const thirdCandidate = admissionContinuity.candidate_3 || {};
+  const thirdCandidate = admissionContinuity.next_admission_candidate
+    || admissionContinuity.candidate_3
+    || {};
   setText("firstMoneyVerdictStatus", firstVerdict);
   setText("firstMoneyVerdictCandidate", firstCandidate);
   setText("firstMoneyVerdictStage", firstMoneyVerdict.artifact_contract
@@ -5587,8 +5591,25 @@ function renderResearchDashboardV2(operations, collectors = []) {
     ? `Net holdout mean ${firstMoneyVerdict.net_expectancy_range_eur_per_mwh?.mean ?? "—"} EUR/MWh; family-adjusted interval ${firstMoneyVerdict.net_expectancy_range_eur_per_mwh?.adjusted_lower ?? "—"} to ${firstMoneyVerdict.net_expectancy_range_eur_per_mwh?.adjusted_upper ?? "—"}. Raw rows remain sealed.`
     : "No protocol-safe Money Verdict is available.");
   setText("firstMoneyVerdictThird", thirdCandidate.candidate_id
-    ? `Third candidate: ${researchDisplayName(thirdCandidate.candidate_id)} · ${thirdCandidate.state || "UNKNOWN"} · blocker: ${humanizeResearchCode(thirdCandidate.blocker || "none")}`
-    : "Third candidate is not materialized.");
+    ? `Next admission closure: ${researchDisplayName(thirdCandidate.candidate_id)} · ${thirdCandidate.state || "UNKNOWN"} · blocker: ${humanizeResearchCode(thirdCandidate.blocker || "none")}`
+    : "Next admission closure is not materialized.");
+  const capacityMetrics = decisionCapacity.portfolio_metrics || {};
+  setText("decisionCapacityReady", `${capacityMetrics.EVIDENCE_READY_COUNT || 0}`);
+  setText("decisionCapacityAccumulation", `${capacityMetrics.ACCUMULATION_ONLY_COUNT || 0}`);
+  setText("decisionCapacityUnderpowered", `${capacityMetrics.STRUCTURALLY_UNDERPOWERED_COUNT || 0}`);
+  setText("decisionCapacityImplausible", `${capacityMetrics.ECONOMICALLY_IMPLAUSIBLE_COUNT || 0}`);
+  if ($("decisionCapacityPortfolio")) {
+    $("decisionCapacityPortfolio").innerHTML = (decisionCapacity.candidates || []).map((row) => {
+      const revision = row.candidate_id === "IC-NEAR-AGSI-SUMMER-WINTER-SPREAD"
+        ? (agsiRevisionSemantics.historical_verdict || row.revision_semantics)
+        : row.revision_semantics;
+      return `<article>
+        <div><strong>${escapeHtml(researchDisplayName(row.candidate_id))}</strong><span>${escapeHtml(row.decision_capacity || "NOT EVALUATED")}</span></div>
+        <p><b>N:</b> ${escapeHtml(row.historical_eligible_n ?? "unknown")} · <b>holdout:</b> ${escapeHtml(row.holdout_eligible_n ?? "unknown")} / ${escapeHtml(row.minimum_required_n ?? "unknown")} · <b>effective:</b> ${escapeHtml(row.effective_n ?? "unknown")}</p>
+        <small><b>Verdict date:</b> ${escapeHtml(row.expected_verdict_date || "unknown")} · <b>Economics:</b> ${escapeHtml(row.economic_breakeven || "NOT EVALUATED")} · <b>Revision:</b> ${escapeHtml(revision || "NOT APPLICABLE")} · <b>Admission:</b> ${escapeHtml(row.admission_state || "NOT ADMITTED")} · <b>Runner:</b> ${escapeHtml(row.runner_state || "NOT RUNNING")}</small>
+      </article>`;
+    }).join("") || `<div class="portal-empty">Decision-capacity audit has not been published.</div>`;
+  }
   if ($("researchSourceAdmissionDirections")) {
     $("researchSourceAdmissionDirections").innerHTML = (infrastructureProducer.directions || []).map((row) => {
       if (row.kind === "ATLAS") {
