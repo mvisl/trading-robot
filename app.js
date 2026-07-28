@@ -5531,6 +5531,7 @@ function renderResearchDashboardV2(operations, collectors = []) {
   const agsiRevisionSemantics = operations.agsi_revision_semantics || {};
   const weakSignalComposition = operations.weak_signal_composition || {};
   const atlasComponentSupply = operations.atlas_component_supply || {};
+  const atlasFidelity = operations.atlas_fidelity_watchdog || {};
   const evidenceWipLineage = operations.evidence_wip_lineage || {};
   const dependencyAwareEvidence = operations.dependency_aware_evidence || {};
   const evidenceExecution = dependencyAwareEvidence.evidence_execution || {};
@@ -5661,6 +5662,24 @@ function renderResearchDashboardV2(operations, collectors = []) {
   setText("atlasSupplyInconclusive", `${atlasComponents.inconclusive_sign_candidates || 0}`);
   setText("atlasSupplyIndependence", humanizeResearchCode(atlasCombination.portfolio_independence_gate_state || "not opened"));
   setText("atlasSupplyMetaObservations", `${atlasCombination.prospective_observation_count || 0}`);
+  const fidelityDimensions = atlasFidelity.multidimensionality || {};
+  const fidelityLifecycle = atlasFidelity.feature_lifecycle || {};
+  setText("atlasFidelityVerdict", humanizeResearchCode(atlasFidelity.verdict || "NOT EVALUATED"));
+  setText("atlasFidelityBlocker", atlasFidelity.violated_invariant
+    ? `${atlasFidelity.violated_invariant}: ${humanizeResearchCode(atlasFidelity.verdict)}`
+    : "No active Atlas fidelity blocker.");
+  setText("atlasFidelityPilot", humanizeResearchCode(fidelityDimensions.pilot_state || "NOT RUNNING"));
+  setText("atlasFidelityDynamic", fidelityDimensions.dynamic_weight_proof ? "Proven" : "Not proven");
+  setText("atlasFidelityRegime", fidelityDimensions.regime_proof ? "Proven" : "Not proven");
+  setText("atlasFidelityInteraction", fidelityDimensions.interaction_proof ? "Proven" : "Not proven");
+  setText("atlasFidelityAblations", fidelityDimensions.ablation_coverage || "0/8");
+  setText("atlasFidelityLifecycle",
+    `${fidelityLifecycle.qualified || 0} / ${fidelityLifecycle.confirmed_contextual || 0} / ${fidelityLifecycle.strategy_components || 0}`);
+  setText("atlasFidelityInconclusive", `${fidelityLifecycle.solo_inconclusive_retained || 0}`);
+  setText("atlasFidelitySoloRejected", `${fidelityLifecycle.solo_rejected_awaiting_incremental_test || 0}`);
+  setText("atlasFidelityScope", humanizeResearchCode(atlasFidelity.blocking_scope || "NONE"));
+  setText("atlasFidelityCorrection", atlasFidelity.minimum_correction
+    || "The exact evaluated model version passed every fidelity invariant.");
   const wipCanary = evidenceWipLineage.canary || {};
   const lineageRows = evidenceWipLineage.lineage?.evaluated_candidates || [];
   const birthBatch = evidenceWipLineage.candidate_birth_batch || {};
