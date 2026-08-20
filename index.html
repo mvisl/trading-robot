@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Institute Control Center</title>
-    <link rel="stylesheet" href="./styles.css?v=20260726-autonomy-action-v1" />
+    <link rel="stylesheet" href="./styles.css?v=20260820-research-factory-v4" />
   </head>
   <body>
     <section class="portal-auth-overlay" id="portalAuthOverlay" hidden>
@@ -647,6 +647,188 @@
       </section>
 
       <section class="portal-view" id="portal-research" data-portal-view="research" hidden>
+        <section class="rfv4-shell" id="researchFactoryV4" aria-labelledby="rfv4Title">
+          <header class="rfv4-header">
+            <div>
+              <span class="rfv4-eyebrow">RESEARCH FACTORY · V4</span>
+              <h1 id="rfv4Title">Four feedback loops. One honest view.</h1>
+              <p>Learning speed, paper economics, investment horizons, and strict evidence—kept separate and readable.</p>
+            </div>
+            <div class="rfv4-header-state">
+              <span class="rfv4-status active" id="rfv4FactoryStatus">Reading state</span>
+              <small id="rfv4UpdatedAt">Authoritative state pending</small>
+              <div><span>ALLOW_REAL=false</span><span>CAPITAL_USED=false</span></div>
+            </div>
+          </header>
+
+          <nav class="rfv4-nav" aria-label="Research Factory views">
+            <button class="active" type="button" data-rfv4-tab="overview">Overview</button>
+            <button type="button" data-rfv4-tab="prediction">Prediction</button>
+            <button type="button" data-rfv4-tab="demo">Demo Arena</button>
+            <button type="button" data-rfv4-tab="investment">Investment</button>
+            <button type="button" data-rfv4-tab="strict">Strict Institute</button>
+            <button type="button" data-rfv4-tab="archive">Archive</button>
+          </nav>
+
+          <div class="rfv4-pane active" data-rfv4-pane="overview">
+            <section class="rfv4-summary" aria-label="Research Factory summary">
+              <article><span>Predictions sealed</span><strong id="rfv4Sealed">—</strong></article>
+              <article><span>Resolved OOS</span><strong id="rfv4Resolved">—</strong></article>
+              <article><span>Demo trades</span><strong id="rfv4DemoTrades">—</strong></article>
+              <article><span>Active investment theses</span><strong id="rfv4ActiveTheses">—</strong></article>
+              <article><span>Strict screens</span><strong id="rfv4StrictScreens">—</strong></article>
+              <article><span>Strict survivors</span><strong id="rfv4StrictSurvivors">—</strong></article>
+            </section>
+
+            <section class="rfv4-signal-strip" aria-label="Key research answers">
+              <article><span>Fastest feedback loop</span><strong id="rfv4FastestLoop">—</strong><small id="rfv4FastestLoopMeta">—</small></article>
+              <article><span>Best current net expectancy</span><strong id="rfv4BestExpectancy">—</strong><small id="rfv4BestExpectancyMeta">—</small></article>
+              <article><span>Next money-relevant milestone</span><strong id="rfv4MoneyMilestone">—</strong><small id="rfv4MoneyMilestoneMeta">—</small></article>
+            </section>
+
+            <aside class="rfv4-owner" id="rfv4OwnerAttention" hidden>
+              <div><span>Owner action required</span><strong id="rfv4OwnerWhat">—</strong></div>
+              <p id="rfv4OwnerWhy">—</p>
+              <time id="rfv4OwnerAge">—</time>
+            </aside>
+
+            <section class="rfv4-contours" aria-label="Active research contours">
+              <article class="rfv4-contour primary">
+                <header><div><span>01 · FAST LOOP</span><h2>Prediction &amp; Learning</h2></div><span class="rfv4-status" id="rfv4PredictionStatus">—</span></header>
+                <div class="rfv4-contour-lead"><strong id="rfv4PredictionProgress">—</strong><span>resolved / minimum evaluation target</span></div>
+                <div class="rfv4-progress"><i id="rfv4PredictionProgressBar"></i></div>
+                <dl>
+                  <div><dt>Models active</dt><dd id="rfv4ModelsActive">—</dd></div>
+                  <div><dt>Consensus</dt><dd id="rfv4ConsensusCount">—</dd></div>
+                  <div><dt>Net expectancy</dt><dd id="rfv4PredictionExpectancy">—</dd></div>
+                  <div><dt>vs Random</dt><dd id="rfv4VsRandom">—</dd></div>
+                  <div><dt>vs Always Long</dt><dd id="rfv4VsLong">—</dd></div>
+                  <div><dt>Brier / calibration</dt><dd id="rfv4Brier">—</dd></div>
+                </dl>
+                <footer><span id="rfv4PredictionNext">—</span><button type="button" data-rfv4-open="prediction">Open contour</button></footer>
+              </article>
+
+              <article class="rfv4-contour">
+                <header><div><span>02 · PAPER ECONOMICS</span><h2>Demo Strategy Arena</h2></div><span class="rfv4-status" id="rfv4DemoStatus">—</span></header>
+                <div class="rfv4-contour-lead"><strong id="rfv4DemoLead">—</strong><span>trades after frozen costs</span></div>
+                <dl>
+                  <div><dt>Active arms</dt><dd id="rfv4DemoArms">—</dd></div>
+                  <div><dt>Net paper P&amp;L</dt><dd id="rfv4DemoPnl">—</dd></div>
+                  <div><dt>Expectancy</dt><dd id="rfv4DemoExpectancy">—</dd></div>
+                  <div><dt>Profit factor</dt><dd id="rfv4DemoProfitFactor">—</dd></div>
+                  <div><dt>Max drawdown</dt><dd id="rfv4DemoDrawdown">—</dd></div>
+                  <div><dt>vs baselines</dt><dd id="rfv4DemoBaseline">—</dd></div>
+                </dl>
+                <footer><span id="rfv4DemoNext">—</span><button type="button" data-rfv4-open="demo">Open contour</button></footer>
+              </article>
+
+              <article class="rfv4-contour">
+                <header><div><span>03 · FORWARD THESES</span><h2>Medium/Long Investment</h2></div><span class="rfv4-status" id="rfv4InvestmentStatus">—</span></header>
+                <div class="rfv4-contour-lead"><strong id="rfv4InvestmentLead">—</strong><span>active sealed theses</span></div>
+                <dl>
+                  <div><dt>Resolved</dt><dd id="rfv4InvestmentResolved">—</dd></div>
+                  <div><dt>Horizons</dt><dd>1W · 1M · 3M</dd></div>
+                  <div><dt>Paper performance</dt><dd id="rfv4InvestmentPerformance">—</dd></div>
+                  <div class="wide"><dt>Strongest active thesis</dt><dd id="rfv4StrongestThesis">—</dd></div>
+                </dl>
+                <footer><span id="rfv4InvestmentNext">—</span><button type="button" data-rfv4-open="investment">Open contour</button></footer>
+              </article>
+
+              <article class="rfv4-contour">
+                <header><div><span>04 · STRICT EVIDENCE</span><h2>Strict Edge Institute</h2></div><span class="rfv4-status" id="rfv4StrictStatus">—</span></header>
+                <div class="rfv4-contour-lead"><strong id="rfv4StrictLead">—</strong><span>strict survivors</span></div>
+                <dl>
+                  <div><dt>Compiled seeds</dt><dd id="rfv4CompiledSeeds">—</dd></div>
+                  <div><dt>D0 / D1</dt><dd id="rfv4D0D1">—</dd></div>
+                  <div><dt>Screen-ready</dt><dd id="rfv4ScreenReady">—</dd></div>
+                  <div><dt>Screens / signals</dt><dd id="rfv4ScreensSignals">—</dd></div>
+                  <div><dt>Formal tests</dt><dd id="rfv4FormalTests">—</dd></div>
+                  <div><dt>Active shadows</dt><dd id="rfv4Shadows">—</dd></div>
+                </dl>
+                <p class="rfv4-path-note" id="rfv4StrictPath">—</p>
+                <footer><span>Strict gates remain unchanged</span><button type="button" data-rfv4-open="strict">Open contour</button></footer>
+              </article>
+            </section>
+
+            <section class="rfv4-performance" aria-labelledby="rfv4PerformanceTitle">
+              <header><div><span class="rfv4-eyebrow">PERFORMANCE</span><h2 id="rfv4PerformanceTitle">Keep unlike evidence separate</h2></div>
+                <div class="rfv4-segmented" role="tablist" aria-label="Performance type">
+                  <button class="active" type="button" data-rfv4-performance="learning">Learning</button>
+                  <button type="button" data-rfv4-performance="money">Money</button>
+                  <button type="button" data-rfv4-performance="science">Science</button>
+                </div>
+              </header>
+              <div class="rfv4-performance-grid" id="rfv4PerformanceGrid"></div>
+            </section>
+
+            <section class="rfv4-models" aria-labelledby="rfv4ModelsTitle">
+              <header><div><span class="rfv4-eyebrow">MODEL COMPARISON</span><h2 id="rfv4ModelsTitle">No leaderboard before enough resolved evidence</h2></div><span id="rfv4ModelNote">Pending first resolution</span></header>
+              <div class="rfv4-table-wrap">
+                <table>
+                  <thead><tr><th>Arm</th><th>Resolved N</th><th>Direction accuracy</th><th>Brier</th><th>Net expectancy</th><th>Paper P&amp;L</th></tr></thead>
+                  <tbody id="rfv4ModelRows"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="rfv4-secondary-grid">
+              <article class="rfv4-time-card"><header><span class="rfv4-eyebrow">NEXT FEEDBACK</span><strong id="rfv4FeedbackLead">—</strong></header><dl>
+                <div><dt>Next 1D resolution</dt><dd id="rfv4Next1d">—</dd></div>
+                <div><dt>Next 5D resolution</dt><dd id="rfv4Next5d">—</dd></div>
+                <div><dt>Next 20D resolution</dt><dd id="rfv4Next20d">—</dd></div>
+              </dl></article>
+              <article class="rfv4-ops-card"><header><span class="rfv4-eyebrow">OPERATIONS</span><strong>Compact execution mix</strong></header><dl>
+                <div><dt>Server robot</dt><dd id="rfv4ServerRobot">—</dd></div>
+                <div><dt>Codex cloud</dt><dd id="rfv4CodexCloud">—</dd></div>
+                <div><dt>Local-only</dt><dd id="rfv4LocalOnly">—</dd></div>
+                <div><dt>Measured mix</dt><dd id="rfv4OperationalMix">—</dd></div>
+              </dl></article>
+            </section>
+
+            <section class="rfv4-commercial"><div><span class="rfv4-eyebrow">COMMERCIAL EXPERIMENTS</span><strong>Parked</strong></div><p>Alert-product and concierge surfaces are inactive and consume no dashboard space.</p></section>
+          </div>
+
+          <div class="rfv4-pane" data-rfv4-pane="prediction" hidden>
+            <section class="rfv4-detail-head"><div><span>01 · FASTEST FEEDBACK</span><h2>Prediction &amp; Learning</h2><p>Sealed forecasts become OOS evidence only after their frozen horizon resolves.</p></div><span class="rfv4-status" id="rfv4PredictionDetailStatus">—</span></section>
+            <section class="rfv4-detail-grid">
+              <article><span>Sealed rows</span><strong id="rfv4PredictionDetailSealed">—</strong><small>Authoritative active batch</small></article>
+              <article><span>Resolved OOS</span><strong id="rfv4PredictionDetailResolved">—</strong><small id="rfv4PredictionDetailResolvedNote">—</small></article>
+              <article><span>Decision dates</span><strong id="rfv4DecisionDates">—</strong><small>Independent forecast dates</small></article>
+              <article><span>Consensus rows</span><strong id="rfv4PredictionDetailConsensus">—</strong><small>Deterministic derived arm</small></article>
+            </section>
+            <section class="rfv4-detail-panel"><header><h3>Evaluation readiness</h3><span id="rfv4EvaluationReadiness">—</span></header><div class="rfv4-progress large"><i id="rfv4EvaluationBar"></i></div><p>Directional accuracy, Brier, calibration, and economic comparisons remain pending until outcomes exist. An edge claim is not allowed before sufficient N.</p></section>
+            <section class="rfv4-detail-panel"><header><h3>Active model routes</h3><span>Frozen before outcomes</span></header><div class="rfv4-route-grid" id="rfv4ModelRoutes"></div></section>
+          </div>
+
+          <div class="rfv4-pane" data-rfv4-pane="demo" hidden>
+            <section class="rfv4-detail-head"><div><span>02 · PAPER ECONOMICS</span><h2>Demo Strategy Arena</h2><p>Model and baseline arms are compared after the same frozen costs. No real capital is authorized.</p></div><span class="rfv4-status" id="rfv4DemoDetailStatus">—</span></section>
+            <section class="rfv4-detail-grid" id="rfv4DemoDetailMetrics"></section>
+            <section class="rfv4-detail-panel"><header><h3>Arena arms</h3><span>Same outcome and cost rules</span></header><div class="rfv4-route-grid" id="rfv4ArenaArms"></div></section>
+          </div>
+
+          <div class="rfv4-pane" data-rfv4-pane="investment" hidden>
+            <section class="rfv4-detail-head"><div><span>03 · FORWARD THESES</span><h2>Medium/Long Investment</h2><p>Sealed theses for week-to-month horizons. Confidence is descriptive—not a recommendation.</p></div><span class="rfv4-status" id="rfv4InvestmentDetailStatus">—</span></section>
+            <section class="rfv4-detail-grid" id="rfv4InvestmentDetailMetrics"></section>
+            <section class="rfv4-detail-panel rfv4-empty-state" id="rfv4InvestmentEmpty"><span>No active thesis yet</span><strong>Waiting for the first sealed investment thesis</strong><p>The ledger is active. Performance will appear only after an authored thesis and its stated horizon resolve.</p></section>
+          </div>
+
+          <div class="rfv4-pane" data-rfv4-pane="strict" hidden>
+            <section class="rfv4-detail-head"><div><span>04 · STRICT EVIDENCE</span><h2>Strict Edge Institute</h2><p>The old causal/PIT contour remains active, protected, and intentionally compact here.</p></div><span class="rfv4-status" id="rfv4StrictDetailStatus">—</span></section>
+            <section class="rfv4-detail-grid" id="rfv4StrictDetailMetrics"></section>
+            <section class="rfv4-detail-panel"><header><h3>Prospective shadows</h3><span id="rfv4ShadowCount">—</span></header><div class="rfv4-route-grid" id="rfv4ShadowRows"></div></section>
+          </div>
+
+          <div class="rfv4-pane" data-rfv4-pane="archive" hidden>
+            <section class="rfv4-detail-head"><div><span>HISTORICAL ACCESS</span><h2>Archive / Previous Research Architecture</h2><p>Historical states stay available for audit; they no longer compete with current feedback loops.</p></div><span class="rfv4-status muted">READ ONLY</span></section>
+            <section class="rfv4-archive-grid">
+              <article class="featured"><span>Previous Research Factory dashboard</span><strong>Institute State &amp; technical surfaces</strong><p>The complete prior Research view remains unchanged behind this archive.</p><button type="button" id="rfv4ShowLegacy">Open previous Research view</button></article>
+              <article><span>Operational dashboard</span><strong>Robot Control Center</strong><p>Trading, Demo Earn, scanner, reviews, and server controls.</p><a href="#dashboard" data-portal-target="dashboard">Open Dashboard</a></article>
+              <article><span>Historical systems</span><strong>Form 4 · Fast Discovery Lane · Hunter</strong><p>Qualified Data Compiler, Execution Moratorium, Data World Race, and prior state views remain in the repository and technical archive.</p></article>
+              <article><span>Governance history</span><strong>Council &amp; immutable state</strong><p>Prior decisions, evidence artifacts, and scientific state remain accessible without reinterpretation.</p><a href="#council" data-portal-target="council">Open Council</a></article>
+            </section>
+          </div>
+        </section>
+        <button class="rfv4-return" id="rfv4Return" type="button">← Return to Research Factory V4</button>
         <header class="portal-page-head institute-state-head">
           <div><span class="portal-kicker">Institute now</span><h1>Institute State</h1><p>Где находится институт, что его блокирует и что произойдёт дальше.</p></div>
           <span class="pill" id="researchFreshness">Loading live state…</span>
@@ -1170,6 +1352,6 @@
       </div>
       <div class="mobile-detail-body" id="mobileDetailBody"></div>
     </aside>
-    <script src="./app.js?v=20260726-autonomy-action-v1" type="module"></script>
+    <script src="./app.js?v=20260820-research-factory-v4" type="module"></script>
   </body>
 </html>

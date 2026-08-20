@@ -1,3 +1,5 @@
+import { initResearchV4, rememberResearchV4State, renderResearchV4 } from "./research-v4.js?v=20260820-rfv4";
+
 const $ = (id) => document.getElementById(id);
 
 const IS_SHARED_VIEW = new URLSearchParams(window.location.search).get("shared") === "1";
@@ -34,7 +36,7 @@ let intentChainCollectorHealthInFlight = false;
 const openLivingProgramQueues = new Set();
 const PORTAL_PAGES = [
   { id: "dashboard", label: "Dashboard", icon: "◫", visible: true, order: 10 },
-  { id: "research", label: "Research", icon: "⌁", visible: true, order: 20 },
+  { id: "research", label: "Research Factory", icon: "⌁", visible: true, order: 20 },
   { id: "handoff", label: "Handoff", icon: "⇄", visible: true, order: 30 },
   { id: "council", label: "Council", icon: "◇", visible: true, order: 40 },
 ];
@@ -5039,6 +5041,8 @@ function bindLevel3RecommendationActions() {
 
 function renderInstitutePortal(state) {
   const operations = state?.instituteOperations || { status: "UNAVAILABLE" };
+  rememberResearchV4State(state);
+  renderResearchV4(state);
   const live = operations.status === "LIVE";
   setText("portalStateLabel", operations.status || "UNAVAILABLE");
   setText("portalStateMeta", instituteFreshness(operations));
@@ -7579,6 +7583,7 @@ if ($("reviewOpenTrades")) $("reviewOpenTrades").addEventListener("click", async
   }
 });
 
+initResearchV4();
 initializePortalShell();
 bindPortalLogin();
 connectEventStream();

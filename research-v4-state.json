@@ -1,0 +1,184 @@
+{
+  "multi_contour_state": {
+    "artifact_contract": "RESEARCH_FACTORY_V4_MULTI_CONTOUR_STATE_V1",
+    "created_at_utc": "2026-08-20T11:06:38Z",
+    "prediction_contour": {
+      "active": true,
+      "pilot_freeze": "PILOT_FREEZE_V1.json",
+      "schema": "PREDICTION_LEDGER.schema.json",
+      "first_batch_manifest": "FIRST_BATCH_MANIFEST_20260820.json",
+      "first_batch_sealed": true,
+      "authoritative_batch_id": "PFV4-20260820-V2",
+      "pre_outcome_tombstones": 1,
+      "sealed_prediction_rows": 150,
+      "independent_model_forecasts": 60,
+      "models_participating": [
+        "GPT",
+        "GEMINI"
+      ],
+      "claude_status": "INACTIVE_NO_CURRENT_AUTHORIZED_ROUTE",
+      "decision_dates": 1,
+      "resolved_oos_observations": 0,
+      "fastest_feedback_loop": "CRYPTO_1D",
+      "earliest_expected_resolution": "2026-08-22_SUBJECT_TO_COMPLETED_BINANCE_DAILY_BARS"
+    },
+    "demo_strategy_arena": {
+      "active": true,
+      "arms": [
+        "GPT",
+        "GEMINI",
+        "CONSENSUS",
+        "RANDOM_BASELINE",
+        "ALWAYS_LONG_BASELINE"
+      ],
+      "paper_only": true,
+      "demo_fills_trusted": false,
+      "open_positions": 0,
+      "resolved_trades": 0,
+      "net_expectancy": null
+    },
+    "investment_contour": {
+      "ledger_active": true,
+      "schema": "INVESTMENT_THESIS_LEDGER.schema.json",
+      "sealed_theses": 0,
+      "resolved_theses": 0,
+      "automatic_real_investment": false
+    },
+    "strict_institute": {
+      "active": true,
+      "allocation_pct": 10,
+      "compiled_seeds": 0,
+      "d0_survivors": 0,
+      "d1_survivors": 0,
+      "family_screen_ready": 0,
+      "screens_run": 0,
+      "formal_tests": 0,
+      "strict_survivors": 0,
+      "prospective_shadows_active": 2,
+      "treasury": "BACKGROUND_PROSPECTIVE_ACCUMULATION",
+      "binance_delisting": "PARK_NO_RESCUE_METADATA_SHADOW_ONLY_WHILE_NEAR_ZERO_COST",
+      "t1": "SYSTEM_RECOVERY_REQUIRED / NO_T1_REDUCTION"
+    },
+    "server_execution": {
+      "active": true,
+      "timer_active": true,
+      "last_acceptance_result": "SUCCESS_EXIT_0_WAITING_OUTCOME_150_UNRESOLVED",
+      "cadence": "30_MINUTES_WITH_INTERNAL_DUE_CHECKS"
+    },
+    "workload_mix_target": {
+      "server_deterministic_pct_range": "60-75",
+      "codex_cloud_pct_range": "15-25",
+      "local_llm_gui_pct_range": "5-15",
+      "current_measured_mix": "NOT_YET_MEASURABLE_BEFORE_ONE_WEEK"
+    },
+    "owner_decisions_pending": [],
+    "safety": {
+      "autonomous_research_authority": "ACTIVE",
+      "real_execution_authority": "NONE",
+      "allow_real": false,
+      "capital_used": false
+    }
+  },
+  "prediction_runtime": {
+    "artifact_contract": "PREDICTION_FACTORY_V4_RUNTIME_STATE_V1",
+    "updated_at_utc": "2026-08-20T11:06:37.587Z",
+    "batches": {
+      "PFV4-20260820-V1": {
+        "state": "TOMBSTONED_PRE_OUTCOME",
+        "decision_date": "2026-08-20",
+        "prediction_count": 150,
+        "resolved_count": 0,
+        "unresolved_count": 150
+      },
+      "PFV4-20260820-V2": {
+        "state": "WAITING_OUTCOME",
+        "decision_date": "2026-08-20",
+        "prediction_count": 150,
+        "resolved_count": 0,
+        "unresolved_count": 150
+      }
+    },
+    "safety": {
+      "research_only": true,
+      "paper_demo_only": true,
+      "autonomous_research_authority": "ACTIVE",
+      "real_execution_authority": "NONE",
+      "allow_real": false,
+      "capital_used": false
+    }
+  },
+  "paper_positions": {
+    "artifact_contract": "PREDICTION_FACTORY_V4_OPEN_PAPER_POSITIONS_V1",
+    "generated_at_utc": "2026-08-20T11:06:37.588Z",
+    "open_count": 0,
+    "safety": {
+      "research_only": true,
+      "paper_demo_only": true,
+      "autonomous_research_authority": "ACTIVE",
+      "real_execution_authority": "NONE",
+      "allow_real": false,
+      "capital_used": false
+    }
+  },
+  "first_batch_manifest": {
+    "artifact_contract": "PREDICTION_FACTORY_V4_FIRST_BATCH_MANIFEST_V1",
+    "created_at_utc": "2026-08-20T11:06:38Z",
+    "model_responses": [
+      {
+        "slot": "GPT",
+        "prediction_rows": 30
+      },
+      {
+        "slot": "GEMINI",
+        "prediction_rows": 30
+      }
+    ],
+    "derived_arms": [
+      "CONSENSUS",
+      "RANDOM_BASELINE",
+      "ALWAYS_LONG_BASELINE"
+    ],
+    "rows": {
+      "total_sealed": 150,
+      "independent_model_forecasts": 60,
+      "consensus_rows": 30,
+      "random_baseline_rows": 30,
+      "always_long_rows": 30,
+      "independent_decision_dates": 1
+    },
+    "state": "WAITING_OUTCOME",
+    "resolved_oos_observations": 0,
+    "open_paper_positions": 0,
+    "earliest_expected_resolution": "2026-08-22_FOR_CRYPTO_1D_SUBJECT_TO_SOURCE_COMPLETENESS",
+    "edge_claim_allowed": false,
+    "safety": {
+      "real_execution_authority": "NONE",
+      "allow_real": false,
+      "capital_used": false
+    }
+  },
+  "treasury_shadow": {
+    "artifact_contract": "TREASURY_PROSPECTIVE_SHADOW_COLLECTOR_STATE_V1",
+    "status": "ACTIVE_FUTURE_ONLY_OBSERVATION_COLLECTION",
+    "updated_at": "2026-08-17T09:29:58.895482+00:00",
+    "counts": {
+      "complete_future_observations_accumulated": 0,
+      "future_eligible_auctions_announced": 1,
+      "official_daily_release_days_captured": 0,
+      "official_result_objects_captured": 0
+    },
+    "protected_boundaries": {
+      "allow_real": false,
+      "capital_used": false,
+      "empirical_test_run": false,
+      "outcome_derived_parameters_allowed": false,
+      "outcome_values_parsed": false,
+      "predictor_values_parsed": false,
+      "screen_run": false,
+      "verdict_generated": false
+    }
+  },
+  "authoritative": true,
+  "read_only": true,
+  "published_at": "2026-08-20T12:41:31.598Z"
+}
