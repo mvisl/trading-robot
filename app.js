@@ -4,6 +4,7 @@ const $ = (id) => document.getElementById(id);
 
 const IS_SHARED_VIEW = new URLSearchParams(window.location.search).get("shared") === "1";
 const IS_GITHUB_PORTAL = window.location.hostname === "mvisl.github.io";
+const IS_PUBLISHED_PORTAL = IS_GITHUB_PORTAL || window.location.protocol === "file:";
 const PORTAL_API_ORIGIN = IS_GITHUB_PORTAL ? "https://institute.167-99-214-34.sslip.io" : window.location.origin;
 const CANONICAL_RESEARCH_URL = "https://mvisl.github.io/trading-robot/#research";
 const PORTAL_ACCESS_TOKEN_KEY = "institute_portal_access_token";
@@ -82,7 +83,12 @@ function hidePortalLogin() {
 
 function bindPortalLogin() {
   const form = $("portalAuthForm");
-  if (!form || !IS_GITHUB_PORTAL) return;
+  if (!form) return;
+  if (IS_PUBLISHED_PORTAL) {
+    hidePortalLogin();
+    return;
+  }
+  if (!IS_GITHUB_PORTAL) return;
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const code = String($("portalAuthCode")?.value || "");
@@ -7607,5 +7613,11 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
-if (IS_GITHUB_PORTAL && portalAccessToken()) refreshInstituteWorkState("initial");
-refreshState("initial");
+if (IS_PUBLISHED_PORTAL) {
+  const publishedState = { instituteOperations: { status: "PUBLISHED", research_factory_v4: null } };
+  rememberResearchV4State(publishedState);
+  renderResearchV4(publishedState);
+  hidePortalLogin();
+} else {
+  refreshState("initial");
+}

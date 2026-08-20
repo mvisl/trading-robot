@@ -106,7 +106,15 @@ function projection(state) {
 }
 
 let activePerformanceView = "learning";
-let publishedBundle = null;
+let publishedBundle = (() => {
+  const node = document.getElementById("researchV4PublishedState");
+  if (!node?.textContent) return null;
+  try {
+    return JSON.parse(node.textContent);
+  } catch {
+    return null;
+  }
+})();
 let publishedBundleRequest = null;
 
 function loadPublishedBundle() {
