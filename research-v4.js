@@ -1,4 +1,4 @@
-import { initHypothesisThroughput, renderHypothesisThroughput } from "./hypothesis-throughput.js?v=20260821-hpt1";
+import { initHypothesisThroughput, renderHypothesisThroughput } from "./hypothesis-throughput.js?v=20260821-live-v2";
 
 const MINIMUM_EVALUATION_TARGET = 200;
 
@@ -101,11 +101,14 @@ function projection(state) {
   const demo = factory?.demo_strategy_arena || {};
   const investment = factory?.investment_contour || {};
   const strict = factory?.strict_institute || {};
+  const hypothesisThroughput = bundle.hypothesis_throughput || null;
+  const empirical = bundle.empirical_discovery || null;
+  const atlas = bundle.atlas_state || null;
+  const predictionV41 = bundle.prediction_v4_1 || null;
   const runtime = bundle.prediction_runtime || {};
   const manifest = bundle.first_batch_manifest || {};
   const batch = authoritativeBatch(runtime, prediction);
-  const hypothesisThroughput = bundle.hypothesis_throughput || null;
-  return { operations, bundle, factory, prediction, demo, investment, strict, runtime, manifest, batch, hypothesisThroughput };
+  return { operations, bundle, factory, prediction, demo, investment, strict, runtime, manifest, batch, hypothesisThroughput, empirical, atlas, predictionV41 };
 }
 
 let activePerformanceView = "learning";
@@ -188,7 +191,8 @@ function renderModels(data) {
 }
 
 function renderDetailViews(data) {
-  const { prediction, demo, investment, strict, manifest } = data;
+  const { prediction, demo, investment, strict, manifest, empirical, hypothesisThroughput } = data;
+  const strictTotals = hypothesisThroughput?.authoritative_totals || {};
   const resolved = count(prediction.resolved_oos_observations);
   const sealed = count(prediction.sealed_prediction_rows, count(manifest.rows?.total_sealed));
   const consensus = count(manifest.rows?.consensus_rows);
@@ -242,13 +246,13 @@ function renderDetailViews(data) {
   setStatus("rfv4StrictDetailStatus", strict.active ? "ACTIVE" : "ERROR");
   if (byId("rfv4StrictDetailMetrics")) {
     byId("rfv4StrictDetailMetrics").innerHTML = [
-      metricArticle("Compiled seeds", count(strict.compiled_seeds)),
-      metricArticle("D0 / D1", `${count(strict.d0_survivors)} / ${count(strict.d1_survivors)}`),
-      metricArticle("Screen-ready", count(strict.family_screen_ready)),
-      metricArticle("Screens run", count(strict.screens_run)),
-      metricArticle("Signals", strict.signals == null ? "Not available" : strict.signals),
-      metricArticle("Formal tests", count(strict.formal_tests)),
-      metricArticle("Strict survivors", count(strict.strict_survivors)),
+      metricArticle("Evidence-backed / normalized", `${strictTotals.evidence_backed ?? "Not available"} / ${strictTotals.normalized ?? "Not available"}`),
+      metricArticle("Early kills", strictTotals.early_kills ?? "Not available"),
+      metricArticle("D0 / D1", `${strictTotals.D0 ?? "Not available"} / ${strictTotals.D1 ?? "Not available"}`),
+      metricArticle("Screens run", strictTotals.screens ?? "Not available"),
+      metricArticle("Signals", strictTotals.signals ?? "Not available"),
+      metricArticle("Formal tests", strictTotals.formal_tests ?? "Not available"),
+      metricArticle("Strict survivors", strictTotals.survivors ?? "Not available"),
       metricArticle("Prospective shadows", count(strict.prospective_shadows_active)),
     ].join("");
   }
@@ -260,6 +264,26 @@ function renderDetailViews(data) {
       routeArticle("T1", strict.t1 || "Not available", "Strict gate unchanged"),
     ].join("");
   }
+
+  const empiricalAvailable = empirical?.artifact_contract === "EMPIRICAL_DISCOVERY_RUNTIME_STATE_V1";
+  if (byId("rfv4EmpiricalDetailStatus")) {
+    setStatus("rfv4EmpiricalDetailStatus", empiricalAvailable ? "WAITING" : "ERROR");
+    setText("rfv4EmpiricalDetailStatus", empiricalAvailable ? String(empirical.phase || "STATE AVAILABLE").replaceAll("_", " ") : "NO STATE");
+  }
+  if (byId("rfv4EmpiricalDetailMetrics")) {
+    byId("rfv4EmpiricalDetailMetrics").innerHTML = [
+      metricArticle("Predeclared tests", empiricalAvailable ? count(empirical.predeclared_tests) : "Not available"),
+      metricArticle("Completed tests", empiricalAvailable ? count(empirical.completed_tests) : "Not available"),
+      metricArticle("Forward confirmations", empiricalAvailable ? count(empirical.forward_confirmations_active) : "Not available"),
+      metricArticle("Outcomes accessed", empiricalAvailable ? String(empirical.outcomes_accessed === true).toUpperCase() : "Not available"),
+      metricArticle("Research only", empiricalAvailable ? String(empirical.research_only === true).toUpperCase() : "Not available"),
+      metricArticle("Capital used", empiricalAvailable ? String(empirical.capital_used === true).toUpperCase() : "Not available"),
+    ].join("");
+  }
+  setText("rfv4EmpiricalUpdated", empiricalAvailable ? timestampLabel(empirical.updated_at) : "Нет данных");
+  setText("rfv4EmpiricalDetailSummary", empiricalAvailable
+    ? "Lane is materialized and frozen pre-outcome. It remains separate from Strict and has no real-capital authority."
+    : "Нет authoritative Empirical Discovery state; фиктивные значения не показываются.");
 }
 
 export function renderResearchV4(state) {
@@ -278,8 +302,9 @@ export function renderResearchV4(state) {
   const resolved = count(prediction.resolved_oos_observations, count(batch?.resolved_count));
   const demoTrades = count(demo.resolved_trades);
   const activeTheses = count(investment.sealed_theses);
-  const strictScreens = count(strict.screens_run);
-  const strictSurvivors = count(strict.strict_survivors);
+  const strictTotals = data.hypothesisThroughput?.authoritative_totals || {};
+  const strictScreens = finite(strictTotals.screens) ?? count(strict.screens_run);
+  const strictSurvivors = finite(strictTotals.survivors) ?? count(strict.strict_survivors);
   const consensus = count(manifest.rows?.consensus_rows);
   const modelsActive = count(prediction.models_participating?.length);
   const nextResolution = dateLabel(prediction.earliest_expected_resolution || manifest.earliest_expected_resolution);
@@ -341,13 +366,29 @@ export function renderResearchV4(state) {
 
   setStatus("rfv4StrictStatus", strict.active ? "ACTIVE" : "ERROR");
   setText("rfv4StrictLead", strictSurvivors);
-  setText("rfv4CompiledSeeds", count(strict.compiled_seeds));
-  setText("rfv4D0D1", `${count(strict.d0_survivors)} / ${count(strict.d1_survivors)}`);
-  setText("rfv4ScreenReady", count(strict.family_screen_ready));
-  setText("rfv4ScreensSignals", `${strictScreens} / ${strict.signals == null ? "N/A" : strict.signals}`);
-  setText("rfv4FormalTests", count(strict.formal_tests));
+  setText("rfv4CompiledSeeds", `${strictTotals.evidence_backed ?? "—"} / ${strictTotals.normalized ?? "—"}`);
+  setText("rfv4D0D1", `${strictTotals.D0 ?? "—"} / ${strictTotals.D1 ?? "—"}`);
+  setText("rfv4ScreenReady", strictTotals.early_kills ?? "—");
+  setText("rfv4ScreensSignals", `${strictScreens} / ${strictTotals.signals ?? "—"}`);
+  setText("rfv4FormalTests", strictTotals.formal_tests ?? "—");
   setText("rfv4Shadows", count(strict.prospective_shadows_active));
-  setText("rfv4StrictPath", !strict.family_screen_ready && !strict.compiled_seeds ? "No finite strict path to screen" : "Finite screen path available");
+  const noRawMaterial = String(data.hypothesisThroughput?.operational_state?.hunter_status || "").startsWith("NO_RAW_MATERIAL");
+  setText("rfv4StrictPath", noRawMaterial ? "Нет подходящего сырья · data-supply request remains open" : "Strict path follows authoritative Hunter state");
+
+  const empiricalAvailable = data.empirical?.artifact_contract === "EMPIRICAL_DISCOVERY_RUNTIME_STATE_V1";
+  setStatus("rfv4EmpiricalStatus", empiricalAvailable ? "WAITING" : "ERROR");
+  setText("rfv4EmpiricalStatus", empiricalAvailable ? String(data.empirical.phase || "STATE AVAILABLE").replaceAll("_", " ") : "NO STATE");
+  setText("rfv4EmpiricalLead", empiricalAvailable ? count(data.empirical.predeclared_tests) : "—");
+  setText("rfv4EmpiricalSummary", empiricalAvailable
+    ? `${count(data.empirical.completed_tests)} completed · ${count(data.empirical.forward_confirmations_active)} forward confirmations · research only`
+    : "Нет authoritative state; no values are inferred.");
+  const atlasAvailable = Boolean(data.atlas?.artifact_contract);
+  setStatus("rfv4AtlasStatus", atlasAvailable ? "WAITING" : "ERROR");
+  setText("rfv4AtlasStatus", atlasAvailable ? "BLOCKED" : "NO STATE");
+  setText("rfv4AtlasLead", atlasAvailable ? String(data.atlas.blocking_scope || "—").replaceAll("_", " ") : "—");
+  setText("rfv4AtlasSummary", atlasAvailable
+    ? `${String(data.atlas.verdict || "Not available").replaceAll("_", " ")} · ${dateLabel(data.atlas.generated_at)}`
+    : "Нет authoritative Atlas readiness state.");
 
   setText("rfv4FeedbackLead", String(prediction.fastest_feedback_loop || "Not available").replaceAll("_", " "));
   setText("rfv4Next1d", nextResolution);
@@ -361,6 +402,7 @@ export function renderResearchV4(state) {
   renderPerformance(activePerformanceView, data);
   renderModels(data);
   renderDetailViews(data);
+  enhanceExplainableMetrics();
 }
 
 function setActiveTab(tab) {
@@ -376,8 +418,31 @@ function setActiveTab(tab) {
   byId("researchFactoryV4")?.scrollIntoView({ block: "start", behavior: "smooth" });
 }
 
+function enhanceExplainableMetrics() {
+  const contourKeys = ["prediction", "demo", "investment", "strict"];
+  document.querySelectorAll(".rfv4-contour").forEach((contour, index) => {
+    const key = contourKeys[index] || "strict";
+    contour.querySelectorAll(".rfv4-contour-lead, dl > div").forEach((node) => {
+      node.classList.add("hpt-clickable");
+      node.dataset.explain = key;
+      node.tabIndex = 0;
+      node.setAttribute("role", "button");
+    });
+  });
+  const detailKeys = { prediction: "prediction", demo: "demo", investment: "investment", strict: "strict", empirical: "empirical" };
+  Object.entries(detailKeys).forEach(([pane, key]) => {
+    document.querySelectorAll(`[data-rfv4-pane="${pane}"] .rfv4-detail-grid > article, [data-rfv4-pane="${pane}"] .rfv4-route-grid > article`).forEach((node) => {
+      node.classList.add("hpt-clickable");
+      node.dataset.explain = key;
+      node.tabIndex = 0;
+      node.setAttribute("role", "button");
+    });
+  });
+}
+
 export function initResearchV4() {
   initHypothesisThroughput(() => projection(window.__researchFactoryCurrentState || {}).hypothesisThroughput);
+  enhanceExplainableMetrics();
   document.querySelectorAll("[data-rfv4-tab]").forEach((button) => button.addEventListener("click", () => setActiveTab(button.dataset.rfv4Tab)));
   document.querySelectorAll("[data-rfv4-open]").forEach((button) => button.addEventListener("click", () => setActiveTab(button.dataset.rfv4Open)));
   document.querySelectorAll("[data-rfv4-performance]").forEach((button) => button.addEventListener("click", () => {
