@@ -158,27 +158,28 @@ function deriveHunter({ rows, reviewed24h, telemetryComplete, operationalState, 
   const declared = String(operationalState?.hunter_status || "").replace(/_EXTERNAL_BOUNDARY$/, "");
   const runnable = Number(operationalState?.runnable_jobs || 0) + Number(operationalState?.runnable_hypothesis_evaluations || 0);
   if (reviewed24h === 0 && runnable > 0) {
-    return { status: "STARVED", label: "Простаивает при наличии работы", detail: `${runnable} runnable jobs · 0 reviewed / 24h`, tone: "starved" };
+    return { status: "STARVED", label: "Работа ждёт запуска", detail: `${runnable} задач ждут проверки; за сутки не проверено ни одной.`, tone: "starved" };
   }
   if (declared === "NO_RAW_MATERIAL") {
-    return { status: "NO_RAW_MATERIAL", label: "Нет подходящего сырья", detail: operationalState?.hunter_status_reason || "Нет честно проверяемого кандидата", tone: "no-raw-material" };
+    const waiting = Number(operationalState?.open_supply_requests || 0);
+    return { status: "NO_RAW_MATERIAL", label: "Сейчас нечего проверять", detail: waiting ? `Все доступные гипотезы разобраны. ${waiting} запрос данных ждёт ответа.` : "Все доступные гипотезы уже разобраны.", tone: "no-raw-material" };
   }
   if (declared === "LEGITIMATELY_IDLE" || operationalState?.legitimate_idle === true) {
-    return { status: "LEGITIMATELY_IDLE", label: "Нет разрешённой работы", detail: operationalState?.hunter_status_reason || "Нет разрешённой runnable work", tone: "legitimate-idle" };
+    return { status: "LEGITIMATELY_IDLE", label: "Сейчас нет доступных задач", detail: "Система ждёт новую гипотезу или новые данные.", tone: "legitimate-idle" };
   }
   if (declared === "BLOCKED" || operationalState?.block_reason) {
-    return { status: "BLOCKED", label: "Заблокирован", detail: operationalState?.block_reason || operationalState?.hunter_status_reason, tone: "blocked" };
+    return { status: "BLOCKED", label: "Работа остановлена", detail: "Система не может продолжить из-за внешнего ограничения.", tone: "blocked" };
   }
   if (!telemetryComplete) {
-    return { status: "UNKNOWN", label: "Нет данных", detail: "Нет operational telemetry", tone: "missing" };
+    return { status: "UNKNOWN", label: "Нет данных", detail: "Состояние системы пока неизвестно.", tone: "missing" };
   }
-  if (reviewed24h > 0) return { status: "ACTIVE", label: "Работает", detail: `${reviewed24h} formally reviewed / 24h`, tone: "active" };
+  if (reviewed24h > 0) return { status: "ACTIVE", label: "Работает", detail: `${reviewed24h} гипотез проверено за сутки.`, tone: "active" };
   const lastReview = Math.max(...rows.map((row) => timestamp(row.review_finished_at) || 0));
   const idleHours = lastReview > 0 ? Math.max(0, (now - lastReview) / 3600000) : null;
   return {
     status: "LEGITIMATELY_IDLE",
-    label: "Нет разрешённой работы",
-    detail: idleHours == null ? "Нет точного времени последнего review" : `0 reviewed / ${Math.round(idleHours * 10) / 10}h`,
+    label: "Сейчас нет доступных задач",
+    detail: idleHours == null ? "Нет данных о времени последней проверки." : `Последняя проверка была ${Math.round(idleHours * 10) / 10} ч. назад; новых задач нет.`,
     tone: idleHours != null && idleHours >= thresholds.no_activity_hours ? "idle" : "waiting",
   };
 }
@@ -466,28 +467,28 @@ function set(id, value) {
 }
 
 const EXPLANATIONS = {
-  throughput: { title: "Скорость проверки гипотез", what: "Количество уникальных гипотез, реально получивших формальную оценку за последние 24 часа. ИИ-отчёты и просто просмотренные идеи не считаются.", why: "Так видно, перерабатывает ли фабрика реальные кандидаты, а не только создаёт документы.", source: "NO_IDLE_TELEMETRY_V0" },
-  today: { title: "Проверено сегодня", what: "Число формальных оценок с начала текущего календарного дня.", why: "Помогает отличить суточный темп от активности именно сегодня.", source: "Hypothesis Experience Ledger timestamps" },
-  total_reviewed: { title: "Накопленный опыт фабрики", what: "Количество evidence-backed гипотез, приведённых к одной нормализованной записи.", why: "Показывает реальный объём накопленной практики без повторного счёта отчётов.", source: "HYPOTHESIS_EXPERIENCE_LEDGER_V1" },
-  last_hypothesis: { title: "Последняя формальная оценка", what: "Время с момента последнего подтверждённого завершения evaluation.", why: "Помогает быстро заметить остановку потока. Если исторического timestamp нет, интерфейс честно показывает «Нет данных».", source: "HYPOTHESIS_EXPERIENCE_LEDGER_V1" },
-  created_at: { title: "Сгенерированные гипотезы", what: "Уникальные кандидаты, созданные фабрикой. Создание ещё не означает формальную проверку.", why: "Не позволяет спутать генерацию идей с реальным throughput.", source: "NO_IDLE_TELEMETRY / Experience Ledger" },
-  review_finished_at: { title: "Формально рассмотренные гипотезы", what: "Уникальные гипотезы, получившие зафиксированную factory evaluation.", why: "Это основная единица работы Hunter и Strict.", source: "HYPOTHESIS_EXPERIENCE_LEDGER_V1 + NO_IDLE_TELEMETRY_V0" },
-  pre_screen_status: { title: "Предварительный отсев", what: "Дешёвая проверка до расходования ресурсов на строгие стадии.", why: "Она должна быстро закрывать очевидно слабые или непроверяемые идеи.", source: "Experience Ledger stage telemetry" },
-  D0_status: { title: "Первая серьёзная проверка", what: "Сюда доходят гипотезы, пережившие дешёвый предварительный отсев. Проверяется, есть ли основания тратить ресурсы на дальнейшее исследование.", why: "Если до D0 ничего не доходит, идеи могут быть слабыми, фильтр слишком жёстким или фабрика может фактически не работать.", source: "FAILURE_EXPERIENCE_TABLE_V0" },
-  D1_status: { title: "Независимая проверка основания", what: "Следующий строгий шаг после D0: проверяется устойчивость основания и независимая воспроизводимость решения.", why: "Отделяет единичный удачный проход от кандидата, достойного empirical screen.", source: "FAILURE_EXPERIENCE_TABLE_V0" },
-  screen_status: { title: "Быстрая эмпирическая проверка", what: "Проверяем, видно ли вообще ожидаемый эффект в данных до запуска дорогого подтверждения.", why: "Экономит время и закрывает идеи, не показывающие даже базовый наблюдаемый эффект.", source: "FAILURE_EXPERIENCE_TABLE_V0" },
-  signal_status: { title: "Обнаруженный сигнал", what: "Screen показал эффект, который допускает переход к более строгому тесту.", why: "Сигнал ещё не является доказанным edge и не разрешает реальную торговлю.", source: "FAILURE_EXPERIENCE_TABLE_V0" },
-  formal_status: { title: "Формальный научный тест", what: "Дорогая подтверждающая проверка с заранее зафиксированными критериями.", why: "Здесь отделяется предварительный сигнал от evidence, способного выдержать строгий verdict.", source: "FAILURE_EXPERIENCE_TABLE_V0" },
-  survivor_status: { title: "Гипотеза пережила строгую проверку", what: "Редкий кандидат, прошедший весь научный контур.", why: "Это ещё не разрешение торговать реальными деньгами: capital и safety gates остаются отдельными.", source: "FAILURE_EXPERIENCE_TABLE_V0" },
-  hunter: { title: "Состояние Хантера", what: "Показывает, есть ли у Strict фактическая разрешённая работа и выполняется ли она. Включённый timer сам по себе не означает ACTIVE.", why: "Так различаются честное отсутствие сырья, блокировка и простой при наличии runnable jobs.", source: "NO_IDLE_TELEMETRY_V1 + DATA_SUPPLY_QUEUE_V1" },
-  death_reasons: { title: "Почему гипотезы закрываются", what: "Основные причины, по которым evidence-backed кандидаты не прошли дальше.", why: "Концентрация одной причины может указывать на проблему источников, selection policy или повторяющийся data blocker.", source: "FAILURE_EXPERIENCE_TABLE_V0" },
-  zero_transitions: { title: "Часы без переходов", what: "Сколько часов не было подтверждённых переходов между состояниями фабрики.", why: "Вместе с runnable work отличает законное ожидание от скрытого простоя.", source: "NO_IDLE_TELEMETRY_V0" },
-  prediction: { title: "Контур прогнозов", what: "Запечатанные прогнозы оцениваются только после наступления заранее заданного горизонта.", why: "Это самый быстрый источник OOS feedback, но до разрешения исходов метрики качества остаются pending.", source: "Prediction Factory runtime state" },
-  demo: { title: "Демо-арена стратегий", what: "Paper-only сравнение моделей и baseline после одинаковых замороженных издержек.", why: "Проверяет экономический смысл сигнала без использования реального капитала.", source: "Prediction Factory paper positions" },
-  investment: { title: "Средне- и долгосрочные тезисы", what: "Запечатанные инвестиционные тезисы для горизонтов от недели до месяцев.", why: "Они отделены от быстрых прогнозов и не являются рекомендацией.", source: "Investment Thesis Ledger" },
-  strict: { title: "Строгий научный контур", what: "Консервативный путь от evidence-backed гипотезы до formal verdict.", why: "Он защищает от ложного edge и не смешивается с Empirical Discovery.", source: "Hypothesis Experience Ledger + Failure Experience Table" },
-  empirical: { title: "Эмпирический поиск", what: "Отдельный исследовательский lane для широких predeclared empirical tests. Он не подменяет Strict.", why: "Даёт быстрый поиск закономерностей с отдельным контролем multiplicity и границами outcome access.", source: "EMPIRICAL_DISCOVERY_RUNTIME_STATE_V1" },
-  atlas: { title: "Готовность Atlas и данных", what: "Показывает состояние карты механизмов, data readiness и fidelity controls.", why: "Atlas отвечает за качество пространства поиска и источников, а не за strict survivor напрямую.", source: "ATLAS_FIDELITY_WATCHDOG_VERDICT_V1" },
+  throughput: { title: "Сколько проверено за сутки", what: "Сколько разных гипотез система проверила за последние 24 часа. Просто созданные идеи сюда не входят.", why: "Показывает, идёт ли реальная работа.", source: "Счётчик работы системы" },
+  today: { title: "Сколько проверено сегодня", what: "Количество проверок с начала сегодняшнего дня.", why: "Показывает текущую активность.", source: "Журнал проверок" },
+  total_reviewed: { title: "Сколько проверено всего", what: "Общее число разобранных гипотез без повторного счёта.", why: "Показывает накопленный опыт системы.", source: "Журнал проверок" },
+  last_hypothesis: { title: "Когда была последняя проверка", what: "Сколько времени прошло с последней завершённой проверки.", why: "Помогает заметить долгую паузу. Если времени нет в журнале, показано «Нет данных».", source: "Журнал проверок" },
+  created_at: { title: "Созданные гипотезы", what: "Сколько новых гипотез появилось. Это ещё не означает, что их проверили.", why: "Отделяет новые идеи от выполненной работы.", source: "Журнал гипотез" },
+  review_finished_at: { title: "Проверенные гипотезы", what: "Сколько гипотез получили зафиксированный результат проверки.", why: "Это основной показатель выполненной работы.", source: "Журнал проверок" },
+  pre_screen_status: { title: "Быстрый отсев", what: "Первая короткая проверка, которая убирает явно слабые или непроверяемые идеи.", why: "Не даёт тратить время на бесперспективные варианты.", source: "Журнал этапов проверки" },
+  D0_status: { title: "Первая подробная проверка", what: "Здесь решается, есть ли смысл исследовать гипотезу дальше.", why: "Если сюда никто не доходит, идеи могут быть слабыми или фильтр слишком жёстким.", source: "Таблица результатов проверок" },
+  D1_status: { title: "Повторная независимая проверка", what: "Другой проверяющий ещё раз оценивает основание гипотезы.", why: "Снижает риск случайной или предвзятой оценки.", source: "Таблица результатов проверок" },
+  screen_status: { title: "Быстрая проверка на данных", what: "Показывают ли данные хотя бы ожидаемый эффект.", why: "Если эффекта не видно, дорогая проверка не нужна.", source: "Таблица результатов проверок" },
+  signal_status: { title: "Найден возможный сигнал", what: "В данных появился результат, который стоит проверить строже.", why: "Это ещё не доказательство и не разрешение торговать.", source: "Таблица результатов проверок" },
+  formal_status: { title: "Итоговая строгая проверка", what: "Гипотезу проверяют по правилам, которые были зафиксированы заранее.", why: "Так случайный результат отделяется от надёжного.", source: "Таблица результатов проверок" },
+  survivor_status: { title: "Гипотеза прошла все проверки", what: "Гипотеза выдержала весь путь проверки.", why: "Даже после этого торговля реальными деньгами включается отдельно.", source: "Таблица результатов проверок" },
+  hunter: { title: "Есть ли работа прямо сейчас", what: "Показывает, есть ли сейчас гипотеза, которую система может проверять.", why: "Если все доступные гипотезы уже разобраны, ожидание нормально и не означает поломку.", source: "Состояние системы и очередь данных" },
+  death_reasons: { title: "Почему гипотезы закрыли", what: "Причины, по которым гипотезы не прошли дальше.", why: "Повторяющаяся причина помогает найти слабое место в данных или правилах проверки.", source: "Таблица результатов проверок" },
+  zero_transitions: { title: "Сколько часов ничего не менялось", what: "Время с последнего изменения состояния системы.", why: "Если доступной работы нет, пауза нормальна. Если работа есть — это повод проверить систему.", source: "Счётчик работы системы" },
+  prediction: { title: "Прогнозы", what: "Прогноз фиксируют заранее и оценивают после наступления указанной даты.", why: "До этой даты качество прогноза посчитать нельзя.", source: "Журнал прогнозов" },
+  demo: { title: "Проверка на виртуальных деньгах", what: "Модели сравниваются без реальных денег и с одинаковыми расходами.", why: "Так видно, есть ли практическая польза без финансового риска.", source: "Журнал демонстрационных сделок" },
+  investment: { title: "Долгосрочные идеи", what: "Идеи со сроком проверки от недели до нескольких месяцев.", why: "Они учитываются отдельно от быстрых прогнозов и не являются рекомендацией.", source: "Журнал инвестиционных идей" },
+  strict: { title: "Строгая проверка", what: "Последовательная проверка самых сильных гипотез.", why: "Она защищает от красивых, но случайных результатов.", source: "Журнал гипотез и таблица результатов" },
+  empirical: { title: "Широкий поиск закономерностей", what: "Отдельный поиск интересных связей в данных.", why: "Его результаты сами по себе ничего не доказывают и не разрешают торговлю.", source: "Состояние эмпирического поиска" },
+  atlas: { title: "Готовность Atlas", what: "Проверяет, готовы ли данные и правильно ли описаны связи между ними.", why: "Без этого новые гипотезы могут строиться на неполной основе.", source: "Проверка качества Atlas" },
 };
 
 function openExplanation(trigger) {
@@ -496,13 +497,13 @@ function openExplanation(trigger) {
   const explanation = EXPLANATIONS[key];
   if (!dialog || !explanation) return;
   const liveTarget = trigger.dataset.liveTarget ? document.getElementById(trigger.dataset.liveTarget) : null;
-  const live = liveTarget?.textContent?.trim() || trigger.dataset.live || trigger.innerText?.trim() || "Нет данных";
+  const compactValue = trigger.querySelector?.("strong, dd")?.textContent?.trim();
+  const live = liveTarget?.textContent?.trim() || trigger.dataset.live || compactValue || "Нет данных";
   set("researchExplainTitle", explanation.title);
   set("researchExplainWhat", explanation.what);
   set("researchExplainWhy", explanation.why);
   set("researchExplainNow", live || "Нет данных");
   set("researchExplainSource", trigger.dataset.source || explanation.source || "Нет данных");
-  set("researchExplainMachine", trigger.dataset.machine || key);
   if (typeof dialog.showModal === "function") dialog.showModal();
   else dialog.setAttribute("open", "");
 }

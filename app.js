@@ -1,4 +1,4 @@
-import { initResearchV4, rememberResearchV4State, renderResearchV4 } from "./research-v4.js?v=20260821-live-v2";
+import { initResearchV4, rememberResearchV4State, renderResearchV4 } from "./research-v4.js?v=20260821-clear-explanations";
 
 const $ = (id) => document.getElementById(id);
 

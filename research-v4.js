@@ -1,4 +1,4 @@
-import { initHypothesisThroughput, renderHypothesisThroughput } from "./hypothesis-throughput.js?v=20260821-live-v2";
+import { initHypothesisThroughput, renderHypothesisThroughput } from "./hypothesis-throughput.js?v=20260821-clear-explanations";
 
 const MINIMUM_EVALUATION_TARGET = 200;
 
@@ -373,7 +373,7 @@ export function renderResearchV4(state) {
   setText("rfv4FormalTests", strictTotals.formal_tests ?? "—");
   setText("rfv4Shadows", count(strict.prospective_shadows_active));
   const noRawMaterial = String(data.hypothesisThroughput?.operational_state?.hunter_status || "").startsWith("NO_RAW_MATERIAL");
-  setText("rfv4StrictPath", noRawMaterial ? "Нет подходящего сырья · data-supply request remains open" : "Strict path follows authoritative Hunter state");
+  setText("rfv4StrictPath", noRawMaterial ? "Сейчас нечего проверять · ожидаем новые данные" : "Состояние строгой проверки получено из журнала системы");
 
   const empiricalAvailable = data.empirical?.artifact_contract === "EMPIRICAL_DISCOVERY_RUNTIME_STATE_V1";
   setStatus("rfv4EmpiricalStatus", empiricalAvailable ? "WAITING" : "ERROR");
