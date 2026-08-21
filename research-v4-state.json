@@ -248,6 +248,17 @@
     "blocking_scope": "MODEL_VERSION_ONLY",
     "source": "runtime/atlas-fidelity-watchdog/current-verdict.json"
   },
+  "atlas_data_asset": {
+    "artifact_contract": null,
+    "generated_at": null,
+    "active": false,
+    "canonical_events": null,
+    "product_ready_objects": null,
+    "readiness": null,
+    "next_action": null,
+    "available": false,
+    "source": null
+  },
   "hypothesis_throughput": {
     "schema_version": "hypothesis-throughput-observability-v2",
     "generated_at": "2026-08-21T10:30:00.000Z",
@@ -1202,5 +1213,5 @@
   },
   "authoritative": true,
   "read_only": true,
-  "published_at": "2026-08-21T13:51:26.367Z"
+  "published_at": "2026-08-21T15:02:31.961Z"
 }

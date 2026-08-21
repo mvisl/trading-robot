@@ -1,4 +1,4 @@
-import { initHypothesisThroughput, renderHypothesisThroughput } from "./hypothesis-throughput.js?v=20260821-clear-explanations";
+import { initHypothesisThroughput, renderHypothesisThroughput } from "./hypothesis-throughput.js?v=20260821-compact-overview-v3";
 
 const MINIMUM_EVALUATION_TARGET = 200;
 
@@ -104,11 +104,145 @@ function projection(state) {
   const hypothesisThroughput = bundle.hypothesis_throughput || null;
   const empirical = bundle.empirical_discovery || null;
   const atlas = bundle.atlas_state || null;
+  const atlasDataAsset = bundle.atlas_data_asset || null;
   const predictionV41 = bundle.prediction_v4_1 || null;
   const runtime = bundle.prediction_runtime || {};
   const manifest = bundle.first_batch_manifest || {};
   const batch = authoritativeBatch(runtime, prediction);
-  return { operations, bundle, factory, prediction, demo, investment, strict, runtime, manifest, batch, hypothesisThroughput, empirical, atlas, predictionV41 };
+  return { operations, bundle, factory, prediction, demo, investment, strict, runtime, manifest, batch, hypothesisThroughput, empirical, atlas, atlasDataAsset, predictionV41 };
+}
+
+function setCardTone(id, tone) {
+  const card = byId(id);
+  if (card) card.dataset.tone = tone;
+}
+
+function setExplainContext(id, live, current, next) {
+  const node = byId(id);
+  if (!node) return;
+  node.dataset.live = live || "Нет данных";
+  node.dataset.current = current || "Нет данных";
+  node.dataset.next = next || "Показатель обновится при следующем изменении состояния.";
+}
+
+function humanAtlasNext(value, available) {
+  if (!available) return "Подключить состояние актива данных";
+  if (String(value || "").includes("OWNER_MAY_REVIEW")) return "Проверить выборку для демонстрации";
+  if (String(value || "").includes("CONTINUE_EXISTING")) return "Продолжить накопление и закрыть пробелы";
+  return "Следующее действие указано во вкладке Atlas";
+}
+
+function renderCompactOverview(data) {
+  const { prediction, demo, investment, empirical, hypothesisThroughput, manifest, batch, atlasDataAsset } = data;
+  const sealed = count(prediction.sealed_prediction_rows, count(batch?.prediction_count, count(manifest.rows?.total_sealed)));
+  const resolved = count(prediction.resolved_oos_observations, count(batch?.resolved_count));
+  const nextResolution = dateLabel(prediction.earliest_expected_resolution || manifest.earliest_expected_resolution);
+  const predictionStatus = resolved > 0 ? "Проверяет результаты" : sealed > 0 ? "Ждёт результатов 1D" : "Нет зафиксированных прогнозов";
+  const predictionNext = resolved > 0 ? "Следующая оценка качества" : `Первые результаты — ${nextResolution}`;
+  setText("rfv4CompactPredictionSealed", sealed);
+  setText("rfv4CompactPredictionResolved", resolved);
+  setText("rfv4CompactPredictionStatus", predictionStatus);
+  setText("rfv4CompactPredictionNext", predictionNext);
+  setCardTone("rfv4CompactPredictionCard", resolved > 0 ? "active" : sealed > 0 ? "waiting" : "neutral");
+  const predictionCurrent = `Зафиксировано заранее: ${sealed}. Получили итог: ${resolved}.`;
+  [
+    ["rfv4CompactPredictionSealedExplain", `Зафиксировано: ${sealed}`],
+    ["rfv4CompactPredictionResolvedExplain", `Получили итог: ${resolved}`],
+    ["rfv4CompactPredictionStatusExplain", predictionStatus],
+  ].forEach(([id, live]) => setExplainContext(id, live, predictionCurrent, predictionNext));
+
+  const paperPositions = finite(data.bundle.paper_positions?.open_count) ?? count(demo.open_positions);
+  const demoCompleted = count(demo.resolved_trades);
+  const demoStatus = demoCompleted > 0 ? "Учится на завершённых сделках" : "Собирает честные результаты";
+  const demoNext = demoCompleted > 0 ? "Следующий независимый цикл обучения" : "Первая завершённая позиция";
+  setText("rfv4CompactDemoPositions", paperPositions);
+  setText("rfv4CompactDemoCompleted", demoCompleted);
+  setText("rfv4CompactDemoStatus", demoStatus);
+  setText("rfv4CompactDemoNext", demoNext);
+  setCardTone("rfv4CompactDemoCard", demoCompleted > 0 ? "active" : "waiting");
+  const demoCurrent = `Открыто позиций: ${paperPositions}. Завершено: ${demoCompleted}. Правила обучения пока не меняются.`;
+  [
+    ["rfv4CompactDemoPositionsExplain", `Виртуальных позиций: ${paperPositions}`],
+    ["rfv4CompactDemoCompletedExplain", `Завершено: ${demoCompleted}`],
+    ["rfv4CompactDemoStatusExplain", demoStatus],
+  ].forEach(([id, live]) => setExplainContext(id, live, demoCurrent, demoNext));
+
+  const empiricalAvailable = empirical?.artifact_contract === "EMPIRICAL_DISCOVERY_RUNTIME_STATE_V1";
+  const empiricalTests = empiricalAvailable ? count(empirical.predeclared_tests) : null;
+  const empiricalCompleted = empiricalAvailable ? count(empirical.completed_tests) : null;
+  const empiricalConfirmations = empiricalAvailable ? count(empirical.forward_confirmations_active) : null;
+  const empiricalStatus = !empiricalAvailable ? "Нет данных" : empiricalCompleted > 0 ? "Проверяет результаты" : "Набор тестов зафиксирован";
+  const empiricalNext = !empiricalAvailable ? "Подключить состояние контура" : empiricalCompleted > 0 ? "Независимая будущая проверка" : "Открыть результаты по зафиксированным правилам";
+  setText("rfv4CompactEmpiricalTests", empiricalTests ?? "—");
+  setText("rfv4CompactEmpiricalCandidates", empiricalConfirmations ?? "—");
+  setText("rfv4CompactEmpiricalStatus", empiricalStatus);
+  setText("rfv4CompactEmpiricalNext", empiricalNext);
+  setCardTone("rfv4CompactEmpiricalCard", !empiricalAvailable ? "neutral" : empiricalCompleted > 0 ? "active" : "waiting");
+  const empiricalCurrent = empiricalAvailable
+    ? `Вопросов зафиксировано заранее: ${empiricalTests}. Завершено: ${empiricalCompleted}. Перешли в будущую проверку: ${empiricalConfirmations}.`
+    : "Текущее состояние эмпирического поиска не найдено.";
+  [
+    ["rfv4CompactEmpiricalTestsExplain", empiricalAvailable ? `Тестов в текущем запуске: ${empiricalTests}` : "Нет данных"],
+    ["rfv4CompactEmpiricalCandidatesExplain", empiricalAvailable ? `Будущих подтверждений: ${empiricalConfirmations}` : "Нет данных"],
+    ["rfv4CompactEmpiricalStatusExplain", empiricalStatus],
+  ].forEach(([id, live]) => setExplainContext(id, live, empiricalCurrent, empiricalNext));
+
+  const activeTheses = count(investment.sealed_theses);
+  const resolvedTheses = count(investment.resolved_theses);
+  const investmentStatus = activeTheses > 0 ? "Наблюдает активные тезисы" : "Ждёт первую тезу";
+  const investmentNext = activeTheses > 0 ? "Ближайшее разрешение тезы" : "Первая зафиксированная теза";
+  setText("rfv4CompactInvestmentActive", activeTheses);
+  setText("rfv4CompactInvestmentResolved", resolvedTheses);
+  setText("rfv4CompactInvestmentStatus", investmentStatus);
+  setText("rfv4CompactInvestmentNext", investmentNext);
+  setCardTone("rfv4CompactInvestmentCard", activeTheses > 0 ? "active" : "neutral");
+  const investmentCurrent = `Активных тез: ${activeTheses}. Получили итог: ${resolvedTheses}.`;
+  [
+    ["rfv4CompactInvestmentActiveExplain", `Активных тез: ${activeTheses}`],
+    ["rfv4CompactInvestmentResolvedExplain", `Получили итог: ${resolvedTheses}`],
+    ["rfv4CompactInvestmentStatusExplain", investmentStatus],
+  ].forEach(([id, live]) => setExplainContext(id, live, investmentCurrent, investmentNext));
+
+  const strictTotals = hypothesisThroughput?.authoritative_totals || {};
+  const strictReviewed = finite(strictTotals.reviewed);
+  const strictSurvivors = finite(strictTotals.survivors);
+  const noRawMaterial = String(hypothesisThroughput?.operational_state?.hunter_status || "").startsWith("NO_RAW_MATERIAL");
+  const strictStatus = noRawMaterial ? "Ждёт новых данных" : "Готов к следующей проверке";
+  const strictNext = noRawMaterial ? "Ответ по запросу данных" : "Следующая подходящая гипотеза";
+  setText("rfv4CompactStrictReviewed", strictReviewed ?? "—");
+  setText("rfv4CompactStrictSurvivors", strictSurvivors ?? "—");
+  setText("rfv4CompactStrictStatus", strictStatus);
+  setText("rfv4CompactStrictNext", strictNext);
+  setCardTone("rfv4CompactStrictCard", noRawMaterial ? "waiting" : "neutral");
+  const strictCurrent = `Проверено: ${strictReviewed ?? "нет данных"}. Прошли весь путь: ${strictSurvivors ?? "нет данных"}. Это состояние только строгого контура.`;
+  [
+    ["rfv4CompactStrictReviewedExplain", strictReviewed == null ? "Нет данных" : `Проверено: ${strictReviewed}`],
+    ["rfv4CompactStrictSurvivorsExplain", strictSurvivors == null ? "Нет данных" : `Прошли все проверки: ${strictSurvivors}`],
+    ["rfv4CompactStrictStatusExplain", strictStatus],
+  ].forEach(([id, live]) => setExplainContext(id, live, strictCurrent, strictNext));
+
+  const atlasAvailable = atlasDataAsset?.available === true;
+  const atlasEvents = atlasDataAsset?.canonical_events == null ? null : finite(atlasDataAsset.canonical_events);
+  const atlasReady = atlasDataAsset?.product_ready_objects == null ? null : finite(atlasDataAsset.product_ready_objects);
+  const atlasReadiness = atlasAvailable ? String(atlasDataAsset.readiness || "Нет данных").replaceAll("_", " ") : "Нет данных об активе";
+  const atlasStatus = atlasReadiness === "L2 DEMOABLE" ? "Готов к демонстрации" : atlasAvailable ? "Копит актив данных" : "Нет данных об активе";
+  const atlasNext = humanAtlasNext(atlasDataAsset?.next_action, atlasAvailable);
+  setText("rfv4CompactAtlasEvents", atlasEvents ?? "—");
+  setText("rfv4CompactAtlasReady", atlasReady ?? "—");
+  setText("rfv4CompactAtlasStatus", atlasStatus);
+  setText("rfv4CompactAtlasNext", atlasNext);
+  setCardTone("rfv4CompactAtlasCard", atlasAvailable ? "active" : "neutral");
+  const atlasCurrent = atlasAvailable
+    ? `Канонических событий: ${atlasEvents}. Готовых объектов: ${atlasReady}. Текущий уровень: ${atlasReadiness}.`
+    : "Отдельное авторитетное состояние актива данных пока не найдено; числа не придуманы.";
+  [
+    ["rfv4CompactAtlasEventsExplain", atlasEvents == null ? "Нет данных" : `Канонических событий: ${atlasEvents}`],
+    ["rfv4CompactAtlasReadyExplain", atlasReady == null ? "Нет данных" : `Готовых объектов: ${atlasReady}`],
+    ["rfv4CompactAtlasStatusExplain", atlasStatus],
+  ].forEach(([id, live]) => setExplainContext(id, live, atlasCurrent, atlasNext));
+
+  setText("rfv4CompactMilestone", resolved > 0 ? "First scored paper comparison" : "First honest 1D OOS result");
+  setText("rfv4CompactMilestoneMeta", resolved > 0 ? "Экономическая оценка после результата" : `Ожидается ${nextResolution}`);
 }
 
 let activePerformanceView = "learning";
@@ -191,7 +325,7 @@ function renderModels(data) {
 }
 
 function renderDetailViews(data) {
-  const { prediction, demo, investment, strict, manifest, empirical, hypothesisThroughput } = data;
+  const { prediction, demo, investment, strict, manifest, empirical, hypothesisThroughput, atlas, atlasDataAsset } = data;
   const strictTotals = hypothesisThroughput?.authoritative_totals || {};
   const resolved = count(prediction.resolved_oos_observations);
   const sealed = count(prediction.sealed_prediction_rows, count(manifest.rows?.total_sealed));
@@ -284,6 +418,20 @@ function renderDetailViews(data) {
   setText("rfv4EmpiricalDetailSummary", empiricalAvailable
     ? "Lane is materialized and frozen pre-outcome. It remains separate from Strict and has no real-capital authority."
     : "Нет authoritative Empirical Discovery state; фиктивные значения не показываются.");
+
+  const atlasAssetAvailable = atlasDataAsset?.available === true;
+  const atlasReadiness = atlasAssetAvailable ? String(atlasDataAsset.readiness || "Нет данных").replaceAll("_", " ") : "Нет данных";
+  setStatus("rfv4AtlasDetailStatus", atlasAssetAvailable ? "ACTIVE" : "WAITING");
+  setText("rfv4AtlasDetailStatus", atlasAssetAvailable ? atlasReadiness : "Нет данных об активе");
+  setText("rfv4AtlasDetailEvents", atlasAssetAvailable ? atlasDataAsset.canonical_events : "—");
+  setText("rfv4AtlasDetailReady", atlasAssetAvailable ? atlasDataAsset.product_ready_objects : "—");
+  setText("rfv4AtlasDetailReadiness", atlasReadiness);
+  setText("rfv4AtlasDetailUpdated", atlasAssetAvailable ? timestampLabel(atlasDataAsset.generated_at) : "Нет данных");
+  setText("rfv4AtlasDetailFidelity", atlas?.blocking_scope ? String(atlas.blocking_scope).replaceAll("_", " ") : "—");
+  setText("rfv4AtlasDetailNext", humanAtlasNext(atlasDataAsset?.next_action, atlasAssetAvailable));
+  setText("rfv4AtlasDetailSummary", atlasAssetAvailable
+    ? "Atlas собирает повторно используемые объекты данных. Готовность и следующие действия берутся из отдельного журнала актива."
+    : "Отдельный журнал коммерческого актива данных пока не найден. Существующая проверка качества Atlas показана отдельно и не заменяет эти числа.");
 }
 
 export function renderResearchV4(state) {
@@ -312,6 +460,7 @@ export function renderResearchV4(state) {
 
   setStatus("rfv4FactoryStatus", "ACTIVE");
   setText("rfv4UpdatedAt", timestampLabel(data.runtime.updated_at_utc || factory.created_at_utc || data.bundle.loaded_at || data.bundle.published_at));
+  renderCompactOverview(data);
   setText("rfv4Sealed", sealed);
   setText("rfv4Resolved", resolved);
   setText("rfv4DemoTrades", demoTrades);
@@ -429,7 +578,7 @@ function enhanceExplainableMetrics() {
       node.setAttribute("role", "button");
     });
   });
-  const detailKeys = { prediction: "prediction", demo: "demo", investment: "investment", strict: "strict", empirical: "empirical" };
+  const detailKeys = { prediction: "prediction", demo: "demo", investment: "investment", strict: "strict", empirical: "empirical", atlas: "atlas" };
   Object.entries(detailKeys).forEach(([pane, key]) => {
     document.querySelectorAll(`[data-rfv4-pane="${pane}"] .rfv4-detail-grid > article, [data-rfv4-pane="${pane}"] .rfv4-route-grid > article`).forEach((node) => {
       node.classList.add("hpt-clickable");
@@ -441,6 +590,9 @@ function enhanceExplainableMetrics() {
 }
 
 export function initResearchV4() {
+  const throughput = byId("hypothesisFactoryThroughput");
+  const strictHost = byId("rfv4StrictThroughputHost");
+  if (throughput && strictHost && !strictHost.contains(throughput)) strictHost.append(throughput);
   initHypothesisThroughput(() => projection(window.__researchFactoryCurrentState || {}).hypothesisThroughput);
   enhanceExplainableMetrics();
   document.querySelectorAll("[data-rfv4-tab]").forEach((button) => button.addEventListener("click", () => setActiveTab(button.dataset.rfv4Tab)));
