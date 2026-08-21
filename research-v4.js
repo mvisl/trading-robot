@@ -1,4 +1,4 @@
-import { initHypothesisThroughput, renderHypothesisThroughput } from "./hypothesis-throughput.js?v=20260821-compact-overview-v3";
+import { initHypothesisThroughput, renderHypothesisThroughput } from "./hypothesis-throughput.js?v=20260821-live-flow-v4";
 
 const MINIMUM_EVALUATION_TARGET = 200;
 
@@ -48,13 +48,13 @@ function dateLabel(value) {
   const dateMatch = String(value).match(/\d{4}-\d{2}-\d{2}/)?.[0];
   const parsed = new Date(`${dateMatch || value}T12:00:00Z`);
   if (!Number.isFinite(parsed.getTime())) return String(value).replaceAll("_", " ");
-  return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(parsed);
+  return new Intl.DateTimeFormat("ru-RU", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(parsed);
 }
 
 function timestampLabel(value) {
   const parsed = new Date(value || "");
   if (!Number.isFinite(parsed.getTime())) return "Authoritative state pending";
-  return `Updated ${new Intl.DateTimeFormat(undefined, {
+  return `Обновлено ${new Intl.DateTimeFormat("ru-RU", {
     month: "short",
     day: "numeric",
     hour: "2-digit",
@@ -106,10 +106,11 @@ function projection(state) {
   const atlas = bundle.atlas_state || null;
   const atlasDataAsset = bundle.atlas_data_asset || null;
   const predictionV41 = bundle.prediction_v4_1 || null;
+  const liveFlow = bundle.live_flow || publishedBundle?.live_flow || null;
   const runtime = bundle.prediction_runtime || {};
   const manifest = bundle.first_batch_manifest || {};
   const batch = authoritativeBatch(runtime, prediction);
-  return { operations, bundle, factory, prediction, demo, investment, strict, runtime, manifest, batch, hypothesisThroughput, empirical, atlas, atlasDataAsset, predictionV41 };
+  return { operations, bundle, factory, prediction, demo, investment, strict, runtime, manifest, batch, hypothesisThroughput, empirical, atlas, atlasDataAsset, predictionV41, liveFlow };
 }
 
 function setCardTone(id, tone) {
@@ -117,12 +118,42 @@ function setCardTone(id, tone) {
   if (card) card.dataset.tone = tone;
 }
 
-function setExplainContext(id, live, current, next) {
+function setExplainContext(id, live, current, next, source = null, what = null) {
   const node = byId(id);
   if (!node) return;
   node.dataset.live = live || "Нет данных";
   node.dataset.current = current || "Нет данных";
   node.dataset.next = next || "Показатель обновится при следующем изменении состояния.";
+  if (source) node.dataset.source = source;
+  if (what) node.dataset.what = what;
+}
+
+function compactTimestamp(value) {
+  const parsed = new Date(value || "");
+  if (!Number.isFinite(parsed.getTime())) return "источник не подключён";
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(parsed);
+}
+
+function flowValue(value) {
+  return value == null ? "—" : String(value);
+}
+
+function renderFlow(id, explanationKey, stages, source) {
+  const host = byId(id);
+  if (!host) return;
+  host.innerHTML = stages.map((stage, index) => {
+    const separator = index ? '<b aria-hidden="true">→</b>' : "";
+    return `${separator}<button type="button" data-explain="${escapeHtml(explanationKey)}" data-live="${escapeHtml(`${stage.label}: ${flowValue(stage.value)}`)}" data-what="${escapeHtml(stage.what)}" data-current="${escapeHtml(stage.current)}" data-next="${escapeHtml(stage.next)}" data-source="${escapeHtml(source || "Источник не подключён")}"><strong>${escapeHtml(flowValue(stage.value))}</strong><span>${escapeHtml(stage.label)}</span></button>`;
+  }).join("");
+}
+
+function setActivity(id, value) {
+  setText(id, `Последняя активность · ${compactTimestamp(value)}`);
 }
 
 function humanAtlasNext(value, available) {
@@ -133,116 +164,116 @@ function humanAtlasNext(value, available) {
 }
 
 function renderCompactOverview(data) {
-  const { prediction, demo, investment, empirical, hypothesisThroughput, manifest, batch, atlasDataAsset } = data;
-  const sealed = count(prediction.sealed_prediction_rows, count(batch?.prediction_count, count(manifest.rows?.total_sealed)));
-  const resolved = count(prediction.resolved_oos_observations, count(batch?.resolved_count));
-  const nextResolution = dateLabel(prediction.earliest_expected_resolution || manifest.earliest_expected_resolution);
-  const predictionStatus = resolved > 0 ? "Проверяет результаты" : sealed > 0 ? "Ждёт результатов 1D" : "Нет зафиксированных прогнозов";
-  const predictionNext = resolved > 0 ? "Следующая оценка качества" : `Первые результаты — ${nextResolution}`;
-  setText("rfv4CompactPredictionSealed", sealed);
-  setText("rfv4CompactPredictionResolved", resolved);
+  const flow = data.liveFlow;
+  if (!flow) return;
+
+  const prediction = flow.prediction || {};
+  const predictionSource = `${prediction.source || "Источник не подключён"} · ${compactTimestamp(prediction.last_activity)}`;
+  const predictionNext = prediction.next_cohort && !prediction.next_cohort_materialized
+    ? `${prediction.next_cohort} запланирован, но новый пакет ещё не создан`
+    : prediction.resolved > 0 ? "Оценить полученные результаты" : "Дождаться первых итогов";
+  setText("rfv4CompactPredictionScope", prediction.scope);
+  renderFlow("rfv4CompactPredictionFlow", "prediction_overview", [
+    { label: "создано", value: prediction.created, what: "Строки текущего пакета созданы.", current: `В текущем пакете ${flowValue(prediction.created)} строк.`, next: "Получить ответы моделей." },
+    { label: "ждут модель", value: prediction.waiting_model_response, what: "Ответ модели ещё не получен.", current: `Сейчас ждут ${flowValue(prediction.waiting_model_response)} ответа.`, next: "Запечатать полученные прогнозы." },
+    { label: "зафиксировано", value: prediction.sealed, what: "Прогнозы зафиксированы заранее и не меняются.", current: `В текущем пакете зафиксировано ${flowValue(prediction.sealed)}.`, next: "Ждать фактический результат." },
+    { label: "открыто", value: prediction.open, what: "Итог по прогнозу ещё неизвестен.", current: `Открыто ${flowValue(prediction.open)} строк.`, next: "Закрыть после появления данных." },
+    { label: "решено", value: prediction.resolved, what: "Фактический итог уже записан.", current: `Решено ${flowValue(prediction.resolved)} строк.`, next: "Сравнить качество с базовыми правилами." },
+  ], predictionSource);
+  const predictionStatus = prediction.resolved > 0 ? "Есть новые результаты" : "Текущий пакет ждёт результатов";
   setText("rfv4CompactPredictionStatus", predictionStatus);
-  setText("rfv4CompactPredictionNext", predictionNext);
-  setCardTone("rfv4CompactPredictionCard", resolved > 0 ? "active" : sealed > 0 ? "waiting" : "neutral");
-  const predictionCurrent = `Зафиксировано заранее: ${sealed}. Получили итог: ${resolved}.`;
-  [
-    ["rfv4CompactPredictionSealedExplain", `Зафиксировано: ${sealed}`],
-    ["rfv4CompactPredictionResolvedExplain", `Получили итог: ${resolved}`],
-    ["rfv4CompactPredictionStatusExplain", predictionStatus],
-  ].forEach(([id, live]) => setExplainContext(id, live, predictionCurrent, predictionNext));
+  setExplainContext("rfv4CompactPredictionStatusExplain", predictionStatus, `Текущий пакет: ${prediction.current_batch_id || "нет источника"}.`, predictionNext, predictionSource, "Человеческий статус текущего пакета.");
+  setActivity("rfv4CompactPredictionActivity", prediction.last_activity);
+  setText("rfv4CompactPredictionNext", `Всего зафиксировано: ${flowValue(prediction.total_sealed_valid)}`);
+  setCardTone("rfv4CompactPredictionCard", prediction.resolved > 0 ? "active" : prediction.sealed > 0 ? "waiting" : "neutral");
 
-  const paperPositions = finite(data.bundle.paper_positions?.open_count) ?? count(demo.open_positions);
-  const demoCompleted = count(demo.resolved_trades);
-  const demoStatus = demoCompleted > 0 ? "Учится на завершённых сделках" : "Собирает честные результаты";
-  const demoNext = demoCompleted > 0 ? "Следующий независимый цикл обучения" : "Первая завершённая позиция";
-  setText("rfv4CompactDemoPositions", paperPositions);
-  setText("rfv4CompactDemoCompleted", demoCompleted);
+  const demo = flow.demo || {};
+  const demoSource = `${demo.source || "Источник не подключён"} · ${compactTimestamp(demo.last_activity)}`;
+  setText("rfv4CompactDemoScope", demo.scope);
+  renderFlow("rfv4CompactDemoFlow", "demo_overview", [
+    { label: "открыто", value: demo.open_positions, what: "Открытые виртуальные позиции без реальных денег.", current: `Сейчас открыто ${flowValue(demo.open_positions)}.`, next: "Ждать закрытия по фиксированным правилам." },
+    { label: "решено", value: demo.resolved, what: "Прогнозы с уже известным фактом.", current: `Решено ${flowValue(demo.resolved)}.`, next: "Добавить результат в оценку." },
+    { label: "no-trade", value: demo.no_trade, what: "Строки текущей группы, где сделка не разрешена.", current: `В текущей группе ${flowValue(demo.no_trade)} no-trade строк.`, next: "Не открывать позицию." },
+    { label: "завершено", value: demo.completed, what: "Полностью завершённые виртуальные сделки.", current: `Завершено ${flowValue(demo.completed)}.`, next: "Использовать только на разрешённой точке обучения." },
+    { label: "C1 строки", value: `${flowValue(demo.c1_resolved_rows)}/${flowValue(demo.c1_minimum_rows)}`, what: "Прогресс до первой разрешённой проверки C1 по числу итогов.", current: `Готово ${flowValue(demo.c1_resolved_rows)} из ${flowValue(demo.c1_minimum_rows)}.`, next: "Продолжать неизменённую группу." },
+    { label: "C1 даты", value: `${flowValue(demo.c1_decision_dates)}/${flowValue(demo.c1_minimum_dates)}`, what: "Прогресс C1 по независимым датам решений.", current: `Готова ${flowValue(demo.c1_decision_dates)} дата из ${flowValue(demo.c1_minimum_dates)}.`, next: "Накопить независимые даты." },
+  ], demoSource);
+  const demoStatus = demo.completed > 0 ? "Есть завершённые paper-сделки" : "Ждёт первых завершённых сделок";
   setText("rfv4CompactDemoStatus", demoStatus);
-  setText("rfv4CompactDemoNext", demoNext);
-  setCardTone("rfv4CompactDemoCard", demoCompleted > 0 ? "active" : "waiting");
-  const demoCurrent = `Открыто позиций: ${paperPositions}. Завершено: ${demoCompleted}. Правила обучения пока не меняются.`;
-  [
-    ["rfv4CompactDemoPositionsExplain", `Виртуальных позиций: ${paperPositions}`],
-    ["rfv4CompactDemoCompletedExplain", `Завершено: ${demoCompleted}`],
-    ["rfv4CompactDemoStatusExplain", demoStatus],
-  ].forEach(([id, live]) => setExplainContext(id, live, demoCurrent, demoNext));
+  setExplainContext("rfv4CompactDemoStatusExplain", demoStatus, `C1: ${flowValue(demo.c1_resolved_rows)}/${flowValue(demo.c1_minimum_rows)} итогов и ${flowValue(demo.c1_decision_dates)}/${flowValue(demo.c1_minimum_dates)} дат.`, "Собирать результаты без изменения правил.", demoSource, "Текущий статус виртуального обучения.");
+  setActivity("rfv4CompactDemoActivity", demo.last_activity);
+  setText("rfv4CompactDemoNext", `C1 · ${flowValue(demo.c1_resolved_rows)}/${flowValue(demo.c1_minimum_rows)} итогов · ${flowValue(demo.c1_decision_dates)}/${flowValue(demo.c1_minimum_dates)} дат`);
+  setCardTone("rfv4CompactDemoCard", demo.completed > 0 ? "active" : "waiting");
 
-  const empiricalAvailable = empirical?.artifact_contract === "EMPIRICAL_DISCOVERY_RUNTIME_STATE_V1";
-  const empiricalTests = empiricalAvailable ? count(empirical.predeclared_tests) : null;
-  const empiricalCompleted = empiricalAvailable ? count(empirical.completed_tests) : null;
-  const empiricalConfirmations = empiricalAvailable ? count(empirical.forward_confirmations_active) : null;
-  const empiricalStatus = !empiricalAvailable ? "Нет данных" : empiricalCompleted > 0 ? "Проверяет результаты" : "Набор тестов зафиксирован";
-  const empiricalNext = !empiricalAvailable ? "Подключить состояние контура" : empiricalCompleted > 0 ? "Независимая будущая проверка" : "Открыть результаты по зафиксированным правилам";
-  setText("rfv4CompactEmpiricalTests", empiricalTests ?? "—");
-  setText("rfv4CompactEmpiricalCandidates", empiricalConfirmations ?? "—");
+  const empirical = flow.empirical || {};
+  const empiricalSource = `${empirical.source || "Источник не подключён"} · ${compactTimestamp(empirical.last_transition)}`;
+  setText("rfv4CompactEmpiricalScope", empirical.scope);
+  renderFlow("rfv4CompactEmpiricalFlow", "empirical_overview", [
+    { label: "создано", value: empirical.generated, what: "Тесты были созданы и зафиксированы заранее.", current: `В V1 создано ${flowValue(empirical.generated)} теста.`, next: "Запустить только по зафиксированным правилам." },
+    { label: "в работе", value: empirical.running, what: "Тесты сейчас выполняются.", current: `В работе ${flowValue(empirical.running)}.`, next: "Дождаться завершения." },
+    { label: "завершено", value: empirical.completed, what: "Тесты с записанным результатом.", current: `Завершено ${flowValue(empirical.completed)} из ${flowValue(empirical.generated)}.`, next: "Разобрать итог без смены правил." },
+    { label: "null", value: empirical.null, what: "Эффект не найден.", current: `Null: ${flowValue(empirical.null)}.`, next: "Не продвигать эти тесты." },
+    { label: "gross-only", value: empirical.gross_only, what: "Сигнал виден до издержек, но исчезает после них.", current: `Gross-only: ${flowValue(empirical.gross_only)}.`, next: "Не считать экономическим кандидатом." },
+    { label: "неясно", value: empirical.inconclusive, what: "Данных недостаточно для уверенного вывода.", current: `Неясный итог: ${flowValue(empirical.inconclusive)}.`, next: "Оставить без продвижения." },
+    { label: "кандидат", value: empirical.candidates, what: "Тест прошёл текущий экран и может идти дальше.", current: `Кандидатов: ${flowValue(empirical.candidates)}.`, next: "Зафиксировать отдельную будущую проверку." },
+    { label: "forward", value: empirical.forward_confirmations, what: "Идёт независимая проверка на будущих данных.", current: `Forward-проверок: ${flowValue(empirical.forward_confirmations)}.`, next: "Ждать новые данные." },
+  ], empiricalSource);
+  const empiricalStatus = empirical.completed === empirical.generated ? "V1 завершён · кандидатов нет" : "V1 выполняется";
   setText("rfv4CompactEmpiricalStatus", empiricalStatus);
-  setText("rfv4CompactEmpiricalNext", empiricalNext);
-  setCardTone("rfv4CompactEmpiricalCard", !empiricalAvailable ? "neutral" : empiricalCompleted > 0 ? "active" : "waiting");
-  const empiricalCurrent = empiricalAvailable
-    ? `Вопросов зафиксировано заранее: ${empiricalTests}. Завершено: ${empiricalCompleted}. Перешли в будущую проверку: ${empiricalConfirmations}.`
-    : "Текущее состояние эмпирического поиска не найдено.";
-  [
-    ["rfv4CompactEmpiricalTestsExplain", empiricalAvailable ? `Тестов в текущем запуске: ${empiricalTests}` : "Нет данных"],
-    ["rfv4CompactEmpiricalCandidatesExplain", empiricalAvailable ? `Будущих подтверждений: ${empiricalConfirmations}` : "Нет данных"],
-    ["rfv4CompactEmpiricalStatusExplain", empiricalStatus],
-  ].forEach(([id, live]) => setExplainContext(id, live, empiricalCurrent, empiricalNext));
+  setExplainContext("rfv4CompactEmpiricalStatusExplain", empiricalStatus, `V1: ${flowValue(empirical.completed)}/${flowValue(empirical.generated)}. V2: только план, ${flowValue(empirical.v2?.planned)} теста.`, "V2 нельзя показывать как запущенный, пока нет отдельного результата.", empiricalSource, "Человеческий статус последнего эмпирического запуска.");
+  setActivity("rfv4CompactEmpiricalActivity", empirical.last_transition);
+  setText("rfv4CompactEmpiricalNext", `V2 · план ${flowValue(empirical.v2?.planned)} · запущено ${flowValue(empirical.v2?.running)}`);
+  setCardTone("rfv4CompactEmpiricalCard", empirical.completed > 0 ? "active" : "waiting");
 
-  const activeTheses = count(investment.sealed_theses);
-  const resolvedTheses = count(investment.resolved_theses);
-  const investmentStatus = activeTheses > 0 ? "Наблюдает активные тезисы" : "Ждёт первую тезу";
-  const investmentNext = activeTheses > 0 ? "Ближайшее разрешение тезы" : "Первая зафиксированная теза";
-  setText("rfv4CompactInvestmentActive", activeTheses);
-  setText("rfv4CompactInvestmentResolved", resolvedTheses);
+  const investment = flow.investment || {};
+  const investmentSource = `${investment.source || "Источник не подключён"} · ${compactTimestamp(investment.last_activity)}`;
+  setText("rfv4CompactInvestmentScope", investment.scope);
+  renderFlow("rfv4CompactInvestmentFlow", "investment_overview", [
+    { label: "заморожено", value: investment.active, what: "Тезисы зафиксированы и не меняются после старта.", current: `Активны ${flowValue(investment.active)} тезиса.`, next: "Ждать дату проверки." },
+    { label: "решено", value: investment.resolved, what: "Тезисы с уже известным итогом.", current: `Решено ${flowValue(investment.resolved)}.`, next: "Записать итог по фиксированному правилу." },
+  ], investmentSource);
+  const investmentStatus = investment.active > 0 ? `Наблюдает ${flowValue(investment.active)} замороженные тезы` : "Нет активных тез";
   setText("rfv4CompactInvestmentStatus", investmentStatus);
-  setText("rfv4CompactInvestmentNext", investmentNext);
-  setCardTone("rfv4CompactInvestmentCard", activeTheses > 0 ? "active" : "neutral");
-  const investmentCurrent = `Активных тез: ${activeTheses}. Получили итог: ${resolvedTheses}.`;
-  [
-    ["rfv4CompactInvestmentActiveExplain", `Активных тез: ${activeTheses}`],
-    ["rfv4CompactInvestmentResolvedExplain", `Получили итог: ${resolvedTheses}`],
-    ["rfv4CompactInvestmentStatusExplain", investmentStatus],
-  ].forEach(([id, live]) => setExplainContext(id, live, investmentCurrent, investmentNext));
+  setExplainContext("rfv4CompactInvestmentStatusExplain", investmentStatus, `Активно ${flowValue(investment.active)}, решено ${flowValue(investment.resolved)}.`, "Дождаться ближайшей даты разрешения.", investmentSource, "Текущий статус долгосрочных тез.");
+  setActivity("rfv4CompactInvestmentActivity", investment.last_activity);
+  setText("rfv4CompactInvestmentNext", investment.next_resolution ? `Следующая проверка · ${dateLabel(investment.next_resolution)}` : "Следующая проверка не указана");
+  setCardTone("rfv4CompactInvestmentCard", investment.active > 0 ? "active" : "neutral");
 
-  const strictTotals = hypothesisThroughput?.authoritative_totals || {};
-  const strictReviewed = finite(strictTotals.reviewed);
-  const strictSurvivors = finite(strictTotals.survivors);
-  const noRawMaterial = String(hypothesisThroughput?.operational_state?.hunter_status || "").startsWith("NO_RAW_MATERIAL");
-  const strictStatus = noRawMaterial ? "Ждёт новых данных" : "Готов к следующей проверке";
-  const strictNext = noRawMaterial ? "Ответ по запросу данных" : "Следующая подходящая гипотеза";
-  setText("rfv4CompactStrictReviewed", strictReviewed ?? "—");
-  setText("rfv4CompactStrictSurvivors", strictSurvivors ?? "—");
-  setText("rfv4CompactStrictStatus", strictStatus);
-  setText("rfv4CompactStrictNext", strictNext);
-  setCardTone("rfv4CompactStrictCard", noRawMaterial ? "waiting" : "neutral");
-  const strictCurrent = `Проверено: ${strictReviewed ?? "нет данных"}. Прошли весь путь: ${strictSurvivors ?? "нет данных"}. Это состояние только строгого контура.`;
-  [
-    ["rfv4CompactStrictReviewedExplain", strictReviewed == null ? "Нет данных" : `Проверено: ${strictReviewed}`],
-    ["rfv4CompactStrictSurvivorsExplain", strictSurvivors == null ? "Нет данных" : `Прошли все проверки: ${strictSurvivors}`],
-    ["rfv4CompactStrictStatusExplain", strictStatus],
-  ].forEach(([id, live]) => setExplainContext(id, live, strictCurrent, strictNext));
+  const strict = flow.strict || {};
+  const strictSource = `${strict.source || "Источник не подключён"} · ${compactTimestamp(strict.last_activity)}`;
+  setText("rfv4CompactStrictScope", strict.scope);
+  renderFlow("rfv4CompactStrictFlow", "strict_overview", [
+    { label: "новые", value: strict.new, what: "Новые гипотезы за последние 24 часа.", current: `Новых: ${flowValue(strict.new)}.`, next: "Передать подходящие идеи на проверку." },
+    { label: "проверено", value: strict.evaluated, what: "Гипотезы, проверенные за последние 24 часа.", current: `Проверено: ${flowValue(strict.evaluated)}.`, next: "Продолжить при появлении данных." },
+    { label: "убито", value: strict.killed, what: "Остановлено за последние 24 часа.", current: `Остановлено: ${flowValue(strict.killed)}.`, next: "Сохранить причину отказа." },
+    { label: "D0", value: strict.D0, what: "Прошли первую строгую проверку за 24 часа.", current: `D0: ${flowValue(strict.D0)}.`, next: "Проверить источник и механизм." },
+    { label: "D1", value: strict.D1, what: "Прошли вторую строгую проверку за 24 часа.", current: `D1: ${flowValue(strict.D1)}.`, next: "Перейти к экрану данных." },
+    { label: "screen", value: strict.screen, what: "Дошли до эмпирического экрана за 24 часа.", current: `Screen: ${flowValue(strict.screen)}.`, next: "Проверить результат по правилам." },
+    { label: "survivor", value: strict.survivor, what: "Полностью прошли строгий путь за 24 часа.", current: `Survivor: ${flowValue(strict.survivor)}.`, next: "Зафиксировать будущую проверку." },
+  ], strictSource);
+  setText("rfv4CompactStrictStatus", strict.human_status || "Нет данных");
+  setExplainContext("rfv4CompactStrictStatusExplain", strict.human_status, `За 24 часа проверено ${flowValue(strict.evaluated)}. Всего в реестре ${flowValue(strict.total_evaluated)}.`, "Ждать новые данные или подходящую гипотезу.", strictSource, "Человеческий статус строгого контура.");
+  setActivity("rfv4CompactStrictActivity", strict.last_activity);
+  setText("rfv4CompactStrictNext", `Всего проверено · ${flowValue(strict.total_evaluated)}`);
+  setCardTone("rfv4CompactStrictCard", String(strict.human_status || "").includes("Ждёт") ? "waiting" : "neutral");
 
-  const atlasAvailable = atlasDataAsset?.available === true;
-  const atlasEvents = atlasDataAsset?.canonical_events == null ? null : finite(atlasDataAsset.canonical_events);
-  const atlasReady = atlasDataAsset?.product_ready_objects == null ? null : finite(atlasDataAsset.product_ready_objects);
-  const atlasReadiness = atlasAvailable ? String(atlasDataAsset.readiness || "Нет данных").replaceAll("_", " ") : "Нет данных об активе";
-  const atlasStatus = atlasReadiness === "L2 DEMOABLE" ? "Готов к демонстрации" : atlasAvailable ? "Копит актив данных" : "Нет данных об активе";
-  const atlasNext = humanAtlasNext(atlasDataAsset?.next_action, atlasAvailable);
-  setText("rfv4CompactAtlasEvents", atlasEvents ?? "—");
-  setText("rfv4CompactAtlasReady", atlasReady ?? "—");
+  const atlas = flow.atlas || {};
+  const atlasSource = atlas.source ? `${atlas.source} · ${compactTimestamp(atlas.last_activity)}` : "Источник не подключён";
+  setText("rfv4CompactAtlasScope", atlas.scope);
+  renderFlow("rfv4CompactAtlasFlow", "atlas_overview", [
+    { label: "события", value: atlas.events, what: "Канонические события в активе данных.", current: atlas.available ? `Событий: ${flowValue(atlas.events)}.` : "Стабильный источник не найден.", next: "Подключить отдельное состояние Atlas." },
+    { label: "готово", value: atlas.ready, what: "Объекты, готовые для использования продуктом.", current: atlas.available ? `Готово: ${flowValue(atlas.ready)}.` : "Стабильный источник не найден.", next: "Подключить отдельное состояние Atlas." },
+  ], atlasSource);
+  const atlasStatus = atlas.available ? String(atlas.readiness || "Состояние подключено").replaceAll("_", " ") : "Источник не подключён";
   setText("rfv4CompactAtlasStatus", atlasStatus);
-  setText("rfv4CompactAtlasNext", atlasNext);
-  setCardTone("rfv4CompactAtlasCard", atlasAvailable ? "active" : "neutral");
-  const atlasCurrent = atlasAvailable
-    ? `Канонических событий: ${atlasEvents}. Готовых объектов: ${atlasReady}. Текущий уровень: ${atlasReadiness}.`
-    : "Отдельное авторитетное состояние актива данных пока не найдено; числа не придуманы.";
-  [
-    ["rfv4CompactAtlasEventsExplain", atlasEvents == null ? "Нет данных" : `Канонических событий: ${atlasEvents}`],
-    ["rfv4CompactAtlasReadyExplain", atlasReady == null ? "Нет данных" : `Готовых объектов: ${atlasReady}`],
-    ["rfv4CompactAtlasStatusExplain", atlasStatus],
-  ].forEach(([id, live]) => setExplainContext(id, live, atlasCurrent, atlasNext));
+  setExplainContext("rfv4CompactAtlasStatusExplain", atlasStatus, atlas.available ? `Состояние Atlas: ${atlasStatus}.` : "Файл отдельного состояния Atlas отсутствует. Числа не подставлены.", atlas.available ? "Продолжать обновление источника." : "Подключить стабильный машинный источник.", atlasSource, "Доступность отдельного источника Atlas.");
+  setActivity("rfv4CompactAtlasActivity", atlas.last_activity);
+  setText("rfv4CompactAtlasNext", atlas.available ? `Готовность · ${atlasStatus}` : "Без источника цифры не показываются");
+  setCardTone("rfv4CompactAtlasCard", atlas.available ? "active" : "neutral");
 
-  setText("rfv4CompactMilestone", resolved > 0 ? "First scored paper comparison" : "First honest 1D OOS result");
-  setText("rfv4CompactMilestoneMeta", resolved > 0 ? "Экономическая оценка после результата" : `Ожидается ${nextResolution}`);
+  const nextResolution = dateLabel(data.prediction.earliest_expected_resolution || data.manifest.earliest_expected_resolution);
+  setText("rfv4CompactMilestone", prediction.resolved > 0 ? "Первая оценка качества" : "Первый честный результат 1D");
+  setText("rfv4CompactMilestoneMeta", prediction.resolved > 0 ? "Сравнить с базовыми правилами" : `Ожидается ${nextResolution}`);
 }
 
 let activePerformanceView = "learning";

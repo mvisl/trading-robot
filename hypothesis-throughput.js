@@ -506,7 +506,7 @@ function openExplanation(trigger) {
   const compactValue = trigger.querySelector?.("strong, dd")?.textContent?.trim();
   const live = liveTarget?.textContent?.trim() || trigger.dataset.live || compactValue || "Нет данных";
   set("researchExplainTitle", explanation.title);
-  set("researchExplainWhat", explanation.what);
+  set("researchExplainWhat", trigger.dataset.what || explanation.what);
   set("researchExplainNowValue", live || "Нет данных");
   set("researchExplainNow", trigger.dataset.current || explanation.current || explanation.why || "Нет данных");
   set("researchExplainNext", trigger.dataset.next || explanation.next || "Показатель обновится при следующем изменении состояния.");
@@ -613,8 +613,8 @@ export function initHypothesisThroughput(getSnapshot) {
   if (!document.body.dataset.researchExplainBound) {
     document.body.dataset.researchExplainBound = "true";
     document.addEventListener("click", (event) => {
-      if (event.target.closest?.("button, a, summary")) return;
       const trigger = event.target.closest?.("[data-explain]");
+      if (event.target.closest?.("a, summary")) return;
       if (trigger) openExplanation(trigger);
     });
     document.addEventListener("keydown", (event) => {

@@ -1,4 +1,4 @@
-import { initResearchV4, rememberResearchV4State, renderResearchV4 } from "./research-v4.js?v=20260821-compact-overview-v3";
+import { initResearchV4, rememberResearchV4State, renderResearchV4 } from "./research-v4.js?v=20260821-live-flow-v4";
 
 const $ = (id) => document.getElementById(id);
 

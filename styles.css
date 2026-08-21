@@ -8557,3 +8557,91 @@ th:nth-child(3) {
   .rfv4-header { padding: 12px; }
   .rfv4-header-state { display: grid; justify-items: start; text-align: left; }
 }
+
+/* Research Factory Overview · Live Hypothesis Flow V4 */
+.rfv4-compact-card {
+  grid-template-rows: auto auto minmax(66px, 1fr) auto auto auto;
+  gap: 6px;
+  min-height: 218px;
+}
+
+.rfv4-compact-scope {
+  color: #8d98a3;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.rfv4-live-flow {
+  display: flex;
+  gap: 4px;
+  align-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
+  padding: 7px 0;
+  border-top: 1px solid var(--rfv4-soft-line);
+  border-bottom: 1px solid var(--rfv4-soft-line);
+}
+
+.rfv4-live-flow button {
+  display: grid;
+  gap: 2px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 5px 6px;
+  border: 1px solid rgba(142, 158, 174, 0.18);
+  border-radius: 7px;
+  color: #e9eef2;
+  text-align: left;
+  cursor: help;
+  background: rgba(255, 255, 255, 0.022);
+}
+
+.rfv4-live-flow button strong {
+  font-size: 15px;
+  line-height: 1;
+  letter-spacing: -0.025em;
+}
+
+.rfv4-live-flow button span {
+  color: #929da8;
+  font-size: 7px;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.rfv4-live-flow > b {
+  color: #5f6c77;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.rfv4-live-flow button:hover,
+.rfv4-live-flow button:focus-visible {
+  border-color: #6899c1;
+  color: #bfe1ff;
+  outline: none;
+  background: rgba(71, 125, 166, 0.09);
+}
+
+.rfv4-compact-activity {
+  overflow: hidden;
+  color: #7f8a94;
+  font-size: 8px;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 1120px) {
+  .rfv4-compact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 700px) {
+  .rfv4-compact-grid { grid-template-columns: minmax(0, 1fr); }
+  .rfv4-compact-card { min-height: 208px; }
+}

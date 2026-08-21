@@ -1,4 +1,171 @@
 {
+  "live_flow": {
+    "schema_version": "research-factory-live-flow-v4",
+    "read_only": true,
+    "prediction": {
+      "scope": "ТЕКУЩИЙ ПАКЕТ · PFV4-20260820-V2",
+      "current_batch_id": "PFV4-20260820-V2",
+      "current_batch_state": "WAITING_OUTCOME",
+      "created": 150,
+      "waiting_model_response": 0,
+      "sealed": 150,
+      "open": 150,
+      "resolved": 0,
+      "total_sealed_valid": 150,
+      "next_cohort": "V4_1",
+      "next_cohort_materialized": false,
+      "last_activity": "2026-08-20T11:06:38Z",
+      "source": "runtime/prediction-factory-v4/state.json + research/prediction_factory_v4/FIRST_BATCH_MANIFEST_20260820.json"
+    },
+    "demo": {
+      "scope": "ТЕКУЩАЯ ГРУППА · PFV4-20260820-V2",
+      "open_positions": 0,
+      "resolved": 0,
+      "no_trade": 38,
+      "completed": 0,
+      "c1_resolved_rows": 0,
+      "c1_minimum_rows": 200,
+      "c1_decision_dates": 1,
+      "c1_minimum_dates": 20,
+      "c1_status": "OWNER_SIGNATURE_REQUIRED_PRE_OUTCOME",
+      "last_activity": "2026-08-21T10:17:53Z",
+      "source": "runtime/prediction-factory-v4/paper-positions.json + current batch + C1 checkpoint contract"
+    },
+    "empirical": {
+      "scope": "ПОСЛЕДНИЙ ЗАВЕРШЁННЫЙ ЗАПУСК · V1",
+      "run": "V1",
+      "generated": 32,
+      "running": 0,
+      "completed": 32,
+      "null": 4,
+      "gross_only": 15,
+      "inconclusive": 13,
+      "candidates": 0,
+      "forward_confirmations": 0,
+      "last_transition": "2026-08-21T13:05:14.486Z",
+      "v2": {
+        "status": "PLAN_ONLY_NOT_FROZEN_NOT_RUN",
+        "planned": 2,
+        "running": 0,
+        "planned_at": "2026-08-21T13:34:12.000Z"
+      },
+      "source": "research/empirical_discovery_lane_v1/SCREEN_RESULTS_MANIFEST_V1.json + SCREEN_RESULTS_V1.jsonl"
+    },
+    "investment": {
+      "scope": "ТЕКУЩИЕ ЗАМОРОЖЕННЫЕ ТЕЗЫ",
+      "active": 2,
+      "resolved": 0,
+      "next_resolution": "FIRST_COMPLETED_DAILY_CLOSE_AFTER_2026-09-20",
+      "last_activity": "2026-08-20T13:40:00Z",
+      "source": "research/prediction_factory_v4/INVESTMENT_THESES_20260820.json"
+    },
+    "strict": {
+      "scope": "ПОСЛЕДНИЕ 24 Ч",
+      "new": 0,
+      "evaluated": 0,
+      "killed": 0,
+      "D0": 0,
+      "D1": 0,
+      "screen": 0,
+      "survivor": 0,
+      "total_evaluated": 44,
+      "human_status": "Ждёт данных",
+      "last_activity": "2026-08-21T10:30:00.000Z",
+      "source": "research/hypothesis_factory/22_continuous_learning/NO_IDLE_TELEMETRY_V1.json"
+    },
+    "atlas": {
+      "scope": "ТЕКУЩИЙ АКТИВ ДАННЫХ",
+      "available": false,
+      "events": null,
+      "ready": null,
+      "readiness": null,
+      "last_activity": null,
+      "source": null,
+      "source_status": "SOURCE_NOT_CONNECTED"
+    },
+    "source_audit": [
+      {
+        "metric": "Prediction current batch",
+        "file": "runtime/prediction-factory-v4/state.json",
+        "updated_at": "2026-08-20T11:06:37.587Z",
+        "authoritative": true,
+        "selected": true,
+        "note": "Current authoritative non-tombstoned batch."
+      },
+      {
+        "metric": "Prediction V4.1 / newer cohort",
+        "file": "runtime/prediction-factory-v4-1/state.json",
+        "updated_at": null,
+        "authoritative": false,
+        "selected": false,
+        "note": "No stable batch artifact was found; planned V4.1 is not reported as a live batch."
+      },
+      {
+        "metric": "Demo open positions",
+        "file": "runtime/prediction-factory-v4/paper-positions.json",
+        "updated_at": "2026-08-20T11:06:37.588Z",
+        "authoritative": true,
+        "selected": true,
+        "note": "Newest stable paper-position state found."
+      },
+      {
+        "metric": "Demo newer cohort",
+        "file": "runtime/prediction-factory-v4-1/paper-positions.json",
+        "updated_at": null,
+        "authoritative": false,
+        "selected": false,
+        "note": "No newer stable paper-position artifact was found; example values are not published."
+      },
+      {
+        "metric": "Investment 0",
+        "file": "research/prediction_factory_v4/STATE_20260820.json",
+        "updated_at": "2026-08-20T11:06:38Z",
+        "authoritative": false,
+        "selected": false,
+        "note": "Superseded by the later V4.1 frozen thesis ledger."
+      },
+      {
+        "metric": "Investment 2",
+        "file": "research/prediction_factory_v4/INVESTMENT_THESES_20260820.json",
+        "updated_at": "2026-08-20T13:40:00Z",
+        "authoritative": true,
+        "selected": true,
+        "note": "Later sealed thesis ledger."
+      },
+      {
+        "metric": "Empirical completed 0",
+        "file": "runtime/empirical-discovery-lane-v1/state.json",
+        "updated_at": "2026-08-21T13:10:00.000Z",
+        "authoritative": false,
+        "selected": false,
+        "note": "Incomplete runtime state conflicts with the sealed 32-row result set."
+      },
+      {
+        "metric": "Empirical completed 32",
+        "file": "research/empirical_discovery_lane_v1/SCREEN_RESULTS_MANIFEST_V1.json",
+        "updated_at": "2026-08-21T13:06:48.031Z",
+        "authoritative": true,
+        "selected": true,
+        "note": "Sealed 32-row result manifest with a matching result-file hash."
+      },
+      {
+        "metric": "Strict total 44",
+        "file": "research/hypothesis_factory/22_continuous_learning/NO_IDLE_TELEMETRY_V1.json",
+        "updated_at": "2026-08-21T10:30:00.000Z",
+        "authoritative": true,
+        "selected": true,
+        "note": "Current normalized evidence-backed total."
+      },
+      {
+        "metric": "Atlas data asset",
+        "file": "runtime/atlas-data-moat-v1/state.json",
+        "updated_at": null,
+        "authoritative": false,
+        "selected": false,
+        "note": "Source file is absent; no number is published."
+      }
+    ]
+  },
   "multi_contour_state": {
     "artifact_contract": "RESEARCH_FACTORY_V4_MULTI_CONTOUR_STATE_V1",
     "created_at_utc": "2026-08-20T11:06:38Z",
@@ -40,9 +207,10 @@
     "investment_contour": {
       "ledger_active": true,
       "schema": "INVESTMENT_THESIS_LEDGER.schema.json",
-      "sealed_theses": 0,
+      "sealed_theses": 2,
       "resolved_theses": 0,
-      "automatic_real_investment": false
+      "automatic_real_investment": false,
+      "source": "research/prediction_factory_v4/INVESTMENT_THESES_20260820.json"
     },
     "strict_institute": {
       "active": true,
@@ -233,8 +401,15 @@
     "phase": "FROZEN_PRE_OUTCOME",
     "grammar_version": "DISCOVERY_GRAMMAR_V1",
     "predeclared_tests": 32,
-    "completed_tests": 0,
+    "completed_tests": 32,
     "forward_confirmations_active": 0,
+    "result_classes": {
+      "historical_null": 4,
+      "gross_signal_net_null": 15,
+      "inconclusive": 13
+    },
+    "candidates": 0,
+    "source": "research/empirical_discovery_lane_v1/SCREEN_RESULTS_MANIFEST_V1.json + SCREEN_RESULTS_V1.jsonl",
     "outcomes_accessed": false,
     "research_only": true,
     "scientific_gates_changed": false,
@@ -1213,5 +1388,5 @@
   },
   "authoritative": true,
   "read_only": true,
-  "published_at": "2026-08-21T15:02:31.961Z"
+  "published_at": "2026-08-21T16:33:36.359Z"
 }
