@@ -178,7 +178,64 @@
       "verdict_generated": false
     }
   },
+  "hypothesis_throughput": {
+    "schema_version": "hypothesis-throughput-observability-v1",
+    "generated_at": "2026-08-21T08:46:29.267Z",
+    "source_of_truth": "Machine-readable formal-review events only; no LLM reports or research documents.",
+    "events": [],
+    "coverage": {
+      "available_partial_fields": [
+        "hypothesis_id",
+        "mechanism_family_id",
+        "pipeline_status",
+        "current_hypothesis_terminal",
+        "imported_at"
+      ],
+      "missing_fields": [
+        "hypothesis_id",
+        "mechanism_family",
+        "data_world",
+        "created_at",
+        "review_started_at",
+        "review_finished_at",
+        "terminal_stage",
+        "terminal_status",
+        "primary_death_reason",
+        "D0_status",
+        "D1_status",
+        "screen_status",
+        "formal_status",
+        "last_transition_at"
+      ],
+      "note": "The historical registry is not a canonical formal-review event ledger and is excluded from throughput metrics."
+    },
+    "historical_partial": {
+      "unique_hypothesis_records": 15,
+      "terminal_records": 13,
+      "unique_mechanism_families": 9,
+      "coverage_from": "2026-07-30T18:16:30Z",
+      "coverage_to": "2026-07-30T18:16:30Z",
+      "source": "research_memory/HYPOTHESES.jsonl",
+      "classification": "PARTIAL_HISTORICAL_REGISTRY_NOT_FORMAL_REVIEW_THROUGHPUT"
+    },
+    "operational_state": {
+      "timer_active": true,
+      "resource_floor_active": null,
+      "resource_floor_delivered": null,
+      "block_reason": null,
+      "runnable_idle_hours_24h": null
+    },
+    "thresholds": {
+      "classification": "OPERATIONAL_HEURISTIC_NOT_SCIENTIFIC_GATE",
+      "no_activity_hours": 12,
+      "throughput_drop_pct": 60,
+      "consecutive_early_kills": 20,
+      "death_reason_concentration_pct": 70,
+      "death_reason_window": 20,
+      "small_denominator": 10
+    }
+  },
   "authoritative": true,
   "read_only": true,
-  "published_at": "2026-08-20T13:25:57.132Z"
+  "published_at": "2026-08-21T08:46:29.270Z"
 }

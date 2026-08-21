@@ -1,3 +1,5 @@
+import { initHypothesisThroughput, renderHypothesisThroughput } from "./hypothesis-throughput.js?v=20260821-hpt1";
+
 const MINIMUM_EVALUATION_TARGET = 200;
 
 const byId = (id) => document.getElementById(id);
@@ -102,7 +104,8 @@ function projection(state) {
   const runtime = bundle.prediction_runtime || {};
   const manifest = bundle.first_batch_manifest || {};
   const batch = authoritativeBatch(runtime, prediction);
-  return { operations, bundle, factory, prediction, demo, investment, strict, runtime, manifest, batch };
+  const hypothesisThroughput = bundle.hypothesis_throughput || null;
+  return { operations, bundle, factory, prediction, demo, investment, strict, runtime, manifest, batch, hypothesisThroughput };
 }
 
 let activePerformanceView = "learning";
@@ -262,6 +265,7 @@ function renderDetailViews(data) {
 export function renderResearchV4(state) {
   if (!byId("researchFactoryV4")) return;
   const data = projection(state);
+  renderHypothesisThroughput(data.hypothesisThroughput, { period: byId("hypothesisFactoryThroughput")?.dataset.period || "7D" });
   const { factory, prediction, demo, investment, strict, manifest, batch } = data;
   if (!factory) {
     setStatus("rfv4FactoryStatus", "ERROR");
@@ -373,6 +377,7 @@ function setActiveTab(tab) {
 }
 
 export function initResearchV4() {
+  initHypothesisThroughput(() => projection(window.__researchFactoryCurrentState || {}).hypothesisThroughput);
   document.querySelectorAll("[data-rfv4-tab]").forEach((button) => button.addEventListener("click", () => setActiveTab(button.dataset.rfv4Tab)));
   document.querySelectorAll("[data-rfv4-open]").forEach((button) => button.addEventListener("click", () => setActiveTab(button.dataset.rfv4Open)));
   document.querySelectorAll("[data-rfv4-performance]").forEach((button) => button.addEventListener("click", () => {

@@ -1,10 +1,11 @@
-import { initResearchV4, rememberResearchV4State, renderResearchV4 } from "./research-v4.js?v=20260820-rfv4";
+import { initResearchV4, rememberResearchV4State, renderResearchV4 } from "./research-v4.js?v=20260821-hpt1";
 
 const $ = (id) => document.getElementById(id);
 
 const IS_SHARED_VIEW = new URLSearchParams(window.location.search).get("shared") === "1";
 const IS_GITHUB_PORTAL = window.location.hostname === "mvisl.github.io";
-const IS_PUBLISHED_PORTAL = IS_GITHUB_PORTAL || window.location.protocol === "file:";
+const IS_THROUGHPUT_FIXTURE = new URLSearchParams(window.location.search).has("throughputFixture");
+const IS_PUBLISHED_PORTAL = IS_GITHUB_PORTAL || window.location.protocol === "file:" || IS_THROUGHPUT_FIXTURE;
 const PORTAL_API_ORIGIN = IS_GITHUB_PORTAL ? "https://institute.167-99-214-34.sslip.io" : window.location.origin;
 const CANONICAL_RESEARCH_URL = "https://mvisl.github.io/trading-robot/#research";
 const PORTAL_ACCESS_TOKEN_KEY = "institute_portal_access_token";

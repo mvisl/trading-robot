@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Institute Control Center</title>
-    <link rel="stylesheet" href="./styles.css?v=20260820-research-factory-v4" />
+    <link rel="stylesheet" href="./styles.css?v=20260821-hypothesis-throughput-v1" />
   </head>
   <body>
     <section class="portal-auth-overlay" id="portalAuthOverlay" hidden>
@@ -671,6 +671,66 @@
           </nav>
 
           <div class="rfv4-pane active" data-rfv4-pane="overview">
+            <section class="hpt-factory" id="hypothesisFactoryThroughput" data-period="7D" aria-labelledby="hptTitle">
+              <header class="hpt-head">
+                <div>
+                  <span class="rfv4-eyebrow">HYPOTHESIS FACTORY · FORMAL REVIEW THROUGHPUT</span>
+                  <h2 id="hptTitle">Is the machine actually reviewing hypotheses?</h2>
+                </div>
+                <div class="hpt-period" role="group" aria-label="Hypothesis throughput period">
+                  <button type="button" data-hpt-period="24H">24H</button>
+                  <button class="active" type="button" data-hpt-period="7D">7D</button>
+                  <button type="button" data-hpt-period="30D">30D</button>
+                  <button type="button" data-hpt-period="ALL">ALL</button>
+                </div>
+              </header>
+              <div class="hpt-fixture" id="hptFixtureBadge" hidden></div>
+
+              <div class="hpt-alerts"><ul id="hptAlerts"><li data-tone="missing">⚠ FORMAL REVIEW TELEMETRY MISSING</li></ul></div>
+
+              <section class="hpt-hero" aria-label="Formal hypothesis review headline metrics">
+                <article class="primary"><span>Hypotheses / 24H</span><strong id="hptRate24h">MISSING TELEMETRY</strong><small>Unique hypotheses formally reviewed</small></article>
+                <article><span>Today</span><strong id="hptToday">MISSING TELEMETRY</strong><small>UTC calendar day</small></article>
+                <article><span>Total reviewed</span><strong id="hptTotalReviewed">MISSING TELEMETRY</strong><small>Not generated, reports, or documents</small></article>
+                <article><span>Last hypothesis</span><strong id="hptLastActivity">MISSING TELEMETRY</strong><small>Formal review finished</small></article>
+              </section>
+
+              <div class="hpt-main-grid">
+                <section class="hpt-panel hpt-funnel-panel" aria-labelledby="hptFunnelTitle">
+                  <header><div><span>FUNNEL</span><h3 id="hptFunnelTitle">Selected period / total</h3></div><small><b id="hptSelectedReviewed">—</b> reviewed · <b id="hptSelectedKills">—</b> kills</small></header>
+                  <ol class="hpt-funnel" id="hptFunnel"></ol>
+                </section>
+
+                <div class="hpt-side-stack">
+                  <section class="hpt-hunter" id="hptHunter" data-tone="missing">
+                    <span>HUNTER</span><strong id="hptHunterStatus">UNKNOWN</strong><small id="hptHunterDetail">Formal review activity telemetry unavailable</small>
+                  </section>
+                  <section class="hpt-panel hpt-trend-panel">
+                    <header><div><span>HYPOTHESES REVIEWED / DAY</span><h3>Last 21 days</h3></div><strong id="hpt7dAverage">MISSING</strong></header>
+                    <div class="hpt-trend" id="hptTrend"></div>
+                  </section>
+                  <section class="hpt-panel hpt-top-reason">
+                    <span>TOP DEATH REASON · SELECTED PERIOD</span><strong id="hptTopReason">MISSING TELEMETRY</strong>
+                  </section>
+                </div>
+              </div>
+
+              <details class="hpt-details">
+                <summary>Details · conversion, timing, reasons, experience &amp; coverage</summary>
+                <div class="hpt-detail-grid">
+                  <section class="hpt-panel"><header><div><span>DEATH REASONS</span><h3>Selected period</h3></div></header><ul class="hpt-reasons" id="hptDeathReasons"></ul></section>
+                  <section class="hpt-panel"><header><div><span>CONVERSION</span><h3>Selected period</h3></div></header><dl class="hpt-definition-list" id="hptConversions"></dl></section>
+                  <section class="hpt-panel"><header><div><span>TIME METRICS</span><h3>Speed vs inactivity</h3></div></header><dl class="hpt-definition-list" id="hptTimeMetrics"></dl></section>
+                  <section class="hpt-panel"><header><div><span>FACTORY EXPERIENCE</span><h3>Cumulative, separately labeled</h3></div></header><dl class="hpt-definition-list" id="hptExperience"></dl></section>
+                </div>
+                <section class="hpt-coverage">
+                  <div><span>MISSING REQUIRED EVENT FIELDS</span><p id="hptMissingFields">Checking machine-readable event coverage…</p></div>
+                  <div><span>HISTORICAL PARTIAL COVERAGE</span><p id="hptHistoricalCoverage">Checking separately labeled registry snapshot…</p></div>
+                  <small>Configured defaults are operational heuristics, not scientific gates: no activity 12h · throughput drop 60% · 20 consecutive early kills · one death reason &gt;70% of last 20.</small>
+                </section>
+              </details>
+            </section>
+
             <section class="rfv4-summary" aria-label="Research Factory summary">
               <article><span>Predictions sealed</span><strong id="rfv4Sealed">—</strong></article>
               <article><span>Resolved OOS</span><strong id="rfv4Resolved">—</strong></article>
@@ -1352,7 +1412,7 @@
       </div>
       <div class="mobile-detail-body" id="mobileDetailBody"></div>
     </aside>
-    <script src="./app.js?v=20260820-research-factory-v4-authfix1" type="module"></script>
-    <script type="application/json" id="researchV4PublishedState">{"multi_contour_state":{"artifact_contract":"RESEARCH_FACTORY_V4_MULTI_CONTOUR_STATE_V1","created_at_utc":"2026-08-20T11:06:38Z","prediction_contour":{"active":true,"pilot_freeze":"PILOT_FREEZE_V1.json","schema":"PREDICTION_LEDGER.schema.json","first_batch_manifest":"FIRST_BATCH_MANIFEST_20260820.json","first_batch_sealed":true,"authoritative_batch_id":"PFV4-20260820-V2","pre_outcome_tombstones":1,"sealed_prediction_rows":150,"independent_model_forecasts":60,"models_participating":["GPT","GEMINI"],"claude_status":"INACTIVE_NO_CURRENT_AUTHORIZED_ROUTE","decision_dates":1,"resolved_oos_observations":0,"fastest_feedback_loop":"CRYPTO_1D","earliest_expected_resolution":"2026-08-22_SUBJECT_TO_COMPLETED_BINANCE_DAILY_BARS"},"demo_strategy_arena":{"active":true,"arms":["GPT","GEMINI","CONSENSUS","RANDOM_BASELINE","ALWAYS_LONG_BASELINE"],"paper_only":true,"demo_fills_trusted":false,"open_positions":0,"resolved_trades":0,"net_expectancy":null},"investment_contour":{"ledger_active":true,"schema":"INVESTMENT_THESIS_LEDGER.schema.json","sealed_theses":0,"resolved_theses":0,"automatic_real_investment":false},"strict_institute":{"active":true,"allocation_pct":10,"compiled_seeds":0,"d0_survivors":0,"d1_survivors":0,"family_screen_ready":0,"screens_run":0,"formal_tests":0,"strict_survivors":0,"prospective_shadows_active":2,"treasury":"BACKGROUND_PROSPECTIVE_ACCUMULATION","binance_delisting":"PARK_NO_RESCUE_METADATA_SHADOW_ONLY_WHILE_NEAR_ZERO_COST","t1":"SYSTEM_RECOVERY_REQUIRED / NO_T1_REDUCTION"},"server_execution":{"active":true,"timer_active":true,"last_acceptance_result":"SUCCESS_EXIT_0_WAITING_OUTCOME_150_UNRESOLVED","cadence":"30_MINUTES_WITH_INTERNAL_DUE_CHECKS"},"workload_mix_target":{"server_deterministic_pct_range":"60-75","codex_cloud_pct_range":"15-25","local_llm_gui_pct_range":"5-15","current_measured_mix":"NOT_YET_MEASURABLE_BEFORE_ONE_WEEK"},"owner_decisions_pending":[],"safety":{"autonomous_research_authority":"ACTIVE","real_execution_authority":"NONE","allow_real":false,"capital_used":false}},"prediction_runtime":{"artifact_contract":"PREDICTION_FACTORY_V4_RUNTIME_STATE_V1","updated_at_utc":"2026-08-20T11:06:37.587Z","batches":{"PFV4-20260820-V1":{"state":"TOMBSTONED_PRE_OUTCOME","decision_date":"2026-08-20","prediction_count":150,"resolved_count":0,"unresolved_count":150},"PFV4-20260820-V2":{"state":"WAITING_OUTCOME","decision_date":"2026-08-20","prediction_count":150,"resolved_count":0,"unresolved_count":150}},"safety":{"research_only":true,"paper_demo_only":true,"autonomous_research_authority":"ACTIVE","real_execution_authority":"NONE","allow_real":false,"capital_used":false}},"paper_positions":{"artifact_contract":"PREDICTION_FACTORY_V4_OPEN_PAPER_POSITIONS_V1","generated_at_utc":"2026-08-20T11:06:37.588Z","open_count":0,"safety":{"research_only":true,"paper_demo_only":true,"autonomous_research_authority":"ACTIVE","real_execution_authority":"NONE","allow_real":false,"capital_used":false}},"first_batch_manifest":{"artifact_contract":"PREDICTION_FACTORY_V4_FIRST_BATCH_MANIFEST_V1","created_at_utc":"2026-08-20T11:06:38Z","model_responses":[{"slot":"GPT","prediction_rows":30},{"slot":"GEMINI","prediction_rows":30}],"derived_arms":["CONSENSUS","RANDOM_BASELINE","ALWAYS_LONG_BASELINE"],"rows":{"total_sealed":150,"independent_model_forecasts":60,"consensus_rows":30,"random_baseline_rows":30,"always_long_rows":30,"independent_decision_dates":1},"state":"WAITING_OUTCOME","resolved_oos_observations":0,"open_paper_positions":0,"earliest_expected_resolution":"2026-08-22_FOR_CRYPTO_1D_SUBJECT_TO_SOURCE_COMPLETENESS","edge_claim_allowed":false,"safety":{"real_execution_authority":"NONE","allow_real":false,"capital_used":false}},"treasury_shadow":{"artifact_contract":"TREASURY_PROSPECTIVE_SHADOW_COLLECTOR_STATE_V1","status":"ACTIVE_FUTURE_ONLY_OBSERVATION_COLLECTION","updated_at":"2026-08-17T09:29:58.895482+00:00","counts":{"complete_future_observations_accumulated":0,"future_eligible_auctions_announced":1,"official_daily_release_days_captured":0,"official_result_objects_captured":0},"protected_boundaries":{"allow_real":false,"capital_used":false,"empirical_test_run":false,"outcome_derived_parameters_allowed":false,"outcome_values_parsed":false,"predictor_values_parsed":false,"screen_run":false,"verdict_generated":false}},"authoritative":true,"read_only":true,"published_at":"2026-08-20T13:25:57.132Z"}</script>
+    <script src="./app.js?v=20260821-hypothesis-throughput-v1" type="module"></script>
+    <script type="application/json" id="researchV4PublishedState">{"multi_contour_state":{"artifact_contract":"RESEARCH_FACTORY_V4_MULTI_CONTOUR_STATE_V1","created_at_utc":"2026-08-20T11:06:38Z","prediction_contour":{"active":true,"pilot_freeze":"PILOT_FREEZE_V1.json","schema":"PREDICTION_LEDGER.schema.json","first_batch_manifest":"FIRST_BATCH_MANIFEST_20260820.json","first_batch_sealed":true,"authoritative_batch_id":"PFV4-20260820-V2","pre_outcome_tombstones":1,"sealed_prediction_rows":150,"independent_model_forecasts":60,"models_participating":["GPT","GEMINI"],"claude_status":"INACTIVE_NO_CURRENT_AUTHORIZED_ROUTE","decision_dates":1,"resolved_oos_observations":0,"fastest_feedback_loop":"CRYPTO_1D","earliest_expected_resolution":"2026-08-22_SUBJECT_TO_COMPLETED_BINANCE_DAILY_BARS"},"demo_strategy_arena":{"active":true,"arms":["GPT","GEMINI","CONSENSUS","RANDOM_BASELINE","ALWAYS_LONG_BASELINE"],"paper_only":true,"demo_fills_trusted":false,"open_positions":0,"resolved_trades":0,"net_expectancy":null},"investment_contour":{"ledger_active":true,"schema":"INVESTMENT_THESIS_LEDGER.schema.json","sealed_theses":0,"resolved_theses":0,"automatic_real_investment":false},"strict_institute":{"active":true,"allocation_pct":10,"compiled_seeds":0,"d0_survivors":0,"d1_survivors":0,"family_screen_ready":0,"screens_run":0,"formal_tests":0,"strict_survivors":0,"prospective_shadows_active":2,"treasury":"BACKGROUND_PROSPECTIVE_ACCUMULATION","binance_delisting":"PARK_NO_RESCUE_METADATA_SHADOW_ONLY_WHILE_NEAR_ZERO_COST","t1":"SYSTEM_RECOVERY_REQUIRED / NO_T1_REDUCTION"},"server_execution":{"active":true,"timer_active":true,"last_acceptance_result":"SUCCESS_EXIT_0_WAITING_OUTCOME_150_UNRESOLVED","cadence":"30_MINUTES_WITH_INTERNAL_DUE_CHECKS"},"workload_mix_target":{"server_deterministic_pct_range":"60-75","codex_cloud_pct_range":"15-25","local_llm_gui_pct_range":"5-15","current_measured_mix":"NOT_YET_MEASURABLE_BEFORE_ONE_WEEK"},"owner_decisions_pending":[],"safety":{"autonomous_research_authority":"ACTIVE","real_execution_authority":"NONE","allow_real":false,"capital_used":false}},"prediction_runtime":{"artifact_contract":"PREDICTION_FACTORY_V4_RUNTIME_STATE_V1","updated_at_utc":"2026-08-20T11:06:37.587Z","batches":{"PFV4-20260820-V1":{"state":"TOMBSTONED_PRE_OUTCOME","decision_date":"2026-08-20","prediction_count":150,"resolved_count":0,"unresolved_count":150},"PFV4-20260820-V2":{"state":"WAITING_OUTCOME","decision_date":"2026-08-20","prediction_count":150,"resolved_count":0,"unresolved_count":150}},"safety":{"research_only":true,"paper_demo_only":true,"autonomous_research_authority":"ACTIVE","real_execution_authority":"NONE","allow_real":false,"capital_used":false}},"paper_positions":{"artifact_contract":"PREDICTION_FACTORY_V4_OPEN_PAPER_POSITIONS_V1","generated_at_utc":"2026-08-20T11:06:37.588Z","open_count":0,"safety":{"research_only":true,"paper_demo_only":true,"autonomous_research_authority":"ACTIVE","real_execution_authority":"NONE","allow_real":false,"capital_used":false}},"first_batch_manifest":{"artifact_contract":"PREDICTION_FACTORY_V4_FIRST_BATCH_MANIFEST_V1","created_at_utc":"2026-08-20T11:06:38Z","model_responses":[{"slot":"GPT","prediction_rows":30},{"slot":"GEMINI","prediction_rows":30}],"derived_arms":["CONSENSUS","RANDOM_BASELINE","ALWAYS_LONG_BASELINE"],"rows":{"total_sealed":150,"independent_model_forecasts":60,"consensus_rows":30,"random_baseline_rows":30,"always_long_rows":30,"independent_decision_dates":1},"state":"WAITING_OUTCOME","resolved_oos_observations":0,"open_paper_positions":0,"earliest_expected_resolution":"2026-08-22_FOR_CRYPTO_1D_SUBJECT_TO_SOURCE_COMPLETENESS","edge_claim_allowed":false,"safety":{"real_execution_authority":"NONE","allow_real":false,"capital_used":false}},"treasury_shadow":{"artifact_contract":"TREASURY_PROSPECTIVE_SHADOW_COLLECTOR_STATE_V1","status":"ACTIVE_FUTURE_ONLY_OBSERVATION_COLLECTION","updated_at":"2026-08-17T09:29:58.895482+00:00","counts":{"complete_future_observations_accumulated":0,"future_eligible_auctions_announced":1,"official_daily_release_days_captured":0,"official_result_objects_captured":0},"protected_boundaries":{"allow_real":false,"capital_used":false,"empirical_test_run":false,"outcome_derived_parameters_allowed":false,"outcome_values_parsed":false,"predictor_values_parsed":false,"screen_run":false,"verdict_generated":false}},"hypothesis_throughput":{"schema_version":"hypothesis-throughput-observability-v1","generated_at":"2026-08-21T08:46:29.267Z","source_of_truth":"Machine-readable formal-review events only; no LLM reports or research documents.","events":[],"coverage":{"available_partial_fields":["hypothesis_id","mechanism_family_id","pipeline_status","current_hypothesis_terminal","imported_at"],"missing_fields":["hypothesis_id","mechanism_family","data_world","created_at","review_started_at","review_finished_at","terminal_stage","terminal_status","primary_death_reason","D0_status","D1_status","screen_status","formal_status","last_transition_at"],"note":"The historical registry is not a canonical formal-review event ledger and is excluded from throughput metrics."},"historical_partial":{"unique_hypothesis_records":15,"terminal_records":13,"unique_mechanism_families":9,"coverage_from":"2026-07-30T18:16:30Z","coverage_to":"2026-07-30T18:16:30Z","source":"research_memory/HYPOTHESES.jsonl","classification":"PARTIAL_HISTORICAL_REGISTRY_NOT_FORMAL_REVIEW_THROUGHPUT"},"operational_state":{"timer_active":true,"resource_floor_active":null,"resource_floor_delivered":null,"block_reason":null,"runnable_idle_hours_24h":null},"thresholds":{"classification":"OPERATIONAL_HEURISTIC_NOT_SCIENTIFIC_GATE","no_activity_hours":12,"throughput_drop_pct":60,"consecutive_early_kills":20,"death_reason_concentration_pct":70,"death_reason_window":20,"small_denominator":10}},"authoritative":true,"read_only":true,"published_at":"2026-08-21T08:46:29.270Z"}</script>
   </body>
 </html>
